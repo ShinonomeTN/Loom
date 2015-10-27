@@ -1,0 +1,58 @@
+package com.shinonometn.Pupa.ToolBox;
+
+import java.io.Console;
+import java.io.UnsupportedEncodingException;
+
+/**
+ * Created by Catten Linger on 2015/10/11.
+ *
+ * Tools about Hex stream
+ */
+public class HexTool {
+    public static byte[] intArrToByteArr(int[] arr, int startPos, int endPos){
+        byte[] result = new byte[endPos - startPos + 1];
+        for(int i = startPos - 1; i < endPos; i++ ){
+            result[i] = (byte)arr[i];
+        }
+        return result;
+    }
+
+    public static byte[] intArrToByteArr(int[] arr){
+        byte[] result = new byte[arr.length];
+        for(int i = 0; i < result.length; i++){
+            result[i] = (byte)arr[i];
+        }
+        return result;
+    }
+    
+    public static int[] byteArrToIntArr(byte[] arr, int startPos, int endPos){
+        int[] result = new int[endPos - startPos + 1];
+        for(int i = startPos - 1; i < endPos; i++){
+            result[i] = (int)arr[i] & 0xFF;
+        }
+        return result;
+    }
+
+    public static int[] byteArrToIntArr(byte[] arr){
+        int[] result = new int[arr.length];
+        for(int i = 0; i < result.length; i++){
+            result[i] = (int)arr[i] & 0xFF;
+        }
+        return result;
+    }
+
+    public static String hexBinToStr(byte[] data){
+        try {
+            return new String(data,"GB2312");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    public static String hexBinToHexStr(int[] data){
+        StringBuilder stringBuilder = new StringBuilder();
+        for(int i:data) stringBuilder.append(String.format((i > 0x10 ? "%x" : "0%x"),i));
+        return stringBuilder.toString();
+    }
+}
