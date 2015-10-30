@@ -11,7 +11,7 @@ import java.io.UnsupportedEncodingException;
 public class HexTool {
     public static byte[] intArrToByteArr(int[] arr, int startPos, int endPos){
         byte[] result = new byte[endPos - startPos + 1];
-        for(int i = startPos - 1; i < endPos; i++ ){
+        for(int i = startPos; i < endPos; i++ ){
             result[i] = (byte)arr[i];
         }
         return result;
@@ -27,7 +27,7 @@ public class HexTool {
     
     public static int[] byteArrToIntArr(byte[] arr, int startPos, int endPos){
         int[] result = new int[endPos - startPos + 1];
-        for(int i = startPos - 1; i < endPos; i++){
+        for(int i = startPos; i < endPos; i++){
             result[i] = (int)arr[i] & 0xFF;
         }
         return result;

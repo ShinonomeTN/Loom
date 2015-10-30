@@ -132,6 +132,7 @@ public class Cypherbook {
         switch (key){
             case 0x8:
             case 0xB:
+            case 0x9:
                 switch (action){
                     case 0x4:
                     case 0x2:
