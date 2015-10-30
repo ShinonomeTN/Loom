@@ -41,7 +41,7 @@ public class HexTool {
         return result;
     }
 
-    public static String hexBinToStr(byte[] data){
+    public static String toStr(byte[] data){
         try {
             return new String(data,"GB2312");
         } catch (UnsupportedEncodingException e) {
@@ -50,9 +50,28 @@ public class HexTool {
         return "";
     }
 
-    public static String hexBinToHexStr(int[] data){
+    public static String toHexStr(int[] data){
         StringBuilder stringBuilder = new StringBuilder();
         for(int i:data) stringBuilder.append(String.format((i > 0x10 ? "%x" : "0%x"),i));
         return stringBuilder.toString();
+    }
+
+    public static int toInt(int[] data){
+        int buffer = 0;
+        if(data.length > 4){
+            throw new NumberFormatException("Nomber too bing");
+        }
+        int i = data.length - 1;
+        while (i >= 0) {
+            buffer <<= 8;
+            buffer += data[i];
+            i--;
+        }
+        return buffer;
+    }
+
+    public static boolean toBool(int[] data){
+        if(data == null) return false;
+        return data[data.length-1] > 0;
     }
 }

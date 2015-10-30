@@ -1,6 +1,8 @@
 package com.shinonometn.Loom.ui;
 
 import com.shinonometn.Loom.common.Networks;
+import com.shinonometn.Loom.connector.Shuttle;
+import com.shinonometn.Loom.connector.ShuttleEvent;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -9,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
@@ -17,7 +20,7 @@ import java.util.*;
 /**
  * Created by catten on 15/10/20.
  */
-public class MainForm extends JFrame implements ActionListener,ItemListener{
+public class MainForm extends JFrame implements ActionListener,ItemListener,ShuttleEvent{
 
     JTextField t_username;
     JPasswordField t_password;
@@ -41,6 +44,8 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
     JMenuItem menuItemHelp;
 
     JLabel lb_info;
+
+    Shuttle shuttle;
 
     public MainForm(){
         super("Loom");
@@ -141,14 +146,14 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.insets = left_inset;
         cb_remember = new JCheckBox("保存账户信息");
-        add(cb_remember,gridBagConstraints);
+        add(cb_remember, gridBagConstraints);
 
         gridBagConstraints.gridx=+2;
         gridBagConstraints.gridwidth = 1;
         gridBagConstraints.insets = right_inset;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         btn_login = new JButton("上线");
-        add(btn_login,gridBagConstraints);
+        add(btn_login, gridBagConstraints);
 
         gridBagConstraints.gridy++;
         gridBagConstraints.gridx = 0;
@@ -181,11 +186,30 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
     }
 
     private void lockInputUI(){
+        try{
+            t_username.setEnabled(false);
+            t_password.setEnabled(false);
+            btn_login.setEnabled(false);
+            cb_netcard.setEnabled(false);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 
+    private void unlockInputUI(){
+        try{
+            t_username.setEnabled(true);
+            t_password.setEnabled(true);
+            btn_login.setEnabled(true);
+            cb_netcard.setEnabled(true);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     private void setupEvent(){
-
+        cb_remember.addActionListener(this);
+        btn_login.addActionListener(this);
     }
 
     @Override
@@ -198,5 +222,25 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
         if(e.getSource() == cb_netcard){
             //do something
         }
+    }
+
+    @Override
+    public void onAction(int actionType) {
+
+    }
+
+    @Override
+    public void onMail(String mail) {
+
+    }
+
+    @Override
+    public void onStateChange(int state) {
+
+    }
+
+    @Override
+    public void onDatagramPackageArrive(DatagramPacket datagramPacket) {
+
     }
 }

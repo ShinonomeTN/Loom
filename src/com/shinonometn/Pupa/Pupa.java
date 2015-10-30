@@ -213,16 +213,31 @@ public class Pupa {
     }
 
     public String toString(){
-        return HexTool.hexBinToHexStr(data);
+        return HexTool.toHexStr(data);
+    }
+
+    public static int[] findField(Pupa pupa ,String fieldName){
+        Integer aKey = Cypherbook.getKeyCode(fieldName);
+        return findField(pupa,aKey);
+    }
+
+    public static int[] findField(Pupa pupa, int Key){
+        Vector<int[]> fields = pupa.getFields();
+        for (int[] field : fields){
+            if(field[0] == Key){
+                return field;
+            }
+        }
+        return null;
     }
 
     public static String toPrintabelString(Pupa aPupa){
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(String.format("[Decrypted Package]\n%s\n",HexTool.hexBinToHexStr(aPupa.getData())));
+        stringBuilder.append(String.format("[Decrypted Package]\n%s\n",HexTool.toHexStr(aPupa.getData())));
         stringBuilder.append(String.format("[Action]\n%s(0x%x)\n", Cypherbook.actionNames(aPupa.getAction()), aPupa.getAction()));
         stringBuilder.append(String.format("[Length]\n%d\n", aPupa.getLength()));
         stringBuilder.append(String.format("[Data Fields Length]\n%d\n", aPupa.getDataFieldLength()));
-        stringBuilder.append(String.format("[MD5 Hash]\n%s\n",HexTool.hexBinToHexStr(aPupa.getMD5hash())));
+        stringBuilder.append(String.format("[MD5 Hash]\n%s\n",HexTool.toHexStr(aPupa.getMD5hash())));
         for(int i = 0; i < aPupa.getFields().size(); i++){
             int[] field = aPupa.getFields().get(i);
             int key = field[0];
@@ -236,7 +251,7 @@ public class Pupa {
             switch (Cypherbook.checkType(key)){
                 case Cypherbook.TYPE_STRING:
                     try {
-                        stringBuilder.append(String.format("%s\n", HexTool.hexBinToStr(HexTool.intArrToByteArr(value,1,value.length))));
+                        stringBuilder.append(String.format("%s\n", HexTool.toStr(HexTool.intArrToByteArr(value, 1, value.length))));
                     }catch (Exception w){
                         stringBuilder.append(String.format("null\n"));
                     }
@@ -265,7 +280,7 @@ public class Pupa {
                     stringBuilder.append(String.format("(Not support yet)\n"));
                     break;
             }
-            stringBuilder.append(String.format("Raw data:\n%s\n",HexTool.hexBinToHexStr(field)));
+            stringBuilder.append(String.format("Raw data:\n%s\n",HexTool.toHexStr(field)));
         }
         return stringBuilder.toString();
     }
