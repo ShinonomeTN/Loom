@@ -80,7 +80,7 @@ public class Program {
         DatagramSocket datagramSocket = null;
         DatagramPacket datagramPacket;
         try{
-            System.out.println("Welcome to use Loom v0.1!\n");
+            System.out.println("Welcome to use Loom v0.2!\n");
             String ip;
             String username;
             String password;
@@ -99,6 +99,7 @@ public class Program {
             ip = bufferedReader.readLine();
             System.out.println("Getting Network Interface with "+ip);
             InetAddress inetAddress = InetAddress.getByName(ip);
+            InetAddress serverInetAddress;
             NetworkInterface networkInterface = NetworkInterface.getByInetAddress(inetAddress);
             byte[] macAddress = networkInterface.getHardwareAddress();
             if(macAddress == null){
@@ -143,7 +144,8 @@ public class Program {
             }
             if(serverIP != null){
                 System.out.println("Found that Server IP is "+serverIP);
-                datagramPacket.setAddress(InetAddress.getByName(serverIP));
+                serverInetAddress = InetAddress.getByName(serverIP);
+                datagramPacket.setAddress(serverInetAddress);
                 datagramPacket.setPort(3848);
             }else return;
 
@@ -181,19 +183,19 @@ public class Program {
             int[] fieldBuffer = Pupa.findField(pupa,"is success");
             if(!HexTool.toBool(fieldBuffer)){
                 System.out.println("Certification failed.");
+                log(Pupa.toPrintabelString(pupa));
                 fieldBuffer = Pupa.findField(pupa,"message");
                 int fieldTemp[] = new int[fieldBuffer.length - 2];
                 System.arraycopy(fieldBuffer,0,fieldTemp,0,fieldTemp.length);
                 System.out.println(HexTool.toStr(HexTool.intArrToByteArr(fieldTemp)));
             }else if(HexTool.toBool(fieldBuffer)){
                 System.out.println("Certification success.");
+                log(Pupa.toPrintabelString(pupa));
                 fieldBuffer = Pupa.findField(pupa, "session");
-                str_session = HexTool.toHexStr(fieldBuffer);
+                str_session = HexTool.toStr(HexTool.intArrToByteArr(Pupa.fieldData(fieldBuffer)));
                 fieldBuffer = Pupa.findField(pupa, "message");
                 System.out.println("|Server Administrator Message|");
-                int fieldTemp[] = new int[fieldBuffer.length - 2];
-                System.arraycopy(fieldBuffer,0,fieldTemp,0,fieldTemp.length);
-                System.out.println(HexTool.toStr(HexTool.intArrToByteArr(fieldTemp)));
+                System.out.println(HexTool.toStr(HexTool.intArrToByteArr(Pupa.fieldData(fieldBuffer))));
                 datagramSocket.close();
                 System.out.println("Starting Breathe Thread.");
                 breatheThread = new Thread(){
@@ -214,21 +216,20 @@ public class Program {
                                 sleep(20000);
                                 System.out.println("Breathe...");
                                 tempFiled = String.format(
-                                        "session:%s|ip address:%s|serial no:%x|mac address:%s",
+                                        "session:%s|ip address:%s|serial no:0%x|mac address:%s",
                                         HexTool.toHexStr(HexTool.byteArrToIntArr(str_session.getBytes())),
                                         HexTool.toHexStr(HexTool.byteArrToIntArr(ip.getBytes())),
                                         serialNo,
                                         HexTool.toHexStr(HexTool.byteArrToIntArr(macAddress))
                                 );
-                                log(tempFiled);
                                 breathePupa = new Pupa("breathe",tempFiled);
+                                log(Pupa.toPrintabelString(breathePupa));
                                 breathePacket = new DatagramPacket(
                                         HexTool.intArrToByteArr(HACKTools.encrypt3848(HexTool.intArrToByteArr(breathePupa.getData()))),
                                         breathePupa.getData().length,
-                                        inetAddress,
+                                        serverInetAddress,
                                         3848
                                 );
-                                log(tempFiled);
                                 breathSocket.send(breathePacket);
                                 buffer = new byte[1024];
                                 breathePacket.setData(buffer);
@@ -248,7 +249,7 @@ public class Program {
                                         breathSocket.receive(breathePacket);
                                     }catch (SocketTimeoutException ee){
                                         System.out.println("Breathe failed...Server no response.");
-                                        break;
+                                        throw new InterruptedException("I killed myself");
                                     }
                                 }
                                 bufferTemp = new byte[breathePacket.getLength()];

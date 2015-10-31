@@ -218,7 +218,7 @@ public class Pupa {
 
     public static int[] findField(Pupa pupa ,String fieldName){
         Integer aKey = Cypherbook.getKeyCode(fieldName);
-        return findField(pupa,aKey);
+        return findField(pupa, aKey);
     }
 
     public static int[] findField(Pupa pupa, int Key){
@@ -229,6 +229,12 @@ public class Pupa {
             }
         }
         return null;
+    }
+
+    public static int[] fieldData(int field[]){
+        int[] result = new int[field.length - 2];
+        System.arraycopy(field, 2, result, 0, result.length);
+        return result;
     }
 
     public static String toPrintabelString(Pupa aPupa){

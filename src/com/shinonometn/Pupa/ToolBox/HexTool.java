@@ -74,4 +74,27 @@ public class HexTool {
         if(data == null) return false;
         return data[data.length-1] > 0;
     }
+
+/*
+*     public static int[] intToHex(int n){
+        int[] result = new int[4];
+        int i = 0;
+        Integer integer = n;
+        while(n != 0){
+            result[i] = (n & 0xFFFFFF00);
+            n >>>= 8;
+            i++;
+        }
+        return result;
+    }
+
+    public static void main(String[] args){
+        int[] temp = HexTool.intToHex(0x02000001);
+        for (int i:temp){
+            System.out.printf("%x ",i);
+        }
+        System.out.println();
+    }
+* */
+
 }
