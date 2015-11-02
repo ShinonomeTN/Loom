@@ -80,7 +80,7 @@ public class Program {
         DatagramSocket datagramSocket = null;
         DatagramPacket datagramPacket;
         try{
-            System.out.println("Welcome to use Loom v0.2!\n");
+            System.out.println("Welcome to use Loom v0.3!\n");
             String ip;
             String username;
             String password;
