@@ -3,7 +3,7 @@ package com.shinonometn.Pupa.ToolBox;
 /**
  * Created by catten on 15/10/10.
  */
-public class HACKTools {
+public class Pronunciation {
 
     public static byte[] encrypt3848(byte[] buffer){
         if(buffer.length > 0){

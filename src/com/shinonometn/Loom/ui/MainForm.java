@@ -1,8 +1,6 @@
 package com.shinonometn.Loom.ui;
 
 import com.shinonometn.Loom.common.Networks;
-import com.shinonometn.Loom.connector.Shuttle;
-import com.shinonometn.Loom.connector.ShuttleEvent;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -12,15 +10,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.util.*;
 
 /**
  * Created by catten on 15/10/20.
  */
-public class MainForm extends JFrame implements ActionListener,ItemListener,ShuttleEvent{
+public class MainForm extends JFrame implements ActionListener,ItemListener{
 
     JTextField t_username;
     JPasswordField t_password;
@@ -44,8 +40,6 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
     JMenuItem menuItemHelp;
 
     JLabel lb_info;
-
-    Shuttle shuttle;
 
     public MainForm(){
         super("Loom");
@@ -222,25 +216,5 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         if(e.getSource() == cb_netcard){
             //do something
         }
-    }
-
-    @Override
-    public void onAction(int actionType) {
-
-    }
-
-    @Override
-    public void onMail(String mail) {
-
-    }
-
-    @Override
-    public void onStateChange(int state) {
-
-    }
-
-    @Override
-    public void onDatagramPackageArrive(DatagramPacket datagramPacket) {
-
     }
 }

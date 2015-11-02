@@ -1,12 +1,13 @@
 package com.shinonometn.Pupa;
 
-import com.shinonometn.Pupa.ToolBox.CHexConvert;
-import com.shinonometn.Pupa.ToolBox.Cypherbook;
-import com.shinonometn.Pupa.ToolBox.HexTool;
+import com.shinonometn.Pupa.ToolBox.Dictionary;
+import com.shinonometn.Pupa.ToolBox.HexTools;
+import com.shinonometn.Pupa.ToolBox.Pronunciation;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import java.util.Scanner;
 import java.util.Vector;
 
 import static java.lang.System.*;
@@ -48,7 +49,7 @@ public class Pupa {
 
     //Constract using String
     public Pupa(String action, String fields){
-        this.action = Cypherbook.getByteActionKey(action);
+        this.action = Dictionary.getByteActionKey(action);
         byte key;
 
         int pack_length = 0;
@@ -58,11 +59,11 @@ public class Pupa {
         for(String field : tempfields){
             //converting fields
             String[] subfields = field.split(":");
-            key = Cypherbook.getByteKeyCode(subfields[0]);
-            byte[] datas = CHexConvert.hexStr2Bytes(subfields[1]);
+            key = Dictionary.getByteKeyCode(subfields[0]);
+            byte[] datas = HexTools.hexStr2Bytes(subfields[1]);
             byte[] result = new byte[datas.length+2];
             result[0] = key;
-            result[1] = (byte) (Cypherbook.isTwoBytesLonger(this.action, key) ? datas.length:datas.length + 2);
+            result[1] = (byte) (Dictionary.isTwoBytesLonger(this.action, key) ? datas.length:datas.length + 2);
             pack_length += 2;
             for(int i = 2; i < result.length; i++){
                 result[i] = datas[i - 2];
@@ -119,7 +120,7 @@ public class Pupa {
         for(byte[] arr : fields){
             packlength += arr[1];
             //+=2 if is a "short length" field
-            if(Cypherbook.isTwoBytesLonger(arr[0], arr[1])) packlength+=2;
+            if(Dictionary.isTwoBytesLonger(arr[0], arr[1])) packlength+=2;
         }
         //Refresh datas to an array
         byte[] fielddata = new byte[packlength];
@@ -174,8 +175,8 @@ public class Pupa {
             while (point < length - 1) {
                 byte key = stream[++point];//The first bit is field type
                 byte field_length = stream[++point];//Second bit is field length
-                //Some field titled a fake length, I recorded that at the Cypherbook
-                if(Cypherbook.isTwoBytesLonger(action, key)) field_length+=2;
+                //Some field titled a fake length, I recorded that at the Dictionary
+                if(Dictionary.isTwoBytesLonger(action, key)) field_length+=2;
                 //Refresh data to a array
                 byte[] field = new byte[field_length];
                 field[0] = key;
@@ -222,11 +223,11 @@ public class Pupa {
     }
 
     public String toString(){
-        return HexTool.toHexStr(data);
+        return HexTools.byte2HexStr(data, data.length);
     }
 
     public static byte[] findField(Pupa pupa ,String fieldName){
-        Byte aKey = Cypherbook.getByteKeyCode(fieldName);
+        Byte aKey = Dictionary.getByteKeyCode(fieldName);
         return findField(pupa, aKey);
     }
 
@@ -248,55 +249,64 @@ public class Pupa {
 
     public static String toPrintabelString(Pupa aPupa){
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(String.format("[Decrypted Package]\n%s\n",HexTool.toHexStr(aPupa.getData())));
-        stringBuilder.append(String.format("[Action]\n%s(0x%x)\n", Cypherbook.actionNames(aPupa.getAction()), aPupa.getAction()));
+        stringBuilder.append(String.format("[Decrypted Package]\n%s\n", HexTools.byte2HexStr(aPupa.getData(), aPupa.getData().length)));
+        stringBuilder.append(String.format("[Action]\n%s(0x%x)\n", Dictionary.actionNames(aPupa.getAction()), aPupa.getAction()));
         stringBuilder.append(String.format("[Length]\n%d\n", aPupa.getLength()));
         stringBuilder.append(String.format("[Data Fields Length]\n%d\n", aPupa.getDataFieldLength()));
-        stringBuilder.append(String.format("[MD5 Hash]\n%s\n",HexTool.toHexStr(aPupa.getMD5hash())));
+        stringBuilder.append(String.format("[MD5 Hash]\n%s\n", HexTools.byte2HexStr(aPupa.getMD5hash(), aPupa.getMD5hash().length)));
         for(int i = 0; i < aPupa.getFields().size(); i++){
             byte[] field = aPupa.getFields().get(i);
             byte key = field[0];
             byte length = field[1];
-            byte[] value = new byte[length];
-            arraycopy(field, 2, value, 0, length - 2);
             stringBuilder.append(String.format("[Field %d]\n", i));
-            stringBuilder.append(String.format("Key\t: %s(0x%x)\n", Cypherbook.keyNames(key),key));
-            stringBuilder.append(String.format("Size\t: %d%s\n",length,(Cypherbook.isTwoBytesLonger(aPupa.getAction(), key)?" + 2":"")));
+            stringBuilder.append(String.format("Key\t: %s(0x%x)\n", Dictionary.keyNames(key),key));
+            stringBuilder.append(String.format("Size\t: %d%s\n",length,(Dictionary.isTwoBytesLonger(aPupa.getAction(), key)?" + 2":"")));
             stringBuilder.append("Context\t: ");
-            switch (Cypherbook.checkType(key)){
-                case Cypherbook.TYPE_STRING:
+            byte value[] = Pupa.fieldData(field);
+            switch (Dictionary.checkType(key)){
+                case Dictionary.TYPE_STRING:
                     try {
-                        stringBuilder.append(String.format("%s\n", HexTool.toStr(value, 1, value.length)));
+                        stringBuilder.append(String.format("%s\n", HexTools.toGB2312Str(value)));
                     }catch (Exception w){
                         stringBuilder.append("null\n");
                     }
                     break;
-                case Cypherbook.TYPE_INT_ADDRESS:
-                    for (int j = 0; j < value.length - 2; j++) stringBuilder.append(String.format((j == value.length - 3 ? "%d":"%d."),value[j]));
+                case Dictionary.TYPE_INT_ADDRESS:
+                    for (int j = 0; j < value.length; j++) {
+                        stringBuilder.append(String.format((j == value.length - 1 ? "%d" : "%d."), value[j]));
+                    }
                     stringBuilder.append("\n");
                     break;
-                case Cypherbook.TYPE_INT_MAC:
-                    for (int j = 0; j < value.length - 2; j++) stringBuilder.append(String.format((j == value.length - 3 ? "%x":"%x:"),value[j]));
+                case Dictionary.TYPE_INT_MAC:
+                    stringBuilder.append(HexTools.byte2HexStr(value, value.length, ':'));
                     stringBuilder.append("\n");
                     break;
-                case Cypherbook.TYPE_INT:
+                case Dictionary.TYPE_INT:
                     int toInt = 0;
-                    for(int j = 0; j < value.length - 2; j++) {
+                    for(int j = 0; j < value.length; j++) {
                         toInt += value[j];
-                        if(j == (value.length - 3)) toInt <<=1; else toInt<<=8;
+                        if(j == (value.length - 1)) toInt <<=1; else toInt<<=8;
                     }
                     stringBuilder.append(String.format("0x%x\n", toInt));
                     break;
-                case Cypherbook.TYPE_BOOLEAN:
+                case Dictionary.TYPE_BOOLEAN:
                     stringBuilder.append(String.format("%b\n", (value[0] != 0)));
                     break;
-                case Cypherbook.TYPE_UNKNOWN:
+                case Dictionary.TYPE_UNKNOWN:
                 default:
                     stringBuilder.append("(Not support yet)\n");
                     break;
             }
-            stringBuilder.append(String.format("Raw data:\n%s\n",HexTool.toHexStr(field)));
+            stringBuilder.append(String.format("Raw data:\n%s\n", HexTools.byte2HexStr(field, field.length)));
         }
         return stringBuilder.toString();
+    }
+
+    public static void main(String[] args){
+        System.out.println("Input a stream of data:");
+        Scanner scanner = new Scanner(System.in);
+        String data = scanner.next();
+        Pupa pupa = new Pupa(Pronunciation.decrypt3848(HexTools.hexStr2Bytes(data)));
+        System.out.println(Pupa.toPrintabelString(pupa));
     }
 }
