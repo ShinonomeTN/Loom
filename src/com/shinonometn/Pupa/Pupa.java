@@ -33,8 +33,8 @@ public class Pupa {
     private byte[] data;//Raw Data
     //The head of the package
     private byte action;//Package type
-    private byte length;//Package length that titled
-    private byte packet_length;//Real package length
+    private int length;//Package length that titled
+    private int packet_length;//Real package length
     private byte[] MD5hash = new byte[16];//MD5 Hash
     //Fields
     Vector<byte[]> fields = new Vector<>();
@@ -165,22 +165,22 @@ public class Pupa {
         this.data = stream;//Raw data
         int point = 0;//Point for reading datas
         action = stream[point];//Package type
-        length = stream[++point];//Package length that titled
+        length = stream[++point] & 0xFF;//Package length that titled
         //Get MD5hash
         for (int i = 0; i < 16; i++) MD5hash[i] = stream[++point];
         //Package length without head
-        packet_length = (byte) (stream.length - point + 1);
+        packet_length = stream.length - point + 1;
         try {
             //Spliting the package
             while (point < length - 1) {
                 byte key = stream[++point];//The first bit is field type
-                byte field_length = stream[++point];//Second bit is field length
+                int field_length = stream[++point] & 0xFF;//Second bit is field length
                 //Some field titled a fake length, I recorded that at the Dictionary
                 if(Dictionary.isTwoBytesLonger(action, key)) field_length+=2;
                 //Refresh data to a array
                 byte[] field = new byte[field_length];
                 field[0] = key;
-                field[1] = field_length;
+                field[1] = (byte) field_length;
                 for (int i = 2; i < field_length; i++) {
                     field[i] = stream[++point];
                 }
@@ -202,7 +202,7 @@ public class Pupa {
         return action;
     }
 
-    public byte getLength(){
+    public int getLength(){
         return length;
     }
 
@@ -260,7 +260,7 @@ public class Pupa {
             byte length = field[1];
             stringBuilder.append(String.format("[Field %d]\n", i));
             stringBuilder.append(String.format("Key\t: %s(0x%x)\n", Dictionary.keyNames(key),key));
-            stringBuilder.append(String.format("Size\t: %d%s\n",length,(Dictionary.isTwoBytesLonger(aPupa.getAction(), key)?" + 2":"")));
+            stringBuilder.append(String.format("Size\t: %d%s\n",length & 0xFF,(Dictionary.isTwoBytesLonger(aPupa.getAction(), key)?" + 2":"")));
             stringBuilder.append("Context\t: ");
             byte value[] = Pupa.fieldData(field);
             switch (Dictionary.checkType(key)){

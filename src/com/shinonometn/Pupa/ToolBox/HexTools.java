@@ -1,6 +1,5 @@
 package com.shinonometn.Pupa.ToolBox;
 
-import java.io.Console;
 import java.util.Locale;
 import java.io.UnsupportedEncodingException;
 
