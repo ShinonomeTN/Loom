@@ -24,18 +24,19 @@ import static java.lang.System.*;
 
 public class Pupa {
 
+    public static int PUPA_GENERATE_FAILED = 1000;
     public static int PUPA_PACKAGE_HEALTHY = 1001;
     public static int PUPA_PACKAGE_BROKEN = 1002;
     public static int PUPA_PACKAGE_FAT = 1003;
 
-    private int[] data;//Raw Data
+    private byte[] data;//Raw Data
     //The head of the package
-    private int action;//Package type
-    private int length;//Package length that titled
-    private int packet_length;//Real package length
-    private int[] MD5hash = new int[16];//MD5 Hash
+    private byte action;//Package type
+    private byte length;//Package length that titled
+    private byte packet_length;//Real package length
+    private byte[] MD5hash = new byte[16];//MD5 Hash
     //Fields
-    Vector<int[]> fields = new Vector<>();
+    Vector<byte[]> fields = new Vector<>();
 
     private String enchatAlgorithm = "MD5";
 
@@ -47,8 +48,8 @@ public class Pupa {
 
     //Constract using String
     public Pupa(String action, String fields){
-        this.action = Cypherbook.getActionKey(action);
-        int key;
+        this.action = Cypherbook.getByteActionKey(action);
+        byte key;
 
         int pack_length = 0;
         //split fields
@@ -57,83 +58,87 @@ public class Pupa {
         for(String field : tempfields){
             //converting fields
             String[] subfields = field.split(":");
-            key = Cypherbook.getKeyCode(subfields[0]);
+            key = Cypherbook.getByteKeyCode(subfields[0]);
             byte[] datas = CHexConvert.hexStr2Bytes(subfields[1]);
-            int[] result = new int[datas.length+2];
+            byte[] result = new byte[datas.length+2];
             result[0] = key;
-            result[1] = (Cypherbook.isTwoBytesLonger(this.action, key) ? datas.length:datas.length + 2);
+            result[1] = (byte) (Cypherbook.isTwoBytesLonger(this.action, key) ? datas.length:datas.length + 2);
             pack_length += 2;
             for(int i = 2; i < result.length; i++){
-                result[i] = (int)datas[i - 2];
+                result[i] = datas[i - 2];
                 pack_length++;
             }
             //put into vector
             this.fields.add(result);
         }
         //get the whole package
-        data = new int[pack_length];
+        data = new byte[pack_length];
         int point = 0;
-        for(int[] arr: this.fields){
-            for(int i = 0; i < arr.length; i++){
-                data[point] = arr[i];
+        for(byte[] arr: this.fields){
+            for (byte anArr : arr) {
+                data[point] = anArr;
                 point++;
             }
         }
 
         point = 0;
-        int[] field_data = data;
-        data = new int[pack_length+2+16];
+        byte[] field_data = data;
+        data = new byte[pack_length+2+16];
         data[point++] = this.action;
-        data[point++] = pack_length+2+16;
-        for (int aMD5hash : MD5hash) {
+        data[point++] = (byte) (pack_length+2+16);
+        for (byte aMD5hash : MD5hash) {
             data[point++] = aMD5hash;
         }
-        for(int afield_data : field_data){
+        for(byte afield_data : field_data){
             data[point++] = afield_data;
         }
-        packet_length = point;
+        packet_length = (byte) point;
 
         MessageDigest messageDigest = null;
         try {
             messageDigest = MessageDigest.getInstance(enchatAlgorithm);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
+            problmPupa = PUPA_GENERATE_FAILED;
         }
-        byte[] temp_hash = messageDigest.digest(HexTool.intArrToByteArr(data));
-        MD5hash = HexTool.byteArrToIntArr(temp_hash);
+        byte[] temp_hash = new byte[0];
+        if (messageDigest != null) {
+            temp_hash = messageDigest.digest(data);
+        }
+        MD5hash = temp_hash;
 
         System.arraycopy(MD5hash, 0, data, 2, MD5hash.length);
     }
 
     //Constract using Raw data
-    public Pupa(int action, Vector<int[]> fields){
+    public Pupa(byte action, Vector<byte[]> fields){
         this.action = action;
         this.fields = fields;
         int packlength = 0;
         //Count whole package length
-        for(int[] arr : fields){
+        for(byte[] arr : fields){
             packlength += arr[1];
             //+=2 if is a "short length" field
             if(Cypherbook.isTwoBytesLonger(arr[0], arr[1])) packlength+=2;
         }
         //Refresh datas to an array
-        int[] fielddata = new int[packlength];
+        byte[] fielddata = new byte[packlength];
         //A point for writing
         int point = 0;
         //Refreshing datas into the array
-        for(int[] arr : fields){
-            for (int anArr : arr) {
+        for(byte[] arr : fields){
+            for (byte anArr : arr) {
                 fielddata[point] = anArr;
                 point++;
             }
         }
         //new array length for the complete package
         packlength += (1+1+16);
-        data = new int[packlength];
+        data = new byte[packlength];
         //First bit for action
         data[0] = action;
         //Second bit for the "fake"(maybe) length
-        data[1] = packlength;
+        data[1] = (byte) packlength;
         //Fill data fields
         arraycopy(fielddata, 0, data, 2 + MD5hash.length, fielddata.length);
 
@@ -143,15 +148,19 @@ public class Pupa {
             messageDigest = MessageDigest.getInstance(enchatAlgorithm);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
+            problmPupa = PUPA_GENERATE_FAILED;
         }
-        byte[] temp_hash = messageDigest.digest(HexTool.intArrToByteArr(fielddata));
-        MD5hash = HexTool.byteArrToIntArr(temp_hash);
+        byte[] temp_hash = new byte[0];
+        if (messageDigest != null) {
+            temp_hash = messageDigest.digest(fielddata);
+        }
+        MD5hash = temp_hash;
 
         //Fill MD5 Hash
         arraycopy(MD5hash, 0, data, 2, MD5hash.length);
     }
 
-    public Pupa(int[] stream) {
+    public Pupa(byte[] stream) {
         this.data = stream;//Raw data
         int point = 0;//Point for reading datas
         action = stream[point];//Package type
@@ -159,16 +168,16 @@ public class Pupa {
         //Get MD5hash
         for (int i = 0; i < 16; i++) MD5hash[i] = stream[++point];
         //Package length without head
-        packet_length = stream.length - point + 1;
+        packet_length = (byte) (stream.length - point + 1);
         try {
             //Spliting the package
             while (point < length - 1) {
-                int key = stream[++point];//The first bit is field type
-                int field_length = stream[++point];//Second bit is field length
+                byte key = stream[++point];//The first bit is field type
+                byte field_length = stream[++point];//Second bit is field length
                 //Some field titled a fake length, I recorded that at the Cypherbook
                 if(Cypherbook.isTwoBytesLonger(action, key)) field_length+=2;
                 //Refresh data to a array
-                int[] field = new int[field_length];
+                byte[] field = new byte[field_length];
                 field[0] = key;
                 field[1] = field_length;
                 for (int i = 2; i < field_length; i++) {
@@ -188,15 +197,15 @@ public class Pupa {
         }
     }
     //Geters
-    public int getAction(){
+    public byte getAction(){
         return action;
     }
 
-    public int getLength(){
+    public byte getLength(){
         return length;
     }
 
-    public int[] getMD5hash(){
+    public byte[] getMD5hash(){
         return MD5hash;
     }
 
@@ -204,11 +213,11 @@ public class Pupa {
         return packet_length;
     }
 
-    public int[] getData(){
+    public byte[] getData(){
         return data;
     }
 
-    public Vector<int[]> getFields(){
+    public Vector<byte[]> getFields(){
         return fields;
     }
 
@@ -216,14 +225,14 @@ public class Pupa {
         return HexTool.toHexStr(data);
     }
 
-    public static int[] findField(Pupa pupa ,String fieldName){
-        Integer aKey = Cypherbook.getKeyCode(fieldName);
+    public static byte[] findField(Pupa pupa ,String fieldName){
+        Byte aKey = Cypherbook.getByteKeyCode(fieldName);
         return findField(pupa, aKey);
     }
 
-    public static int[] findField(Pupa pupa, int Key){
-        Vector<int[]> fields = pupa.getFields();
-        for (int[] field : fields){
+    public static byte[] findField(Pupa pupa, int Key){
+        Vector<byte[]> fields = pupa.getFields();
+        for (byte[] field : fields){
             if(field[0] == Key){
                 return field;
             }
@@ -231,8 +240,8 @@ public class Pupa {
         return null;
     }
 
-    public static int[] fieldData(int field[]){
-        int[] result = new int[field.length - 2];
+    public static byte[] fieldData(byte field[]){
+        byte[] result = new byte[field.length - 2];
         System.arraycopy(field, 2, result, 0, result.length);
         return result;
     }
@@ -245,21 +254,21 @@ public class Pupa {
         stringBuilder.append(String.format("[Data Fields Length]\n%d\n", aPupa.getDataFieldLength()));
         stringBuilder.append(String.format("[MD5 Hash]\n%s\n",HexTool.toHexStr(aPupa.getMD5hash())));
         for(int i = 0; i < aPupa.getFields().size(); i++){
-            int[] field = aPupa.getFields().get(i);
-            int key = field[0];
-            int length = field[1];
-            int[] value = new int[length];
+            byte[] field = aPupa.getFields().get(i);
+            byte key = field[0];
+            byte length = field[1];
+            byte[] value = new byte[length];
             arraycopy(field, 2, value, 0, length - 2);
             stringBuilder.append(String.format("[Field %d]\n", i));
             stringBuilder.append(String.format("Key\t: %s(0x%x)\n", Cypherbook.keyNames(key),key));
             stringBuilder.append(String.format("Size\t: %d%s\n",length,(Cypherbook.isTwoBytesLonger(aPupa.getAction(), key)?" + 2":"")));
-            stringBuilder.append(String.format("Context\t: "));
+            stringBuilder.append("Context\t: ");
             switch (Cypherbook.checkType(key)){
                 case Cypherbook.TYPE_STRING:
                     try {
-                        stringBuilder.append(String.format("%s\n", HexTool.toStr(HexTool.intArrToByteArr(value, 1, value.length))));
+                        stringBuilder.append(String.format("%s\n", HexTool.toStr(value, 1, value.length)));
                     }catch (Exception w){
-                        stringBuilder.append(String.format("null\n"));
+                        stringBuilder.append("null\n");
                     }
                     break;
                 case Cypherbook.TYPE_INT_ADDRESS:
@@ -283,7 +292,7 @@ public class Pupa {
                     break;
                 case Cypherbook.TYPE_UNKNOWN:
                 default:
-                    stringBuilder.append(String.format("(Not support yet)\n"));
+                    stringBuilder.append("(Not support yet)\n");
                     break;
             }
             stringBuilder.append(String.format("Raw data:\n%s\n",HexTool.toHexStr(field)));

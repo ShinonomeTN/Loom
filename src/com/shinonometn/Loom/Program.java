@@ -110,15 +110,15 @@ public class Program {
 
             String fields = String.format(
                     "session:%s|ip address:%s|mac address:%s",
-                    HexTool.toHexStr(HexTool.byteArrToIntArr(session)),
-                    HexTool.toHexStr(HexTool.byteArrToIntArr(ip.getBytes())),
-                    HexTool.toHexStr(HexTool.byteArrToIntArr(macAddress))
+                    HexTool.toHexStr(session),
+                    HexTool.toHexStr(ip.getBytes()),
+                    HexTool.toHexStr(macAddress)
             );
             Pupa pupa = new Pupa("get server",fields);
             System.out.println("Knocking Server...");
             log("Fields:" + fields);
             datagramPacket = new DatagramPacket(
-                    HexTool.intArrToByteArr(HACKTools.encrypt3848(HexTool.intArrToByteArr(pupa.getData()))),
+                    HACKTools.encrypt3848(pupa.getData()),
                     pupa.getData().length,
                     InetAddress.getByName("1.1.1.8"),
                     3850
@@ -137,8 +137,8 @@ public class Program {
             pupa = new Pupa(HACKTools.decrypt3848(temp));
             log(Pupa.toPrintabelString(pupa));
             String serverIP = null;
-            for(int[] arr:pupa.getFields()){
-                if(arr[0] == Cypherbook.getKeyCode("server ip address")){
+            for(byte[] arr:pupa.getFields()){
+                if(arr[0] == Cypherbook.getByteKeyCode("server ip address")){
                     serverIP = String.format("%d.%d.%d.%d",arr[2],arr[3],arr[4],arr[5]);
                 }
             }
@@ -156,19 +156,19 @@ public class Program {
 
             fields = String.format(
                     "session:%s|username:%s|password:%s|ip address:%s|mac address:%s|access point:%s|version:%s|is dhcp enabled:%s",
-                    HexTool.toHexStr(HexTool.byteArrToIntArr(session)),
-                    HexTool.toHexStr(HexTool.byteArrToIntArr(username.getBytes())),
-                    HexTool.toHexStr(HexTool.byteArrToIntArr(password.getBytes())),
-                    HexTool.toHexStr(HexTool.byteArrToIntArr(ip.getBytes())),
-                    HexTool.toHexStr(HexTool.byteArrToIntArr(macAddress)),
-                    HexTool.toHexStr(HexTool.byteArrToIntArr("internet".getBytes())),
-                    HexTool.toHexStr(HexTool.byteArrToIntArr("3,6,9".getBytes())),
+                    HexTool.toHexStr(session),
+                    HexTool.toHexStr(username.getBytes()),
+                    HexTool.toHexStr(password.getBytes()),
+                    HexTool.toHexStr(ip.getBytes()),
+                    HexTool.toHexStr(macAddress),
+                    HexTool.toHexStr("internet".getBytes()),
+                    HexTool.toHexStr("3.6.9".getBytes()),
                     "00"
             );
 
             pupa = new Pupa("login",fields);
             log("Fields: " + fields);
-            datagramPacket.setData(HexTool.intArrToByteArr(HACKTools.encrypt3848(HexTool.intArrToByteArr(pupa.getData()))));
+            datagramPacket.setData(HACKTools.encrypt3848(pupa.getData()));
             datagramPacket.setLength(pupa.getData().length);
             System.out.println("Sending certify package...");
             datagramSocket.send(datagramPacket);
@@ -180,22 +180,22 @@ public class Program {
             temp = new byte[datagramPacket.getLength()];
             System.arraycopy(datagramPacket.getData(),0,temp,0,temp.length);
             pupa = new Pupa(HACKTools.decrypt3848(temp));
-            int[] fieldBuffer = Pupa.findField(pupa,"is success");
+            byte[] fieldBuffer = Pupa.findField(pupa,"is success");
             if(!HexTool.toBool(fieldBuffer)){
                 System.out.println("Certification failed.");
                 log(Pupa.toPrintabelString(pupa));
                 fieldBuffer = Pupa.findField(pupa,"message");
-                int fieldTemp[] = new int[fieldBuffer.length - 2];
+                byte fieldTemp[] = new byte[fieldBuffer.length - 2];
                 System.arraycopy(fieldBuffer,0,fieldTemp,0,fieldTemp.length);
-                System.out.println(HexTool.toStr(HexTool.intArrToByteArr(fieldTemp)));
+                System.out.println(HexTool.toStr(fieldTemp));
             }else if(HexTool.toBool(fieldBuffer)){
                 System.out.println("Certification success.");
                 log(Pupa.toPrintabelString(pupa));
                 fieldBuffer = Pupa.findField(pupa, "session");
-                str_session = HexTool.toStr(HexTool.intArrToByteArr(Pupa.fieldData(fieldBuffer)));
+                str_session = HexTool.toStr(Pupa.fieldData(fieldBuffer));
                 fieldBuffer = Pupa.findField(pupa, "message");
                 System.out.println("|Server Administrator Message|");
-                System.out.println(HexTool.toStr(HexTool.intArrToByteArr(Pupa.fieldData(fieldBuffer))));
+                System.out.println(HexTool.toStr(Pupa.fieldData(fieldBuffer)));
                 datagramSocket.close();
                 System.out.println("Starting Breathe Thread.");
                 breatheThread = new Thread(){
@@ -217,15 +217,15 @@ public class Program {
                                 System.out.println("Breathe...");
                                 tempFiled = String.format(
                                         "session:%s|ip address:%s|serial no:0%x|mac address:%s",
-                                        HexTool.toHexStr(HexTool.byteArrToIntArr(str_session.getBytes())),
-                                        HexTool.toHexStr(HexTool.byteArrToIntArr(ip.getBytes())),
+                                        HexTool.toHexStr(str_session.getBytes()),
+                                        HexTool.toHexStr(ip.getBytes()),
                                         serialNo,
-                                        HexTool.toHexStr(HexTool.byteArrToIntArr(macAddress))
+                                        HexTool.toHexStr(macAddress)
                                 );
                                 breathePupa = new Pupa("breathe",tempFiled);
                                 log(Pupa.toPrintabelString(breathePupa));
                                 breathePacket = new DatagramPacket(
-                                        HexTool.intArrToByteArr(HACKTools.encrypt3848(HexTool.intArrToByteArr(breathePupa.getData()))),
+                                        HACKTools.encrypt3848(breathePupa.getData()),
                                         breathePupa.getData().length,
                                         serverInetAddress,
                                         3848
@@ -241,7 +241,7 @@ public class Program {
                                 }catch (SocketTimeoutException e){
                                     try {
                                         System.out.println("Breathe timeout...Try again....");
-                                        breathePacket.setData(HexTool.intArrToByteArr(HACKTools.encrypt3848(HexTool.intArrToByteArr(breathePupa.getData()))));
+                                        breathePacket.setData(HACKTools.encrypt3848(breathePupa.getData()));
                                         breathePacket.setLength(breathePupa.getData().length);
                                         breathSocket.send(breathePacket);
                                         breathePacket.setData(buffer);
@@ -256,7 +256,7 @@ public class Program {
                                 System.arraycopy(breathePacket.getData(),0,bufferTemp,0,bufferTemp.length);
                                 breathePupa = new Pupa(HACKTools.decrypt3848(bufferTemp));
                                 log(Pupa.toPrintabelString(breathePupa));
-                                int[] TfiledBuffer = Pupa.findField(breathePupa,"is success");
+                                byte[] TfiledBuffer = Pupa.findField(breathePupa,"is success");
                                 if(TfiledBuffer != null && HexTool.toBool(TfiledBuffer)) {
                                     serialNo += 0x03;
                                     System.out.println("Breathed.");
@@ -300,7 +300,7 @@ public class Program {
                                 messageSocket.receive(messagePacket);
                                 bufferTemp = new byte[messagePacket.getLength()];
                                 System.arraycopy(messagePacket.getData(), 0, bufferTemp, 0, bufferTemp.length);
-                                log(HexTool.toHexStr(HexTool.byteArrToIntArr(bufferTemp)));
+                                log(HexTool.toHexStr(bufferTemp));
                                 messagePupa = new Pupa(HACKTools.decrypt3848(bufferTemp));
                                 System.out.println("Server send you a " + Cypherbook.actionNames(messagePupa.getAction()) + "packet.");
                                 if(messagePupa.getAction() == 0x9){
@@ -330,14 +330,14 @@ public class Program {
                     datagramSocket = new DatagramSocket(3848,inetAddress);
                     fields = String.format(
                             "session:%s|ip address:%s|mac address:%s",
-                            HexTool.toHexStr(HexTool.byteArrToIntArr(str_session.getBytes())),
-                            HexTool.toHexStr(HexTool.byteArrToIntArr(ip.getBytes())),
-                            HexTool.toHexStr(HexTool.byteArrToIntArr(macAddress))
+                            HexTool.toHexStr(str_session.getBytes()),
+                            HexTool.toHexStr(ip.getBytes()),
+                            HexTool.toHexStr(macAddress)
                     );
                     log(fields);
                     System.out.println("Telling Server.....");
                     pupa = new Pupa("logout",fields);
-                    datagramPacket.setData(HexTool.intArrToByteArr(HACKTools.encrypt3848(HexTool.intArrToByteArr(pupa.getData()))));
+                    datagramPacket.setData(HACKTools.encrypt3848(pupa.getData()));
                     datagramPacket.setLength(pupa.getData().length);
                     datagramSocket.send(datagramPacket);
                     buffer = new byte[1024];

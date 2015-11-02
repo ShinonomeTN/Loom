@@ -5,19 +5,19 @@ package com.shinonometn.Pupa.ToolBox;
  */
 public class HACKTools {
 
-    public static int[] encrypt3848(byte[] buffer){
+    public static byte[] encrypt3848(byte[] buffer){
         if(buffer.length > 0){
-            int[] result = new int[buffer.length];
+            byte[] result = new byte[buffer.length];
 
             for (int i = 0; i < buffer.length; i++) {
-                result[i] = (buffer[i] & 0x80) >>> 6
-                        | (buffer[i] & 0x40) >>> 4
-                        | (buffer[i] & 0x20) >>> 2
-                        | (buffer[i] & 0x10) << 2
-                        | (buffer[i] & 0x08) << 2
-                        | (buffer[i] & 0x04) << 2
-                        | (buffer[i] & 0x02) >>> 1
-                        | (buffer[i] & 0x01) << 7;
+                result[i] = (byte) ((buffer[i] & 0x80) >>> 6
+                                        | (buffer[i] & 0x40) >>> 4
+                                        | (buffer[i] & 0x20) >>> 2
+                                        | (buffer[i] & 0x10) << 2
+                                        | (buffer[i] & 0x08) << 2
+                                        | (buffer[i] & 0x04) << 2
+                                        | (buffer[i] & 0x02) >>> 1
+                                        | (buffer[i] & 0x01) << 7);
             }
 
             return result;
@@ -25,19 +25,19 @@ public class HACKTools {
         return null;
     }
 
-    public static int[] decrypt3848(byte[] buffer){
+    public static byte[] decrypt3848(byte[] buffer){
         if(buffer.length > 0){
-            int[] result = new int[buffer.length];
+            byte[] result = new byte[buffer.length];
 
             for (int i = 0; i < buffer.length; i++){
-                result[i] = (buffer[i] & 0x80) >>> 7
-                            | (buffer[i] & 0x40) >>> 2
-                            | (buffer[i] & 0x20) >>> 2
-                            | (buffer[i] & 0x10) >>> 2
-                            | (buffer[i] & 0x08) << 2
-                            | (buffer[i] & 0x04) << 4
-                            | (buffer[i] & 0x02) << 6
-                            | (buffer[i] & 0x01) << 1;
+                result[i] = (byte) ((buffer[i] & 0x80) >>> 7
+                                            | (buffer[i] & 0x40) >>> 2
+                                            | (buffer[i] & 0x20) >>> 2
+                                            | (buffer[i] & 0x10) >>> 2
+                                            | (buffer[i] & 0x08) << 2
+                                            | (buffer[i] & 0x04) << 4
+                                            | (buffer[i] & 0x02) << 6
+                                            | (buffer[i] & 0x01) << 1);
             }
 
             return result;
@@ -84,5 +84,4 @@ public class HACKTools {
         }
         return null;
     }
-
 }
