@@ -322,7 +322,7 @@ public class Program {
                 serverMessageThread.setDaemon(true);
                 serverMessageThread.start();
                 System.out.println("All works are finished. if you want to go offline, please input \"exit\"");
-                while(!"exit".equals(bufferedReader.readLine().toLowerCase()))
+                while(!"exit".equals(bufferedReader.readLine().toLowerCase()));
                 System.out.println("Offline politely...");
                 breatheThread.interrupt();
                 serverMessageThread.interrupt();
