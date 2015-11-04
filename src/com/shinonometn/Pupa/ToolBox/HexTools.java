@@ -31,7 +31,7 @@ public class HexTools {
     public static int toInt(byte[] data){
         int buffer = 0;
         if(data.length > 4){
-            throw new NumberFormatException("Nomber too bing");
+            throw new NumberFormatException("Number too bing");
         }
         int i = data.length - 1;
         while (i >= 0) {
@@ -59,7 +59,7 @@ public class HexTools {
      * @return boolean
      */
     public static boolean checkHexStr(String sHex){
-        String sTmp = sHex.toString().trim().replace(" ", "").toUpperCase(Locale.US);
+        String sTmp = sHex.trim().replace(" ", "").toUpperCase(Locale.US);
         int iLen = sTmp.length();
 
         if (iLen > 1 && iLen%2 == 0){
@@ -95,7 +95,7 @@ public class HexTools {
      * @return String 对应的字符串
      */
     public static String hexStr2Str(String hexStr){
-        hexStr = hexStr.toString().trim().replace(" ", "").toUpperCase(Locale.US);
+        hexStr = hexStr.trim().replace(" ", "").toUpperCase(Locale.US);
         char[] hexs = hexStr.toCharArray();
         byte[] bytes = new byte[hexStr.length() / 2];
         int iTmp = 0x00;;

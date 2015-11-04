@@ -1,6 +1,7 @@
 package com.shinonometn.Loom.ui;
 
 import com.shinonometn.Loom.common.Networks;
+import com.shinonometn.Loom.connector.Shuttle;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -40,6 +41,9 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
     JMenuItem menuItemHelp;
 
     JLabel lb_info;
+
+    Shuttle shuttle;
+    Vector<NetworkInterface> nf;
 
     public MainForm(){
         super("Loom");
@@ -124,7 +128,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.insets = right_inset;
         cb_netcard = new JComboBox<>();
-        Vector<NetworkInterface> nf = Networks.getNetworkInterfaces(false);
+        nf = Networks.getNetworkInterfaces(false);
         if(nf != null){
             for(NetworkInterface n:nf){
                 cb_netcard.addItem(n.getDisplayName());
@@ -208,7 +212,12 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
+        if(e.getSource() == btn_login){
+            if (shuttle != null) {
+                shuttle.dispose();
+            }
+            shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()));
+        }
     }
 
     @Override

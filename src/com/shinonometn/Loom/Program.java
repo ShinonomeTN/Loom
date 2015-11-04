@@ -35,7 +35,7 @@ public class Program {
             }
         }
 
-        if(args.length > 0 && "-consolemode".toLowerCase().equals(args[0].toLowerCase())){
+        if(args.length > 0 && "-consoleMode".toLowerCase().equals(args[0].toLowerCase())){
             Loomv02();
         }else if(args.length == 0 || "-graphicMode".toLowerCase().equals(args[0].toLowerCase())){
             try{
@@ -322,43 +322,42 @@ public class Program {
                 serverMessageThread.setDaemon(true);
                 serverMessageThread.start();
                 System.out.println("All works are finished. if you want to go offline, please input \"exit\"");
-                if("exit".equals(bufferedReader.readLine().toLowerCase())) {
-                    System.out.println("Offline politely...");
-                    breatheThread.interrupt();
-                    serverMessageThread.interrupt();
-                    while (breatheThread.isAlive() || breatheThread.isAlive());
-                    datagramSocket = new DatagramSocket(3848,inetAddress);
-                    fields = String.format(
-                            "session:%s|ip address:%s|mac address:%s",
-                            HexTools.byte2HexStr(str_session.getBytes()),
-                            HexTools.byte2HexStr(ip.getBytes()),
-                            HexTools.byte2HexStr(macAddress)
-                    );
-                    log(fields);
-                    System.out.println("Telling Server.....");
-                    pupa = new Pupa("logout",fields);
-                    datagramPacket.setData(Pronunciation.encrypt3848(pupa.getData()));
-                    datagramPacket.setLength(pupa.getData().length);
-                    datagramSocket.send(datagramPacket);
-                    buffer = new byte[1024];
-                    datagramPacket.setData(buffer);
-                    datagramPacket.setLength(buffer.length);
-                    datagramSocket.setSoTimeout(10000);
-                    try {
-                        datagramSocket.receive(datagramPacket);
-                        byte[] bufferTemp;
-                        bufferTemp = new byte[datagramPacket.getLength()];
-                        System.arraycopy(datagramPacket.getData(),0,bufferTemp,0,bufferTemp.length);
-                        pupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
-                        log(Pupa.toPrintabelString(pupa));
-                        if(HexTools.toBool(Pupa.findField(pupa, "is success"))){
-                            System.out.println("Server response.Now you are offline.");
-                        }
-                    }catch (SocketTimeoutException w){
-                        System.out.println("Timeout...");
+                while(!"exit".equals(bufferedReader.readLine().toLowerCase()))
+                System.out.println("Offline politely...");
+                breatheThread.interrupt();
+                serverMessageThread.interrupt();
+                while (breatheThread.isAlive() || breatheThread.isAlive());
+                datagramSocket = new DatagramSocket(3848,inetAddress);
+                fields = String.format(
+                        "session:%s|ip address:%s|mac address:%s",
+                        HexTools.byte2HexStr(str_session.getBytes()),
+                        HexTools.byte2HexStr(ip.getBytes()),
+                        HexTools.byte2HexStr(macAddress)
+                );
+                log(fields);
+                System.out.println("Telling Server.....");
+                pupa = new Pupa("logout",fields);
+                datagramPacket.setData(Pronunciation.encrypt3848(pupa.getData()));
+                datagramPacket.setLength(pupa.getData().length);
+                datagramSocket.send(datagramPacket);
+                buffer = new byte[1024];
+                datagramPacket.setData(buffer);
+                datagramPacket.setLength(buffer.length);
+                datagramSocket.setSoTimeout(10000);
+                try {
+                    datagramSocket.receive(datagramPacket);
+                    byte[] bufferTemp;
+                    bufferTemp = new byte[datagramPacket.getLength()];
+                    System.arraycopy(datagramPacket.getData(),0,bufferTemp,0,bufferTemp.length);
+                    pupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
+                    log(Pupa.toPrintabelString(pupa));
+                    if(HexTools.toBool(Pupa.findField(pupa, "is success"))){
+                        System.out.println("Server response.Now you are offline.");
                     }
-                    datagramSocket.close();
+                }catch (SocketTimeoutException w){
+                    System.out.println("Timeout...");
                 }
+                datagramSocket.close();
             }
         }catch (Exception e){
             System.out.println(e.toString());
