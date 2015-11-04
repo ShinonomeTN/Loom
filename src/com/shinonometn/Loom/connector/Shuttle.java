@@ -1,266 +1,192 @@
 package com.shinonometn.Loom.connector;
 
-import com.shinonometn.Loom.connector.base.NetworkFeedback;
-import com.shinonometn.Loom.connector.base.UDPRecive;
-import com.shinonometn.Loom.connector.base.UDPSend;
+import com.shinonometn.Loom.common.Logger;
+import com.shinonometn.Loom.connector.Messanger.ShuttleEvent;
 import com.shinonometn.Pupa.Pupa;
-import com.shinonometn.Pupa.ToolBox.HexTool;
+import com.shinonometn.Pupa.ToolBox.HexTools;
+import com.shinonometn.Pupa.ToolBox.Pronunciation;
 
+import java.io.IOException;
 import java.net.*;
-import java.util.Enumeration;
-import java.util.Vector;
+import java.util.List;
 
 /**
- * Created by catten on 15/10/21.
+ * Created by catten on 15/11/2.
  */
-public class Shuttle implements NetworkFeedback{
-    private int session;
+public class Shuttle extends Thread{
+    private final int defaultPacketSize = 1024;
+    private final int defaultSocketTimeout = 10000;
 
-    public final static int STATE_NOT_INIT = -3;
-    public final static int STATE_INITED_FAILED = -2;
-    public final static int STATE_INITED = -1;
-    public final static int STATE_SEARCH_SERVER = 0;
-    public final static int STATE_SEARCH_FOUND = 1;
-    public final static int STATE_SUPPLICAT_SHAKING = 2;
-    //public final static int STATE_SUPPLICAT_SUCCESS = 3;
-    public final static int STATE_SUPPLICAT_FAILED = 4;
-    public final static int STATE_ONLINE_BREATHING = 5;
-    public final static int STATE_OFFLINE_BREATH_FAILED = 6;
-    public final static int STATE_OFFLINE_SERVER_REJECT = 7;
-    public final static int STATE_OFFLINE_USER_OFFLINE = 8;
-    public final static int STATE_OFFLINE_BREATH_STOPED = 9;
+    private NetworkInterface networkInterface;
 
-    public final static int ACTION_SEARCH = 10;
-    public final static int ACTION_SUPPLICANT = 20;
-    public final static int ACTION_BREATH = 50;
-    public final static int ACTION_OFFLINE = 80;
+    private String username;
+    private String password;
+    private byte[] init_session = new byte[]{0x00,0x00,0x00,0x01};
+    private String session;
 
-    private Vector<String> mailBox = new Vector<>();
-    //private Vector<Integer> planList = new Vector<>();
-    //private Queue<Integer> planList = new SynchronousQueue<>();
+    private String ipAddress;
+    private String serverIPAddress;
+    private byte[] macAddress;
+    private InetAddress serverInetAddress;
+    private InetAddress localInetAddress;
 
-    private int session_no;
-    private int serial_no;
+    private boolean isBreathing = false;
+    private ShuttleEvent shuttleEvent;
 
-    private byte[] clientMAC;
-    private String clientAddress;
-    private InetAddress clientInetAddress;
-    private String serverAddress;
-
-    private int state;
-    private int waitTime = 10000;
-    private int lastBreathTime;
-
-    private UDPSend udpSend;
-    private UDPRecive udpRecive;
-
-    public boolean DeveloperMode = true;
-
-    private DatagramSocket datagramSocket_communicator;
-    //private ThreadPool threadPool;
-
-    private void setState(int state){
-        this.state = state;
-        if(eventFeedbackObject != null){
-            eventFeedbackObject.onStateChange(state);
-        }
-    }
-
-    ShuttleEvent eventFeedbackObject;
-
-    public void setFeedBackObject(ShuttleEvent shuttleEvent){
-        this.eventFeedbackObject = shuttleEvent;
-    }
+    private DatagramSocket datagramSocket;
 
     public Shuttle(NetworkInterface networkInterface){
-        this();
-        setNetworkInterface(networkInterface);
-    }
-
-    public Shuttle(){
-        setState(STATE_NOT_INIT);
-    }
-
-    public boolean setNetworkInterface(NetworkInterface networkInterface){
-        try {
-            clientMAC = networkInterface.getHardwareAddress();
-            InetAddress address;
-            Enumeration<InetAddress> addressEnumeration = networkInterface.getInetAddresses();
-            while(addressEnumeration.hasMoreElements()){
-                address = addressEnumeration.nextElement();
-                if(address.toString().contains(".")){
-                    clientInetAddress = address;
-                    clientAddress = address.toString().replace("/","");
-                    break;
+        this.networkInterface = networkInterface;
+        setDaemon(true);
+        List<InterfaceAddress> interfaceAddressList = networkInterface.getInterfaceAddresses();
+        for(InterfaceAddress iA:interfaceAddressList){
+            if(iA.toString().contains(".")) {
+                localInetAddress = iA.getAddress();
+                ipAddress = iA.getAddress().toString().replace("/", "");
+                Logger.log("Shuttle change IP to " + ipAddress);
+                try {
+                    macAddress = networkInterface.getHardwareAddress();
+                } catch (SocketException e) {
+                    Logger.error(e.getMessage());
                 }
             }
-            datagramSocket_communicator = new DatagramSocket(3848,clientInetAddress);
+        }
+
+        try {
+            Logger.log("Try to get socket.");
+            datagramSocket = new DatagramSocket(3848,localInetAddress);
+            datagramSocket.setSoTimeout(defaultSocketTimeout);
         } catch (SocketException e) {
-            setState(STATE_INITED_FAILED);
-            return false;
+            Logger.error("Get socket Failed." + e.getMessage());
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_PORT_IN_USE, e.getMessage());
+            return;
         }
-        setState(STATE_INITED);
-
-        udpRecive = new UDPRecive(datagramSocket_communicator);
-        udpRecive.setFeedbackObject(this);
-        udpSend = new UDPSend(datagramSocket_communicator);
-        udpSend.setFeedBackObject(this);
-        return true;
+        Logger.log("Get socket success.");
+        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_GET_SOCKET_SUCCESS, "Get Socket Success");
     }
 
+    public void run(){
 
-    public void log(String string){
-        if(DeveloperMode) System.out.println(string);
-    }
-/*
-    private Pupa pupa;
-    public void feedBackPackage(Pupa pupa,FeedbackMessage feedbackMessage){
-        this.pupa = pupa;
-        for(int[] arr:pupa.getFields()){
-            if("server ip address".equals(Cypherbook.actionNames(arr[0]))){
-                byte[] buffer = new byte[arr.length - 2];
-                for(int i = 0; i < buffer.length; i++){
-                    buffer[i] = (byte)arr[i + 2];
-                }
-                serverAddress = String.format("%x.%x.%x.%x",arr[0],arr[1],arr[2],arr[3]);
-            }
-        }
-        log(Pupa.toPrintabelString(pupa));
-    }
-//*/
-    @Override
-    public void onMessage(String message) {
-        log("[Message]\t" + message);
-
-        if(eventFeedbackObject != null) eventFeedbackObject.onMail(message);
     }
 
-    @Override
-    public void onException(Exception e) {
-        log("[Exception]\t" + e.toString());
-    }
-
-    @Override
-    public void onPackageRecived(DatagramPacket datagramPacket) {
-        //THINGS BEFORE ACTION
-        byte[] buffer = new byte[datagramPacket.getLength()];
-        System.arraycopy(datagramPacket.getData(),0,buffer,0,buffer.length);
-        Pupa pupa = new Pupa(HexTool.byteArrToIntArr(buffer));
-        switch (pupa.getAction()){
-            case 13:{
-                for(int[] field :pupa.getFields()){
-                    switch (field[0]){
-                        case 0x0c:
-                            serverAddress = String.format("%s.%s.%s.%s",field[2],field[3],field[4],field[5]);
-                    }
-                }
-            }
-            default:
-                break;
-        }
-        if(eventFeedbackObject != null){
-            eventFeedbackObject.onDatagramPackageArrive(datagramPacket);
-        }
-    }
-
-    public void startSearchServer(){
-        int[] session = new int[]{0x00,0x00,0x00,0x01};
-        String targetIP = "1.1.1.8";
-
-        DatagramPacket datagramPacket;
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(String.format(
-                        "session:%s|ip address:%s|mac address:%s",
-                        HexTool.toHexStr(session),
-                        HexTool.toHexStr(HexTool.byteArrToIntArr(clientAddress.getBytes())),
-                        HexTool.toHexStr(HexTool.byteArrToIntArr(clientMAC))
-                )
+    public void knock(){
+        if(datagramSocket == null) return;
+        String fields = String.format(
+                "session:%s|ip address:%s|mac address:%s",
+                HexTools.byte2HexStr(init_session),
+                HexTools.byte2HexStr(ipAddress.getBytes()),
+                HexTools.byte2HexStr(macAddress)
         );
-        log(stringBuilder.toString());
-        Pupa pupa = new Pupa("get server",stringBuilder.toString());
-        log(Pupa.toPrintabelString(pupa));
+        byte[] data = Pronunciation.encrypt3848(new Pupa("login", fields).getData());
+        Logger.log("[Fileds]"+fields);
+        DatagramPacket datagramPacket = null;
         try {
-            datagramPacket = new DatagramPacket(
-                    HexTool.intArrToByteArr(pupa.getData()),
-                    pupa.getData().length,
-                    InetAddress.getByName(targetIP),
-                    3850
-            );
-            eventFeedbackObject.onAction(ACTION_SEARCH);
-            eventFeedbackObject.onStateChange(STATE_SEARCH_SERVER);
-            udpSend.send(datagramPacket);
+            datagramPacket = new DatagramPacket(data,data.length, InetAddress.getByName("1.1.1.8"),3850);
         } catch (UnknownHostException e) {
-            eventFeedbackObject.onMail(e.toString());
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT, "Server not found.");
+            return;
         }
-    }
-
-/*
-    SearchServer searchServer;
-    public void SearchServer(){
-        searchServer = new SearchServer(clientInetAddress,clientMAC,this);
-        searchServer.start();
-    }
-
-    private class SearchServer extends Thread{
-        private Pupa pupa;
-        int[] session = new int[]{0x00,0x00,0x00,0x01};
-        String IP;
-
-        IFeedBack iFeedBack;
-        DatagramSocket datagramSocket;
-        public SearchServer(InetAddress address,byte[] MAC,IFeedBack feedbackObject){
-
-            iFeedBack = feedbackObject;
-            this.IP = address.toString().replace("/","");
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(String.format(
-                            "session:%s|ip address:%s|mac address:%s",
-                            HexTool.toHexStr(session),
-                            HexTool.toHexStr(HexTool.byteArrToIntArr(IP.getBytes())),
-                            HexTool.toHexStr(HexTool.byteArrToIntArr(MAC)))
-            );
-            log(stringBuilder.toString());
-            pupa = new Pupa("get server",stringBuilder.toString());
-            log(Pupa.toPrintabelString(pupa));
-            try {
-                datagramSocket = new DatagramSocket(3848,address);
-            } catch (SocketException e) {
-                if(e.getClass() == NoRouteToHostException.class){
-                    feedBackPackage(null,new FeedbackMessage(FeedbackMessage.SERVER_NO_ROUTE));
+        try {
+            Logger.log("Knocking server.");
+            datagramSocket.send(datagramPacket);
+            datagramPacket.setData(new byte[defaultPacketSize]);
+            datagramPacket.setLength(defaultPacketSize);
+            //datagramSocket.setSoTimeout(defaultSocketTimeout);
+            Logger.log("Waiting server response.");
+            datagramSocket.receive(datagramPacket);
+        } catch (IOException e) {
+            if(e.getCause().getClass() == SocketTimeoutException.class){
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "Server response timeout.");
+                return;
+            }
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, "Unknown Exception.");
+            return;
+        }
+        Logger.log("Server response.");
+        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_RESPONSE, "Server Response.");
+        data = new byte[datagramPacket.getLength()];
+        System.arraycopy(Pronunciation.decrypt3848(datagramPacket.getData()), 0, data, 0, data.length);
+        byte[] fieldBuffer = Pupa.fieldData(Pupa.findField(new Pupa(data), "server ip address"));
+        serverIPAddress = String.format(
+                "%d.%d.%d.%d",
+                fieldBuffer[0] & 0xFF,
+                fieldBuffer[1] & 0xFF,
+                fieldBuffer[2] & 0xFF,
+                fieldBuffer[3] & 0xFF
+        );
+        if(serverIPAddress != null){
+            if(!serverIPAddress.equals("")){
+                Logger.log("Server IP is : "+serverIPAddress);
+                try {
+                    serverInetAddress = InetAddress.getByName(serverIPAddress);
+                } catch (UnknownHostException e) {
+                    Logger.log("Server IP unavailable.");
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT, "Server IP unavailabel.");
                 }
-            }
+            }else
+                Logger.error("Get server IP failed: Field empty.");
+        }else{
+            Logger.error("Get server IP failed: No Server IP Data found.");
         }
-
-        public void run(){
-            DatagramPacket datagramPacket;
-            try {
-                System.out.println("Calling server");
-                datagramPacket = new DatagramPacket(
-                        HexTool.intArrToByteArr(HACKTools.encrypt3848(HexTool.intArrToByteArr(pupa.getData()))),
-                        pupa.getData().length,
-                        InetAddress.getByName("1.1.1.8"),
-                        3850
-                );
-                datagramSocket.send(datagramPacket);
-                System.out.println("Waiting for response");
-            } catch (IOException e) {
-                //if((() e))
-                e.printStackTrace();
-            }
-            byte[] buffer = new byte[1024];
-            datagramPacket = new DatagramPacket(buffer,buffer.length);
-            try {
-                datagramSocket.setSoTimeout(waitTime);
-                datagramSocket.receive(datagramPacket);
-                System.out.println("Server responsed");
-                byte[] buffer2 = new byte[datagramPacket.getLength()];
-                System.arraycopy(buffer, 0, buffer2, 0, buffer2.length);
-                feedBackPackage(new Pupa(HACKTools.decrypt3848(buffer2)),new FeedbackMessage(FeedbackMessage.SERVER_RESPONSE));
-            } catch (IOException e) {
-                log(e.toString());
-                if(e.getClass() == SocketTimeoutException.class) feedBackPackage(null,new FeedbackMessage(FeedbackMessage.SERVER_TIMEOUT));
-            }
-        }
+        //datagramSocket.close();
     }
-    //*/
+
+    public void login(String username, String password){
+        if(datagramSocket == null) return;
+        this.username = username;
+        this.password = password;
+        Logger.log("Try to use account " + username + "to login...");
+        String fields = String.format(
+                "session:%s|username:%s|password:%s|ip address:%s|mac address:%s|access point:%s|version:%s|is dhcp enabled:%s",
+                HexTools.byte2HexStr(init_session),
+                HexTools.byte2HexStr(username.getBytes()),
+                HexTools.byte2HexStr(password.getBytes()),
+                HexTools.byte2HexStr(ipAddress.getBytes()),
+                HexTools.byte2HexStr(macAddress),
+                HexTools.byte2HexStr("internet".getBytes()),
+                HexTools.byte2HexStr("3.6.9".getBytes()),
+                "00"
+        );
+        Logger.log("[Fields]" + fields);
+        byte[] data = Pronunciation.encrypt3848(new Pupa("login",fields).getData());
+        DatagramPacket datagramPacket = new DatagramPacket(data,data.length,serverInetAddress,3848);
+        try {
+            Logger.log("Sending certify package...");
+            datagramSocket.send(datagramPacket);
+            datagramPacket.setData(new byte[defaultPacketSize]);
+            datagramPacket.setLength(defaultPacketSize);
+            datagramSocket.receive(datagramPacket);
+            Logger.log("Server responsed.");
+            data = new byte[datagramPacket.getLength()];
+            Pupa pupa = new Pupa(Pronunciation.decrypt3848(data));
+            byte[] fieldBuffer = Pupa.fieldData(Pupa.findField(pupa,"is success"));
+            if(fieldBuffer != null){
+                if(HexTools.toBool(fieldBuffer)){
+                    Logger.log("Certify success!");
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS,"Certify Success.");
+                }
+            }else{
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION,"Can't sure that certificate is success or not.");
+            }
+        } catch (IOException e) {
+            if(e.getCause().getClass() == SocketTimeoutException.class){
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "Server no response.");
+                Logger.error("Server no response");
+                return;
+            }
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, e.getMessage());
+            Logger.error(e.getMessage());
+            return;
+        }
+        Logger.log("Login Success.");
+        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS,"Certificate success.");
+    }
+
+    public void logout(){
+
+    }
+
+    public void dispose(){
+
+    }
 }

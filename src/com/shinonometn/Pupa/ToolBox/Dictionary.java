@@ -4,65 +4,60 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-/**
- * Created by catten on 15/10/10.
- */
-
 /*
+*  Created by catten on 15/10/10.
+*
 * Tidy package again, make it clear to read.
 *
 * */
-public class Cypherbook {
+public class Dictionary {
     /*
     * Translate action code to action name(Dictionary);
     *
     * */
-    public static final int TYPE_STRING = 1;
-    public static final int TYPE_INT = 0;
-    public static final int TYPE_BOOLEAN = 2;
-    public static final int TYPE_UNKNOWN = -1;
-    public static final int TYPE_INT_ADDRESS = 3;
-    public static final int TYPE_INT_MAC = 4;
+    public static final int TYPE_STRING = 0x01;
+    public static final int TYPE_INT = 0x00;
+    public static final int TYPE_BOOLEAN = 0x02;
+    public static final int TYPE_UNKNOWN = 0xFF;
+    public static final int TYPE_INT_ADDRESS = 0x03;
+    public static final int TYPE_INT_MAC = 0x04;
 
-    private static Map<String,Integer> actionCodes = new HashMap<>();
-    private static Map<String,Integer> keyCodes = new HashMap<>();
+    private static Map<String,Byte> actionCodes1 = new HashMap<>();
+    private static Map<String,Byte> keyCodes1 = new HashMap<>();
+
     static {
-        for(int i = 0; i < 14; i++){
-            actionCodes.put(actionNames(i), i);
-        }
-        for(int i = 0; i < 0x38; i++){
-            keyCodes.put(keyNames(i),i);
-        }
+        for(int i = 0; i < 14; i++) actionCodes1.put(actionNames((byte) i), (byte) i);
+        for(int i = 0; i < 0x38; i++) keyCodes1.put(keyNames((byte) i), (byte) i);
     }
 
-    public static int getActionKey(String Name){
-        return actionCodes.get(Name);
+    public static byte getByteActionKey(String Name){
+        return actionCodes1.get(Name);
     }
 
-    public static int getKeyCode(String Name){
-        return keyCodes.get(Name);
+    public static byte getByteKeyCode(String Name){
+        return keyCodes1.get(Name);
     }
 
-    public static String actionNames(int action){
+    public static String actionNames(byte action){
         switch (action){
-            case 1: return "login";
-            case 2: return "login result";
-            case 3: return "breathe";
-            case 4: return "breath result";
-            case 5: return "logout";
-            case 6: return "logout result";
-            case 7: return "get access point";
-            case 8: return "return access point";
-            case 9: return "disconnect";
-            case 10: return "confirm login";
-            case 11: return "confirm login result";
-            case 12: return "get server";
-            case 13: return "return server";
+            case 0x01: return "login";
+            case 0x02: return "login result";
+            case 0x03: return "breathe";
+            case 0x04: return "breath result";
+            case 0x05: return "logout";
+            case 0x06: return "logout result";
+            case 0x07: return "get access point";
+            case 0x08: return "return access point";
+            case 0x09: return "disconnect";
+            case 0x0A: return "confirm login";
+            case 0x0B: return "confirm login result";
+            case 0x0C: return "get server";
+            case 0x0D: return "return server";
             default: return "no match";
         }
     }
 
-    public static String keyNames(int key){
+    public static String keyNames(byte key){
         switch (key){
             case 0x01 : return "username";
             case 0x02 : return "password";
@@ -101,7 +96,7 @@ public class Cypherbook {
         }
     }
 
-    public static int checkType(int key){
+    public static int checkType(byte key){
         switch (key){
             case 0x1:
             case 0x2:
@@ -110,7 +105,7 @@ public class Cypherbook {
             case 0xA:
             case 0xB:
             case 0x13:
-            //case 0x14:
+                //case 0x14:
             case 0x1F:
             case 0x24:
                 return TYPE_STRING;
@@ -128,7 +123,7 @@ public class Cypherbook {
         }
     }
 
-    public static boolean isTwoBytesLonger(int action, int key){
+    public static boolean isTwoBytesLonger(byte action, byte key){
         switch (key){
             case 0x8:
             case 0xB:
