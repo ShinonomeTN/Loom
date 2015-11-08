@@ -139,7 +139,8 @@ public class Program {
             String serverIP = null;
             for(byte[] arr:pupa.getFields()){
                 if(arr[0] == Dictionary.getByteKeyCode("server ip address")){
-                    serverIP = String.format("%d.%d.%d.%d",arr[2],arr[3],arr[4],arr[5]);
+                    byte[] fieldbuffer = Pupa.fieldData(arr);
+                    serverIP = String.format("%d.%d.%d.%d",fieldbuffer[0]&0xFF,fieldbuffer[1]&0xFF,fieldbuffer[2]&0xFF,fieldbuffer[3]&0xFF);
                 }
             }
             if(serverIP != null){

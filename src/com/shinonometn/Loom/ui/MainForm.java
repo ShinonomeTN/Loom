@@ -217,6 +217,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
                 shuttle.dispose();
             }
             shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()));
+            shuttle.start();
         }
     }
 

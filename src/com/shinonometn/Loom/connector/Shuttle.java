@@ -66,11 +66,11 @@ public class Shuttle extends Thread{
     }
 
     public void run(){
-
+        knock();
     }
 
     public void knock(){
-        if(datagramSocket == null) return;
+        //if(datagramSocket == null) return;
         String fields = String.format(
                 "session:%s|ip address:%s|mac address:%s",
                 HexTools.byte2HexStr(init_session),
@@ -78,7 +78,7 @@ public class Shuttle extends Thread{
                 HexTools.byte2HexStr(macAddress)
         );
         byte[] data = Pronunciation.encrypt3848(new Pupa("login", fields).getData());
-        Logger.log("[Fileds]"+fields);
+        Logger.log("[Fields]"+fields);
         DatagramPacket datagramPacket = null;
         try {
             datagramPacket = new DatagramPacket(data,data.length, InetAddress.getByName("1.1.1.8"),3850);
@@ -187,6 +187,6 @@ public class Shuttle extends Thread{
     }
 
     public void dispose(){
-
+        this.datagramSocket.close();
     }
 }
