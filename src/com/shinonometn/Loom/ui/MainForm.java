@@ -1,6 +1,7 @@
 package com.shinonometn.Loom.ui;
 
 import com.shinonometn.Loom.common.Networks;
+import com.shinonometn.Loom.connector.Messanger.ShuttleEvent;
 import com.shinonometn.Loom.connector.Shuttle;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ import java.util.*;
 /**
  * Created by catten on 15/10/20.
  */
-public class MainForm extends JFrame implements ActionListener,ItemListener{
+public class MainForm extends JFrame implements ActionListener,ItemListener,ShuttleEvent{
 
     JTextField t_username;
     JPasswordField t_password;
@@ -29,6 +30,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
 
     //JList<JCheckBox> list1;
     JList<String> list1;
+    DefaultListModel<String> listModel = new DefaultListModel<String>();
 
     JMenuBar menuBar;
     JMenu menuOperation;
@@ -43,7 +45,9 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
     JLabel lb_info;
 
     Shuttle shuttle;
+    Thread thread_shuttle;
     Vector<NetworkInterface> nf;
+    //Vector<String> vector_Info;
 
     public MainForm(){
         super("Loom");
@@ -160,12 +164,9 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1;
         gridBagConstraints.weighty = 1;
-        list1 = new JList<>();
+        list1 = new JList<>(listModel);
         JScrollPane scrollPane = new JScrollPane(list1);
         scrollPane.setBorder(new TitledBorder("信息"));
-        String[] strings = new String[50];
-        for(int i = 0; i < 50; i++) strings[i] = "Test";
-        list1.setListData(strings);
         add(scrollPane, gridBagConstraints);
 
         //Pre-set actions
@@ -215,9 +216,12 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
         if(e.getSource() == btn_login){
             if (shuttle != null) {
                 shuttle.dispose();
+            }else{
+                shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
+                shuttle.start();
+                lockInputUI();
+                btn_login.setText("上线中...");
             }
-            shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()));
-            shuttle.start();
         }
     }
 
@@ -225,6 +229,47 @@ public class MainForm extends JFrame implements ActionListener,ItemListener{
     public void itemStateChanged(ItemEvent e) {
         if(e.getSource() == cb_netcard){
             //do something
+        }
+    }
+
+    @Override
+    public void onMessage(int messageType, String message) {
+        switch (messageType){
+            case SHUTTLE_SERVER_NO_RESPONSE:{
+                if("knock_server_no_response".equals(message)){
+                    unlockInputUI();
+                    btn_login.setText("上线");
+                    listModel.add(listModel.getSize(),"获取认证服务器失败");
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "敲门无响应\n请检查您所选择的网卡是否已连接到校园网",
+                            this.getTitle(),
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    shuttle.dispose();
+                    shuttle = null;
+                }
+            }
+            break;
+
+            case SHUTTLE_GET_SOCKET_SUCCESS:{
+                listModel.add(listModel.getSize(),"获取Socket成功");
+            }
+            break;
+
+            case SHUTTLE_PORT_IN_USE:{
+                listModel.add(listModel.getSize(),"目的网卡端口号正在被使用，获取Socket失败");
+                JOptionPane.showMessageDialog(
+                        this,
+                        "端口正在被使用：目的网卡拨号端口被占用\n请查看您是否已经启动了其他拨号器，或者尝试更换目的网卡",
+                        this.getTitle(),
+                        JOptionPane.WARNING_MESSAGE
+                );
+                unlockInputUI();
+                btn_login.setText("上线");
+                shuttle = null;
+            }
+            break;
         }
     }
 }

@@ -127,11 +127,11 @@ public class Dictionary {
         switch (key){
             case 0x8:
             case 0xB:
-            case 0x9:
                 switch (action){
                     case 0x4:
                     case 0x2:
                     case 0x6:
+                    case 0x9:
                         return true;
                 }
             default:

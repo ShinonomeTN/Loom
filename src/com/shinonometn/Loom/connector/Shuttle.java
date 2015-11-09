@@ -8,7 +8,9 @@ import com.shinonometn.Pupa.ToolBox.Pronunciation;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * Created by catten on 15/11/2.
@@ -30,13 +32,17 @@ public class Shuttle extends Thread{
     private InetAddress serverInetAddress;
     private InetAddress localInetAddress;
 
-    private boolean isBreathing = false;
+    //private boolean isBreathing = false;
+    Breathe breatheThread;
+    Messenger messengerThread;
+
     private ShuttleEvent shuttleEvent;
 
     private DatagramSocket datagramSocket;
 
-    public Shuttle(NetworkInterface networkInterface){
+    public Shuttle(NetworkInterface networkInterface,ShuttleEvent feedBackObject){
         this.networkInterface = networkInterface;
+        this.shuttleEvent = feedBackObject;
         setDaemon(true);
         List<InterfaceAddress> interfaceAddressList = networkInterface.getInterfaceAddresses();
         for(InterfaceAddress iA:interfaceAddressList){
@@ -62,15 +68,23 @@ public class Shuttle extends Thread{
             return;
         }
         Logger.log("Get socket success.");
-        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_GET_SOCKET_SUCCESS, "Get Socket Success");
+        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_GET_SOCKET_SUCCESS, "get_socket_success");
     }
+
+    //private Queue queue = new LinkedList<String>();
 
     public void run(){
-        knock();
+        try{
+            if(!knock()) return;
+            this.wait();
+        }catch (InterruptedException e){
+            
+        }
     }
 
-    public void knock(){
+    private boolean knock(){
         //if(datagramSocket == null) return;
+
         String fields = String.format(
                 "session:%s|ip address:%s|mac address:%s",
                 HexTools.byte2HexStr(init_session),
@@ -83,8 +97,8 @@ public class Shuttle extends Thread{
         try {
             datagramPacket = new DatagramPacket(data,data.length, InetAddress.getByName("1.1.1.8"),3850);
         } catch (UnknownHostException e) {
-            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT, "Server not found.");
-            return;
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT, "knock_server_not_found");
+            return false;
         }
         try {
             Logger.log("Knocking server.");
@@ -94,16 +108,17 @@ public class Shuttle extends Thread{
             //datagramSocket.setSoTimeout(defaultSocketTimeout);
             Logger.log("Waiting server response.");
             datagramSocket.receive(datagramPacket);
+        } catch (SocketTimeoutException e) {
+            Logger.log("Server no response.");
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "knock_server_no_response");
+            return false;
         } catch (IOException e) {
-            if(e.getCause().getClass() == SocketTimeoutException.class){
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "Server response timeout.");
-                return;
-            }
-            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, "Unknown Exception.");
-            return;
+            Logger.log("Unknown Exception.");
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, "unknown_exception");
+            return false;
         }
         Logger.log("Server response.");
-        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_RESPONSE, "Server Response.");
+        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_RESPONSE, "server_response");
         data = new byte[datagramPacket.getLength()];
         System.arraycopy(Pronunciation.decrypt3848(datagramPacket.getData()), 0, data, 0, data.length);
         byte[] fieldBuffer = Pupa.fieldData(Pupa.findField(new Pupa(data), "server ip address"));
@@ -117,11 +132,12 @@ public class Shuttle extends Thread{
         if(serverIPAddress != null){
             if(!serverIPAddress.equals("")){
                 Logger.log("Server IP is : "+serverIPAddress);
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_RESPONSE,"Server IP is "+serverIPAddress);
                 try {
                     serverInetAddress = InetAddress.getByName(serverIPAddress);
                 } catch (UnknownHostException e) {
                     Logger.log("Server IP unavailable.");
-                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT, "Server IP unavailabel.");
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT, "server_ip_unavailable");
                 }
             }else
                 Logger.error("Get server IP failed: Field empty.");
@@ -129,12 +145,11 @@ public class Shuttle extends Thread{
             Logger.error("Get server IP failed: No Server IP Data found.");
         }
         //datagramSocket.close();
+        return true;
     }
 
-    public void login(String username, String password){
-        if(datagramSocket == null) return;
-        this.username = username;
-        this.password = password;
+    private boolean login(){
+        if(datagramSocket == null) return false;
         Logger.log("Try to use account " + username + "to login...");
         String fields = String.format(
                 "session:%s|username:%s|password:%s|ip address:%s|mac address:%s|access point:%s|version:%s|is dhcp enabled:%s",
@@ -163,30 +178,59 @@ public class Shuttle extends Thread{
             if(fieldBuffer != null){
                 if(HexTools.toBool(fieldBuffer)){
                     Logger.log("Certify success!");
-                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS,"Certify Success.");
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS,"certificate_success");
                 }
             }else{
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION,"Can't sure that certificate is success or not.");
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION,"certificate_status_unsure");
             }
+            fieldBuffer = Pupa.findField(pupa,"session");
+            session = HexTools.toGB2312Str(Pupa.fieldData(fieldBuffer));
+            fieldBuffer = Pupa.findField(pupa, "message");
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_MESSAGE,HexTools.toGB2312Str(fieldBuffer));
+            breatheThread = new Breathe(datagramSocket,session,shuttleEvent,macAddress,ipAddress,serverInetAddress);
+            messengerThread = new Messenger(shuttleEvent,serverInetAddress);
         } catch (IOException e) {
             if(e.getCause().getClass() == SocketTimeoutException.class){
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "Server no response.");
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "certificate_timeout");
                 Logger.error("Server no response");
-                return;
+                return false;
             }
             shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, e.getMessage());
             Logger.error(e.getMessage());
-            return;
+            return false;
         }
         Logger.log("Login Success.");
-        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS,"Certificate success.");
+        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS,"certificate_success");
+        return true;
     }
 
-    public void logout(){
-
+    private boolean logoutFlag = false;
+    public void Offline(){
+        logoutFlag = true;
+        this.interrupt();
+    }
+    private void logout(){
+        logoutFlag = false;
     }
 
     public void dispose(){
         this.datagramSocket.close();
+        Logger.log("Try to dispose Shuttle.");
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

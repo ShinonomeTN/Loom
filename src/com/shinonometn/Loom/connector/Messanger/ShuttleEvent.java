@@ -13,5 +13,8 @@ public interface ShuttleEvent {
 
     int SHUTTLE_CERTIFICATE_SUCCESS = 6;
     int SHUTTLE_CERTIFICATE_FAILED = 7;
+
+    int SHUTTLE_SERVER_MESSAGE = 8;
+
     void onMessage(int messageType, String message);
 }
