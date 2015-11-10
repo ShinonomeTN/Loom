@@ -54,7 +54,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         setSize(240, 400);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false);
+        //setResizable(false);
         setupUI();
         setVisible(true);
         setupEvent();
@@ -215,7 +215,9 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == btn_login){
             if (shuttle != null) {
-                shuttle.dispose();
+                shuttle.Offline();
+                lockInputUI();
+                btn_login.setText("下线中");
             }else{
                 shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
                 shuttle.start();
@@ -248,9 +250,28 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
                     );
                     shuttle.dispose();
                     shuttle = null;
+                }else if("certificate_timeout".equals(message)){
+                    unlockInputUI();
+                    btn_login.setText("上线");
+                    listModel.add(listModel.getSize(), "认证超时，服务器无响应");
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "认证超时，服务器无响应",
+                            this.getTitle(),
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    shuttle.dispose();
+                    shuttle = null;
                 }
             }
             break;
+
+            case SHUTTLE_CERTIFICATE_SUCCESS:{
+                listModel.add(listModel.getSize(), message);
+                unlockInputUI();
+                btn_login.setText("下线");
+                cb_netcard.setEnabled(false);
+            }break;
 
             case SHUTTLE_GET_SOCKET_SUCCESS:{
                 listModel.add(listModel.getSize(),"获取Socket成功");
@@ -270,6 +291,26 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
                 shuttle = null;
             }
             break;
+
+            case SHUTTLE_SERVER_RESPONSE:{
+                listModel.add(listModel.getSize(),"服务器IP是 "+message);
+            }
+            break;
+
+            case SHUTTLE_SERVER_NOT_FOUNT:{
+                listModel.add(listModel.getSize(),"找不到服务器");
+            }break;
+
+            case SHUTTLE_OTHER_EXCEPTION:{
+                listModel.add(listModel.getSize(),"未知错误" + message);
+            }break;
+
+            case SHUTTLE_OFFLINE:{
+                listModel.add(listModel.getSize(),"下线");
+                btn_login.setText("上线");
+                cb_netcard.setEnabled(true);
+                unlockInputUI();
+            }break;
         }
     }
 }

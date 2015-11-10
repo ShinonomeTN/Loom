@@ -16,5 +16,13 @@ public interface ShuttleEvent {
 
     int SHUTTLE_SERVER_MESSAGE = 8;
 
+    int SHUTTLE_BREATHE_SUCCESS = 9;
+    int SHUTTLE_BREATHE_FAILED = 10;
+    int SHUTTLE_BREATHE_EXCEPTION = 11;
+
+    int SHUTTLE_MSGTHREAD_CLOSE = 12;
+
+    int SHUTTLE_OFFLINE = 13;
+
     void onMessage(int messageType, String message);
 }

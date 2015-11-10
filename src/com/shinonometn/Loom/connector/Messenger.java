@@ -40,25 +40,30 @@ public class Messenger extends Thread{
         messagePacket = new DatagramPacket(buffer,buffer.length);
         while (isRun){
             try {
-                sleep(10);
-                System.out.println("Listening Server message...");
+                sleep(1);
+                Logger.log("Listening Server message...");
                 messageSocket.receive(messagePacket);
                 bufferTemp = new byte[messagePacket.getLength()];
                 System.arraycopy(messagePacket.getData(), 0, bufferTemp, 0, bufferTemp.length);
                 Logger.log(HexTools.byte2HexStr(bufferTemp));
                 messagePupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
-                System.out.println("Server send you a " + Dictionary.actionNames(messagePupa.getAction()) + "packet.");
+                Logger.log("Server send you a |" + Dictionary.actionNames(messagePupa.getAction()) + "| packet.");
                 if(messagePupa.getAction() == 0x9){
-                    System.out.println("Server maybe wanna you go offline..........\nBut I will not stop myself till you close me ;P");
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_MESSAGE, "offline");
+                }else{
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_MESSAGE,Pupa.toPrintabelString(messagePupa));
                 }
                 Logger.log(Pupa.toPrintabelString(messagePupa));
             } catch (IOException e) {
                 e.printStackTrace();
                 messageSocket.close();
+                isRun = false;
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION,"message_thread_exception");
                 break;
             } catch (InterruptedException e){
                 System.out.println("Message Thread Closing....");
                 messageSocket.close();
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_MSGTHREAD_CLOSE,"message_thread_closed");
                 break;
             }
         }

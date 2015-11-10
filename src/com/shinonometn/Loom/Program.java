@@ -296,18 +296,18 @@ public class Program {
                         messagePacket = new DatagramPacket(buffer,buffer.length);
                         while (isRun){
                             try {
-                                sleep(10);
                                 System.out.println("Listening Server message...");
                                 messageSocket.receive(messagePacket);
                                 bufferTemp = new byte[messagePacket.getLength()];
                                 System.arraycopy(messagePacket.getData(), 0, bufferTemp, 0, bufferTemp.length);
                                 log(HexTools.byte2HexStr(bufferTemp));
                                 messagePupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
-                                System.out.println("Server send you a " + Dictionary.actionNames(messagePupa.getAction()) + "packet.");
+                                System.out.println("Server send you a |" + Dictionary.actionNames(messagePupa.getAction()) + "| packet.");
                                 if(messagePupa.getAction() == 0x9){
                                     System.out.println("Server maybe wanna you go offline..........\nBut I will not stop myself till you close me ;P");
                                 }
                                 log(Pupa.toPrintabelString(messagePupa));
+                                sleep(1);
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 messageSocket.close();

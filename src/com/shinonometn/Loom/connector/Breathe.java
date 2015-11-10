@@ -37,6 +37,7 @@ public class Breathe extends Thread {
         datagramSocket = socket;
         macAddress = mac;
         ipAddress = ip;
+        Logger.log("Initiating Breathe thread.");
     }
 
     public void stopBreath(){
@@ -54,6 +55,7 @@ public class Breathe extends Thread {
         }
     }//*/
     public void run(){
+        Logger.log("Breathe thread started.");
         Logger.log("Set breathe time as "+sleepTime+"s.");
         boolean noSleep = true;
         while(!stopFlag){
@@ -112,25 +114,32 @@ public class Breathe extends Thread {
                 if(TfiledBuffer != null && HexTools.toBool(TfiledBuffer)) {
                     serialNo += 0x03;
                     Logger.log("Breathed.");
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_SUCCESS,"breathe_success");
                 }else if(TfiledBuffer == null && Pupa.findField(breathePupa,"serial no") != null){
                     if(serialNo == 0x01000003){
                         serialNo = 0x0100000;
                     }
                     serialNo += 0x06;
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION,"change_breathe_type");
                 }else{
                     Logger.log("Server Rejected this Breathe.");
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_FAILED,"server_rejected");
                     //break;
                 }
             } catch (InterruptedException e) {
                 Logger.log("Breathe thread Closeing....");
-                datagramSocket.close();
+                //datagramSocket.close();
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION,"breathe_thread_close");
                 break;
-            } catch (SocketTimeoutException e){
+            } catch (SocketTimeoutException e) {
                 Logger.log("Breathe timeout.");
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION, "breathe_timeout");
                 noSleep = true;
             } catch (IOException e){
                 e.printStackTrace();
                 datagramSocket.close();
+                stopFlag = true;
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION,"other_exception");
             }
         }
     }
