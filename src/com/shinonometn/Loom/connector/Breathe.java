@@ -37,6 +37,7 @@ public class Breathe extends Thread {
         datagramSocket = socket;
         macAddress = mac;
         ipAddress = ip;
+        setDaemon(true);
         Logger.log("Initiating Breathe thread.");
     }
 
@@ -57,11 +58,11 @@ public class Breathe extends Thread {
     public void run(){
         Logger.log("Breathe thread started.");
         Logger.log("Set breathe time as "+sleepTime+"s.");
-        boolean noSleep = true;
+        boolean noSleep = false;
         while(!stopFlag){
             try {
-                if(!noSleep){
-                    noSleep = true;
+                if(noSleep){
+                    noSleep = false;
                     Logger.log("Sleep for " + sleepTime);
                     sleep(sleepTime);
                 }
@@ -73,8 +74,9 @@ public class Breathe extends Thread {
                         serialNo,
                         HexTools.byte2HexStr(macAddress)
                 );
+                Logger.log("[Field]"+tempFiled);
                 breathePupa = new Pupa("breathe",tempFiled);
-                Logger.log("[Field]" + Pupa.toPrintabelString(breathePupa));
+                //Logger.log("[Field]" + Pupa.toPrintabelString(breathePupa));
                 breathePacket = new DatagramPacket(
                         Pronunciation.encrypt3848(breathePupa.getData()),
                         breathePupa.getData().length,
@@ -82,34 +84,18 @@ public class Breathe extends Thread {
                         3848
                 );
                 datagramSocket.send(breathePacket);
+
                 buffer = new byte[1024];
                 breathePacket.setData(buffer);
                 breathePacket.setLength(buffer.length);
                 Logger.log("Waiting Server Response...");
                 datagramSocket.setSoTimeout(10000);
                 datagramSocket.receive(breathePacket);
-                /*
-                try{
-                    datagramSocket.receive(breathePacket);
-                }catch (SocketTimeoutException e){
-                    try {
-                        Logger.log("Breathe timeout...Try again....");
-                        breathePacket.setData(Pronunciation.encrypt3848(breathePupa.getData()));
-                        breathePacket.setLength(breathePupa.getData().length);
-                        datagramSocket.send(breathePacket);
-                        breathePacket.setData(buffer);
-                        breathePacket.setLength(buffer.length);
-                        datagramSocket.receive(breathePacket);
-                    }catch (SocketTimeoutException ee){
-                        Logger.log("Breathe failed...Server no response.");
-                        throw new InterruptedException("I killed myself");
-                    }
-                }
-                //*/
+
                 bufferTemp = new byte[breathePacket.getLength()];
                 System.arraycopy(breathePacket.getData(),0,bufferTemp,0,bufferTemp.length);
                 breathePupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
-                Logger.log(Pupa.toPrintabelString(breathePupa));
+                //Logger.log(Pupa.toPrintabelString(breathePupa));
                 byte[] TfiledBuffer = Pupa.findField(breathePupa,"is success");
                 if(TfiledBuffer != null && HexTools.toBool(TfiledBuffer)) {
                     serialNo += 0x03;
@@ -136,7 +122,7 @@ public class Breathe extends Thread {
                 shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION, "breathe_timeout");
                 noSleep = true;
             } catch (IOException e){
-                e.printStackTrace();
+                Logger.log(e.toString());
                 datagramSocket.close();
                 stopFlag = true;
                 shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION,"other_exception");

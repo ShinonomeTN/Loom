@@ -72,29 +72,25 @@ public class Shuttle extends Thread{
             shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_GET_SOCKET_SUCCESS, "get_socket_success");
         } catch (SocketException e) {
             Logger.error("Get socket Failed." + e.getMessage());
-            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_PORT_IN_USE, e.getMessage());
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_PORT_IN_USE, "get_connect_socket_failed");
         }
     }
 
     //private Queue queue = new LinkedList<String>();
 
     public void run(){
-        try{
-            //敲门
-            if(!knock()) return;
-            //登陆
-            if(!login()) return;
-            //创建呼吸和信息线程
-            breatheThread = new Breathe(datagramSocket,session,shuttleEvent,macAddress,ipAddress,serverInetAddress);
-            messengerThread = new Messenger(shuttleEvent,serverInetAddress);
-            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS,"login_success");
-            //挂起，等待
-            wait();
-        }catch (InterruptedException e){
-            //下线
-            Offline();
-            dispose();
-        }
+        //敲门
+        if(!knock()) return;
+        //登陆
+        if(!login()) return;
+        //创建呼吸和信息线程
+        breatheThread = new Breathe(datagramSocket,session,shuttleEvent,macAddress,ipAddress,serverInetAddress);
+        breatheThread.start();
+        messengerThread = new Messenger(shuttleEvent,localInetAddress);
+        breatheThread.start();
+        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS, "login_success");
+        //挂起，等待
+        //while (!logoutFlag) this.sleep(100000);
     }
 
     public boolean isOnline(){
@@ -112,7 +108,7 @@ public class Shuttle extends Thread{
                 HexTools.byte2HexStr(macAddress)
         );
         //利用Pupa和Pronunciation生成加密好的数据
-        byte[] data = Pronunciation.encrypt3848(new Pupa("login", fields).getData());
+        byte[] data = Pronunciation.encrypt3848(new Pupa("get server", fields).getData());
         Logger.log("[Fields]"+fields);
         DatagramPacket datagramPacket = null;
         try {
@@ -129,10 +125,10 @@ public class Shuttle extends Thread{
                 Logger.log("Waiting server response.");
                 datagramSocket.receive(datagramPacket);
                 Logger.log("Server response.");
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_RESPONSE, "server_response");
                 //取出数据包并利用Pupa取出认证服务器ip
                 data = new byte[datagramPacket.getLength()];
                 System.arraycopy(Pronunciation.decrypt3848(datagramPacket.getData()), 0, data, 0, data.length);
+                //Logger.log(Pupa.toPrintabelString(new Pupa(data)));
                 byte[] fieldBuffer = Pupa.fieldData(Pupa.findField(new Pupa(data), "server ip address"));
                 serverIPAddress = String.format(
                         "%d.%d.%d.%d",
@@ -209,35 +205,35 @@ public class Shuttle extends Thread{
             datagramSocket.receive(datagramPacket);
             Logger.log("Server responsed.");
             data = new byte[datagramPacket.getLength()];
+            System.arraycopy(datagramPacket.getData(), 0, data, 0, data.length);
             Pupa pupa = new Pupa(Pronunciation.decrypt3848(data));
             //判断是否登陆成功
-            byte[] fieldBuffer = Pupa.fieldData(Pupa.findField(pupa,"is success"));
-            if(fieldBuffer != null){
-                if(HexTools.toBool(fieldBuffer)){
+            byte[] fieldBuffer = Pupa.fieldData(Pupa.findField(pupa, "is success"));
+            if (fieldBuffer != null) {
+                if (HexTools.toBool(fieldBuffer)) {
                     Logger.log("Certify success!");
-                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS,"certificate_success");
-                }else{
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_CERTIFICATE_SUCCESS, "certificate_success");
+                } else {
                     shuttleEvent.onMessage(
                             ShuttleEvent.SHUTTLE_CERTIFICATE_FAILED,
                             HexTools.toGB2312Str(
-                                    Pupa.fieldData(Pupa.findField(pupa,"message"))
+                                    Pupa.fieldData(Pupa.findField(pupa, "message"))
                             ));
                 }
-            }else{
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION,"certificate_status_unsure");
+            } else {
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, "certificate_status_unsure");
             }
             //提取会话号
-            fieldBuffer = Pupa.findField(pupa,"session");
+            fieldBuffer = Pupa.findField(pupa, "session");
             session = HexTools.toGB2312Str(Pupa.fieldData(fieldBuffer));
             //提取服务器信息
             fieldBuffer = Pupa.findField(pupa, "message");
-            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_MESSAGE,HexTools.toGB2312Str(fieldBuffer));
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_MESSAGE, HexTools.toGB2312Str(fieldBuffer));
+        } catch (SocketTimeoutException e){
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "certificate_timeout");
+            Logger.error("Server no response");
+            return false;
         } catch (IOException e) {
-            if(e.getCause().getClass() == SocketTimeoutException.class){
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "certificate_timeout");
-                Logger.error("Server no response");
-                return false;
-            }
             shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, e.getMessage());
             Logger.error(e.getMessage());
             return false;
@@ -250,7 +246,7 @@ public class Shuttle extends Thread{
     private boolean logoutFlag = false;
     public void Offline(){
         logoutFlag = true;
-        this.interrupt();
+        dispose();
     }
 
     private void logout(){
@@ -304,7 +300,7 @@ public class Shuttle extends Thread{
     public void dispose(){
         breatheThread.interrupt();
         messengerThread.interrupt();
-        this.datagramSocket.close();
+        datagramSocket.close();
         Logger.log("Try to dispose Shuttle.");
         shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OFFLINE,"shuttle_closed");
     }

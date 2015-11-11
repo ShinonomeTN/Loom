@@ -25,12 +25,14 @@ public class Messenger extends Thread{
     byte[] bufferTemp;
     ShuttleEvent shuttleEvent;
 
-    public Messenger(ShuttleEvent feedBackObject,InetAddress server){
+    public Messenger(ShuttleEvent feedBackObject,InetAddress address){
         shuttleEvent = feedBackObject;
+        setDaemon(true);
+        Logger.log("Initiating Message Thread.");
         try {
-            messageSocket = new DatagramSocket(4999,server);
+            messageSocket = new DatagramSocket(4999,address);
         } catch (SocketException e) {
-            Logger.log("Get socket for Messenger failed.");
+            Logger.log("Get socket for Messenger failed. " + e.getMessage());
             shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_PORT_IN_USE,"get_message_socket_failed");
             return;
         }

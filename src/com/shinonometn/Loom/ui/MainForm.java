@@ -220,6 +220,8 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
                 btn_login.setText("下线中");
             }else{
                 shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
+                shuttle.setUsername(t_username.getText());
+                shuttle.setPassword(new String(t_password.getPassword()));
                 shuttle.start();
                 lockInputUI();
                 btn_login.setText("上线中...");
@@ -268,9 +270,10 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
 
             case SHUTTLE_CERTIFICATE_SUCCESS:{
                 listModel.add(listModel.getSize(), message);
-                unlockInputUI();
+                //unlockInputUI();
+                btn_login.setEnabled(true);
                 btn_login.setText("下线");
-                cb_netcard.setEnabled(false);
+                //cb_netcard.setEnabled(false);
             }break;
 
             case SHUTTLE_GET_SOCKET_SUCCESS:{
@@ -279,16 +282,26 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
             break;
 
             case SHUTTLE_PORT_IN_USE:{
-                listModel.add(listModel.getSize(),"目的网卡端口号正在被使用，获取Socket失败");
-                JOptionPane.showMessageDialog(
-                        this,
-                        "端口正在被使用：目的网卡拨号端口被占用\n请查看您是否已经启动了其他拨号器，或者尝试更换目的网卡",
-                        this.getTitle(),
-                        JOptionPane.WARNING_MESSAGE
-                );
-                unlockInputUI();
-                btn_login.setText("上线");
-                shuttle = null;
+                if("get_connect_socket_failed".equals(message)){
+                    listModel.add(listModel.getSize(),"目的网卡端口号正在被使用，获取Socket失败");
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "端口正在被使用：目的网卡拨号端口被占用\n请查看您是否已经启动了其他拨号器，或者尝试更换目的网卡",
+                            this.getTitle(),
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    unlockInputUI();
+                    btn_login.setText("上线");
+                    shuttle = null;
+                }else if("get_message_socket_failed".equals(message)){
+                    listModel.add(listModel.getSize(),"消息监听端口被占用，获取Socket失败");
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "尝试监听服务器消息失败，可能端口正在被占用。\n不监听服务器消息就无法得知什么时候断网，不过不影响上线。",
+                            getTitle(),
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                }
             }
             break;
 
