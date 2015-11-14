@@ -42,9 +42,12 @@ public class HexTools {
         return buffer;
     }
 
-    public static boolean toBool(byte[] data){
-        if(data == null) return false;
-        return (data[data.length-1]&=0xFF) > 0;
+    public static boolean toBool(byte[] data) {
+        return data != null && (data[data.length - 1] &= 0xFF) > 0;
+    }
+
+    public static String toIPAddress(byte[] data){
+        return String.format("%d.%d.%d.%d", data[0] & 0xFF, data[1] & 0xFF, data[2] & 0xFF, data[3] & 0xFF);
     }
 
     /*

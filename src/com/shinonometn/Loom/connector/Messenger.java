@@ -30,11 +30,11 @@ public class Messenger extends Thread{
         setDaemon(true);
         Logger.log("Initiating Message Thread.");
         try {
+            //创建监听Socket
             messageSocket = new DatagramSocket(4999,address);
         } catch (SocketException e) {
             Logger.log("Get socket for Messenger failed. " + e.getMessage());
             shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_PORT_IN_USE,"get_message_socket_failed");
-            return;
         }
     }
 
@@ -43,6 +43,8 @@ public class Messenger extends Thread{
         while (isRun){
             try {
                 sleep(1);
+
+                //监听服务器信息
                 Logger.log("Listening Server message...");
                 messageSocket.receive(messagePacket);
                 bufferTemp = new byte[messagePacket.getLength()];
@@ -50,23 +52,26 @@ public class Messenger extends Thread{
                 Logger.log(HexTools.byte2HexStr(bufferTemp));
                 messagePupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
                 Logger.log("Server send you a |" + Dictionary.actionNames(messagePupa.getAction()) + "| packet.");
+                //如果是下线包的话，通知为下线。如果是其他的包的话，直接把内容发送出去
                 if(messagePupa.getAction() == 0x9){
                     shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_MESSAGE, "offline");
                 }else{
                     shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_MESSAGE,Pupa.toPrintabelString(messagePupa));
                 }
-                Logger.log(Pupa.toPrintabelString(messagePupa));
+                //Logger.log(Pupa.toPrintabelString(messagePupa));
             } catch (IOException e) {
                 e.printStackTrace();
                 messageSocket.close();
                 isRun = false;
                 shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION,"message_thread_exception");
-                break;
+                //break;
             } catch (InterruptedException e){
+                //一旦中断就退出
+                isRun = false;
                 System.out.println("Message Thread Closing....");
                 messageSocket.close();
                 shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_MSGTHREAD_CLOSE,"message_thread_closed");
-                break;
+                //break;
             }
         }
     }

@@ -270,10 +270,8 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
 
             case SHUTTLE_CERTIFICATE_SUCCESS:{
                 listModel.add(listModel.getSize(), message);
-                //unlockInputUI();
                 btn_login.setEnabled(true);
                 btn_login.setText("下线");
-                //cb_netcard.setEnabled(false);
             }break;
 
             case SHUTTLE_GET_SOCKET_SUCCESS:{
