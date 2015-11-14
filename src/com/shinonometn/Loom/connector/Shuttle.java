@@ -1,6 +1,7 @@
 package com.shinonometn.Loom.connector;
 
 import com.shinonometn.Loom.common.Logger;
+import com.shinonometn.Loom.connector.Messanger.Messenger;
 import com.shinonometn.Loom.connector.Messanger.ShuttleEvent;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.HexTools;

@@ -99,7 +99,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         gridBagConstraints.gridwidth = 1;
         //gridBagConstraints.weightx = 0.3;
         gridBagConstraints.insets = left_inset;
-        gridBagConstraints.fill = gridBagConstraints.HORIZONTAL;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         add(new JLabel("用户名",JLabel.RIGHT),gridBagConstraints);
 
         gridBagConstraints.gridx++;

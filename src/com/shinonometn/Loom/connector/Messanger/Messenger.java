@@ -1,4 +1,4 @@
-package com.shinonometn.Loom.connector;
+package com.shinonometn.Loom.connector.Messanger;
 
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Loom.connector.Messanger.ShuttleEvent;

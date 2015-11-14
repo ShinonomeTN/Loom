@@ -101,7 +101,7 @@ public class HexTools {
         hexStr = hexStr.trim().replace(" ", "").toUpperCase(Locale.US);
         char[] hexs = hexStr.toCharArray();
         byte[] bytes = new byte[hexStr.length() / 2];
-        int iTmp = 0x00;;
+        int iTmp = 0x00;
 
         for (int i = 0; i < bytes.length; i++){
             iTmp = mHexStr.indexOf(hexs[2 * i]) << 4;
