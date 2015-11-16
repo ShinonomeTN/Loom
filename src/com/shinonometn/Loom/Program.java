@@ -24,6 +24,7 @@ public class Program{
                 developerMode = true;
             }
         }
+        Logger.outPrint = developerMode;
 
         if(args.length > 0 && "-consoleMode".toLowerCase().equals(args[0].toLowerCase())){
             LoomConsole();
@@ -77,7 +78,7 @@ public class Program{
             ip = scanner.next();
             System.out.println("Getting Network Interface with " + ip);
             InetAddress inetAddress = InetAddress.getByName(ip);
-            InetAddress serverInetAddress;
+            //InetAddress serverInetAddress;
             NetworkInterface networkInterface = NetworkInterface.getByInetAddress(inetAddress);
             byte[] macAddress = networkInterface.getHardwareAddress();
             if (macAddress == null) {
@@ -98,11 +99,27 @@ public class Program{
             System.out.println("Loom Start.");
             shuttle.start();
 
-            System.out.println("If you want to get offline, Please input \"exit\"");
-            while (!scanner.next().toLowerCase().equals("exit")) ;
+            System.out.println("If you want to get offline or exit program, Please input \"exit\"");
+            while (!scanner.next().toLowerCase().equals("exit")){
+                if(scanner.next().equals("about")){
+                    aboutMe();
+                }else System.out.println("If you want to get offline or exit program, Please input \"exit\"");
+            }
             shuttle.Offline();
         }catch (SocketException | UnknownHostException e){
             Logger.log(e.toString());
         }
+    }
+
+    public static void aboutMe(){
+        System.out.println("\n\n如果这个软件早出一年就好了" +
+                "\n可惜这个软件出来命令行测试版本的时候，我已经是大二了。" +
+                "\n\n互联网是现代社会的基本设施，不是拿来敛财的工具" +
+                "\n回收点运营成本，那是情理之中" +
+                "\n但是用这么肮脏的手段阻止我们使用路由器以及共享网络给手机，那是不合道理的" +
+                "\n浪费了一个多月的时间就是为了写这个软件" +
+                "\n垃圾校园网，坑我钱财，毁我青春！" +
+                "\n(PS:我14届信工，用的技术一半以上都是老师教过的哦hhh)"
+        );
     }
 }

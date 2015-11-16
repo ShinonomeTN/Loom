@@ -45,7 +45,7 @@ public class Shuttle extends Thread{
     private ShuttleEvent shuttleEvent = new ShuttleEvent() {
         @Override
         public void onMessage(int messageType, String message) {
-            Logger.log(String.format("[Message code %d]:%s",message));
+            Logger.log(String.format("[Message code %d]:%s",messageType,message));
         }
     };
 
@@ -166,7 +166,7 @@ public class Shuttle extends Thread{
         }
 
         //准备认证用字段，这个认证版本是安朗的3.6.9版协议
-        Logger.log("Try to use account " + username + "to login...");
+        Logger.log("Try to use account " + username + " to login...");
         fields = String.format(
                 "session:%s|username:%s|password:%s|ip address:%s|mac address:%s|access point:%s|version:%s|is dhcp enabled:%s",
                 HexTools.byte2HexStr(init_session),
