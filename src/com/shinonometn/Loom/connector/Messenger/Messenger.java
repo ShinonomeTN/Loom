@@ -1,7 +1,6 @@
-package com.shinonometn.Loom.connector.Messanger;
+package com.shinonometn.Loom.connector.Messenger;
 
 import com.shinonometn.Loom.common.Logger;
-import com.shinonometn.Loom.connector.Messanger.ShuttleEvent;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.Dictionary;
 import com.shinonometn.Pupa.ToolBox.HexTools;
@@ -38,12 +37,17 @@ public class Messenger extends Thread{
         }
     }
 
+    public void dispose(){
+        isRun = false;
+        if(!messageSocket.isClosed()){
+            messageSocket.close();
+        }
+    }
+
     public void run(){
         messagePacket = new DatagramPacket(buffer,buffer.length);
         while (isRun){
             try {
-                sleep(1);
-
                 //监听服务器信息
                 Logger.log("Listening Server message...");
                 messageSocket.receive(messagePacket);
@@ -60,17 +64,17 @@ public class Messenger extends Thread{
                 }
                 //Logger.log(Pupa.toPrintabelString(messagePupa));
             } catch (IOException e) {
-                e.printStackTrace();
-                messageSocket.close();
-                isRun = false;
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION,"message_thread_exception");
-                //break;
-            } catch (InterruptedException e){
-                //一旦中断就退出
-                isRun = false;
-                System.out.println("Message Thread Closing....");
-                messageSocket.close();
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_MSGTHREAD_CLOSE,"message_thread_closed");
+                if(!messageSocket.isClosed()){
+                    e.printStackTrace();
+                    messageSocket.close();
+                    isRun = false;
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION,"message_thread_exception");
+                }else{
+                    isRun = false;
+                    System.out.println("Message Thread Closing....");
+                    messageSocket.close();
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_MSGTHREAD_CLOSE,"message_thread_closed");
+                }
                 //break;
             }
         }

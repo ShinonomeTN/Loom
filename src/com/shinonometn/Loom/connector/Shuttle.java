@@ -1,8 +1,8 @@
 package com.shinonometn.Loom.connector;
 
 import com.shinonometn.Loom.common.Logger;
-import com.shinonometn.Loom.connector.Messanger.Messenger;
-import com.shinonometn.Loom.connector.Messanger.ShuttleEvent;
+import com.shinonometn.Loom.connector.Messenger.Messenger;
+import com.shinonometn.Loom.connector.Messenger.ShuttleEvent;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;
@@ -233,10 +233,14 @@ public class Shuttle extends Thread{
             return;
         }
 
+        //启动消息监听线程
+        messengerThread = new Messenger(this.shuttleEvent,localInetAddress);
+        messengerThread.start();
+
         //呼吸
         Logger.log("Breathe started.");
-        sleepTime = 200000; //20s
-        Logger.log("Set breathe time as "+sleepTime+"s.");
+        sleepTime = 20000; //20s
+        Logger.log("Set breathe time as " + sleepTime + "ms.");
         Pupa breathePupa;
         while(!logoutFlag){
             state[2] = true;
@@ -244,7 +248,7 @@ public class Shuttle extends Thread{
             try {
                 //如果有跳过等待直接发送呼吸包
                 if(!noSleep){
-                    Logger.log("Sleep for " + sleepTime);
+                    Logger.log("Sleep for " + sleepTime + "ms");
                     sleep(sleepTime);
                 }else noSleep = false;
 
@@ -304,13 +308,12 @@ public class Shuttle extends Thread{
         }
         Logger.log("Breathe thread Closeing....");
         state[2] = false;
-        Logger.log("Offline politely...");
 
         //通知消息线程
-        messengerThread.interrupt();
+        messengerThread.dispose();
 
         //等待消息线程结束
-        while(messengerThread.isRun);
+        while(messengerThread.isAlive());
         state[3] = false;
 
         try {
@@ -342,29 +345,32 @@ public class Shuttle extends Thread{
                 bufferTemp = new byte[datagramPacket.getLength()];
                 System.arraycopy(datagramPacket.getData(),0,bufferTemp,0,bufferTemp.length);
                 pupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
-                Logger.log(Pupa.toPrintabelString(pupa));
+                //Logger.log(Pupa.toPrintabelString(pupa));
                 if(HexTools.toBool(Pupa.findField(pupa, "is success"))){
                     Logger.log("Server response.Now you are offline.");
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OFFLINE,"offline_generally");
                 }
             }catch (SocketTimeoutException w){
                 Logger.error("Logout Timeout...");
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE,"logout_timeout");
+                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OFFLINE,"logout_timeout");
             }
-
+            Logger.log("Offline politely...");
+            //return;
         } catch (IOException e) {
             Logger.error(e.toString());
             shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION,e.toString());
-            return;
         }finally {
             if(!datagramSocket.isClosed()) datagramSocket.close();
         }
-        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION,"breathe_close");
+        //shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION,"breathe_close");
 
     }
 
     public boolean isOnline(){
         return state[2];
     }
+
+    public boolean isMessageListening() { return state[3]; }
 
     //敲门
 

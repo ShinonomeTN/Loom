@@ -99,13 +99,26 @@ public class Program{
             System.out.println("Loom Start.");
             shuttle.start();
 
-            System.out.println("If you want to get offline or exit program, Please input \"exit\"");
-            while (!scanner.next().toLowerCase().equals("exit")){
-                if(scanner.next().equals("about")){
-                    aboutMe();
-                }else System.out.println("If you want to get offline or exit program, Please input \"exit\"");
+            do{
+                System.out.println("If you want to get offline or exit program, Please input \"exit\"");
+                if (!scanner.next().toLowerCase().equals("exit")){
+                    if(scanner.next().equals("about")){
+                        aboutMe();
+                    }else System.out.println("If you want to get offline or exit program, Please input \"exit\"");
+                }else{
+                    shuttle.Offline();
+                    while(shuttle.isOnline() || shuttle.isMessageListening());
+                    return;
+                }
+            }while(shuttle.isAlive());
+
+            if(!developerMode){
+                System.out.println(
+                        "Some error accorded. Restart program or run " +
+                                "\n\"java -jar Loom.jar -consoleMode -developerMode\"" +
+                                "\n to know more."
+                );
             }
-            shuttle.Offline();
         }catch (SocketException | UnknownHostException e){
             Logger.log(e.toString());
         }
