@@ -1,7 +1,7 @@
 package com.shinonometn.Loom.ui;
 
 import com.shinonometn.Loom.common.Networks;
-import com.shinonometn.Loom.connector.Messanger.ShuttleEvent;
+import com.shinonometn.Loom.connector.Messenger.ShuttleEvent;
 import com.shinonometn.Loom.connector.Shuttle;
 
 import javax.swing.*;
@@ -9,16 +9,13 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.net.DatagramPacket;
 import java.net.NetworkInterface;
 import java.util.*;
 
 /**
  * Created by catten on 15/10/20.
  */
-public class MainForm extends JFrame implements ActionListener,ItemListener,ShuttleEvent{
+public class MainForm extends JFrame implements ActionListener,ShuttleEvent{
 
     JTextField t_username;
     JPasswordField t_password;
@@ -28,33 +25,22 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
 
     JComboBox<String> cb_netcard;
 
-    //JList<JCheckBox> list1;
     JList<String> list1;
     DefaultListModel<String> listModel = new DefaultListModel<String>();
 
     JMenuBar menuBar;
-    JMenu menuOperation;
-    JMenuItem menuItemReset;
-    JMenuItem menuItemKillCut;
-    JMenuItem menuItemQuit;
     JMenu menuAbout;
     JMenuItem menuItemAbout;
-    JMenuItem menuItemRefreshNetCard;
     JMenuItem menuItemHelp;
 
-    JLabel lb_info;
-
     Shuttle shuttle;
-    Thread thread_shuttle;
     Vector<NetworkInterface> nf;
-    //Vector<String> vector_Info;
 
     public MainForm(){
         super("Loom");
         setSize(240, 400);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        //setResizable(false);
         setupUI();
         setVisible(true);
         setupEvent();
@@ -64,28 +50,27 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         menuBar = new JMenuBar();
         setJMenuBar(menuBar);
 
-        menuOperation = new JMenu("操作");
-        menuItemReset = new JMenuItem("重新匹配认证服务器");
-        menuItemKillCut = new JMenuItem("非正常方式下线");
-        menuItemRefreshNetCard = new JMenuItem("刷新网卡列表");
-        menuItemQuit = new JMenuItem("退出");
-
-        menuOperation.add(menuItemReset);
-        menuOperation.add(menuItemKillCut);
-        menuOperation.add(new JPopupMenu.Separator());
-        menuOperation.add(menuItemRefreshNetCard);
-        menuOperation.add(new JPopupMenu.Separator());
-        menuOperation.add(menuItemQuit);
-
         menuAbout = new JMenu("关于");
         menuItemHelp = new JMenuItem("帮助");
+        menuItemHelp.addActionListener(this);
         menuItemAbout = new JMenuItem("关于软件");
+        menuItemAbout.addActionListener(this);
 
         menuAbout.add(menuItemHelp);
         menuAbout.add(new JPopupMenu.Separator());
         menuAbout.add(menuItemAbout);
+        menuAbout.add(new JPopupMenu.Separator());
+        JMenuItem m1;
+        m1 = new JMenuItem("Loom v1.0");
+        m1.setEnabled(false);
+        menuAbout.add(m1);
+        m1 = new JMenuItem("Pupa version:3.6");
+        m1.setEnabled(false);
+        menuAbout.add(m1);
+        m1 = new JMenuItem("Amnoon Auth. v3.6.9");
+        m1.setEnabled(false);
+        menuAbout.add(m1);
 
-        menuBar.add(menuOperation);
         menuBar.add(menuAbout);
 
         setLayout(new GridBagLayout());
@@ -97,13 +82,11 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridwidth = 1;
-        //gridBagConstraints.weightx = 0.3;
         gridBagConstraints.insets = left_inset;
-        gridBagConstraints.fill = gridBagConstraints.HORIZONTAL;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         add(new JLabel("用户名",JLabel.RIGHT),gridBagConstraints);
 
         gridBagConstraints.gridx++;
-        //gridBagConstraints.weightx = 0.7;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.insets = right_inset;
         t_username = new JTextField();
@@ -132,15 +115,14 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.insets = right_inset;
         cb_netcard = new JComboBox<>();
-        nf = Networks.getNetworkInterfaces(false);
+        nf = Networks.getNetworkInterfaces(false);//获取网卡列表
         if(nf != null){
             for(NetworkInterface n:nf){
                 cb_netcard.addItem(n.getDisplayName());
             }
         }else{
-            cb_netcard.addItem("No Network Interface");
+            cb_netcard.addItem("找不到可用网卡");
         }
-        cb_netcard.addItemListener(this);
         add(cb_netcard, gridBagConstraints);
 
         gridBagConstraints.gridx = 0;
@@ -169,7 +151,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         scrollPane.setBorder(new TitledBorder("信息"));
         add(scrollPane, gridBagConstraints);
 
-        //Pre-set actions
+        //检查一下有没有可用网卡，没有则不给操作
         if(nf == null){
             setVisible(true);
             t_password.setEditable(false);
@@ -184,6 +166,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         }
     }
 
+    //锁定输入UI
     private void lockInputUI(){
         try{
             t_username.setEnabled(false);
@@ -195,6 +178,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         }
     }
 
+    //解锁输入UI
     private void unlockInputUI(){
         try{
             t_username.setEnabled(true);
@@ -206,6 +190,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
         }
     }
 
+    //事件监听设置
     private void setupEvent(){
         cb_remember.addActionListener(this);
         btn_login.addActionListener(this);
@@ -213,8 +198,9 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        //登录按钮的动作
         if(e.getSource() == btn_login){
-            if (shuttle != null) {
+            if (shuttle != null && shuttle.isOnline()) {
                 shuttle.Offline();
                 lockInputUI();
                 btn_login.setText("下线中");
@@ -226,24 +212,44 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
                 lockInputUI();
                 btn_login.setText("上线中...");
             }
+        }else if(e.getSource() == menuItemAbout){ //菜单里的关于
+            String aboutInfo = "Loom\t(不是真的纺纱机啦)" +
+                    "\n您可以无偿使用这个软件，用以登录岭南职院校园网。" +
+                    "\n\n此软件开源自由，遵循GPL(General Public License)协议" +
+                    "\nhttp://www.gnu.org/licenses/gpl.html" +
+                    "\n欢迎在Github上共建此软件" +
+                    "\nhttps://github.com/JohnKozak/Loom" +
+                    "\n有关于此软件出现的问题可以邮件至我邮箱：" +
+                    "\nkozakcuu@gmail.com";
+
+            JOptionPane.showMessageDialog(null,aboutInfo,"关于 Loom",JOptionPane.INFORMATION_MESSAGE);
+        }else if(e.getSource() == menuItemHelp){//菜单里的帮助
+            String helpInfo = "欢迎使用Loom" +
+                    "\n\n填写好登录账号和密码之后，选择已经链接到校园网的网卡，然后上线即可。" +
+                    "\n点击保存用户名和密码选项可以保存用户信息方便下次登录" +
+                    "\n如果提示没有可用网卡，请检查网线或者WLAN是否已经连接上" +
+                    "\n如果需要使用WLAN（无线网卡）连接校园网，请把无线路由器调至交换机模式" +
+                    "\n软件本身不能让你无限时长上网，如果想配合网上的方法实现不断网，在线的时候直接关掉程序即可" +
+                    "\n有些区域的校园网是可以强退蝴蝶不掉线的，直接关掉本程序即可尝试" +
+                    "\n如果认证超时，重试即可。如依旧不能解决，请到http://172.19.1.8/selfLogoutAction.do登陆后强制下线" +
+                    "\n更多问题请自己摸摸或者查看关于发邮件于我。";
+            JOptionPane.showMessageDialog(null,helpInfo,"帮助",JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
-    @Override
-    public void itemStateChanged(ItemEvent e) {
-        if(e.getSource() == cb_netcard){
-            //do something
-        }
+    public void logAtList(String s){
+        listModel.add(listModel.getSize(),s);
     }
 
     @Override
     public void onMessage(int messageType, String message) {
         switch (messageType){
+            //服务器无响应
             case SHUTTLE_SERVER_NO_RESPONSE:{
                 if("knock_server_no_response".equals(message)){
                     unlockInputUI();
                     btn_login.setText("上线");
-                    listModel.add(listModel.getSize(),"获取认证服务器失败");
+                    logAtList("获取认证服务器失败:服务器无响应");
                     JOptionPane.showMessageDialog(
                             this,
                             "敲门无响应\n请检查您所选择的网卡是否已连接到校园网",
@@ -255,7 +261,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
                 }else if("certificate_timeout".equals(message)){
                     unlockInputUI();
                     btn_login.setText("上线");
-                    listModel.add(listModel.getSize(), "认证超时，服务器无响应");
+                    logAtList("认证超时，服务器无响应");
                     JOptionPane.showMessageDialog(
                             this,
                             "认证超时，服务器无响应",
@@ -268,22 +274,33 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
             }
             break;
 
+            //认证成功
             case SHUTTLE_CERTIFICATE_SUCCESS:{
-                listModel.add(listModel.getSize(), message);
-                //unlockInputUI();
+                logAtList("认证成功");
+                logAtList("已上线");
                 btn_login.setEnabled(true);
                 btn_login.setText("下线");
-                //cb_netcard.setEnabled(false);
             }break;
 
+            //认证失败
+            case SHUTTLE_CERTIFICATE_FAILED:{
+                logAtList("认证失败:"+message);
+                btn_login.setEnabled(true);
+                btn_login.setText("上线");
+                unlockInputUI();
+                JOptionPane.showMessageDialog(this,"认证失败\n"+message,this.getTitle(),JOptionPane.WARNING_MESSAGE);
+            }break;
+
+            //获取Socket成功
             case SHUTTLE_GET_SOCKET_SUCCESS:{
-                listModel.add(listModel.getSize(),"获取Socket成功");
+                logAtList("准备工作完成");
             }
             break;
 
+            //端口被占用
             case SHUTTLE_PORT_IN_USE:{
                 if("get_connect_socket_failed".equals(message)){
-                    listModel.add(listModel.getSize(),"目的网卡端口号正在被使用，获取Socket失败");
+                    logAtList("目的网卡端口号正在被使用，获取Socket失败");
                     JOptionPane.showMessageDialog(
                             this,
                             "端口正在被使用：目的网卡拨号端口被占用\n请查看您是否已经启动了其他拨号器，或者尝试更换目的网卡",
@@ -294,7 +311,7 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
                     btn_login.setText("上线");
                     shuttle = null;
                 }else if("get_message_socket_failed".equals(message)){
-                    listModel.add(listModel.getSize(),"消息监听端口被占用，获取Socket失败");
+                    logAtList("消息监听端口被占用，获取Socket失败");
                     JOptionPane.showMessageDialog(
                             this,
                             "尝试监听服务器消息失败，可能端口正在被占用。\n不监听服务器消息就无法得知什么时候断网，不过不影响上线。",
@@ -305,24 +322,47 @@ public class MainForm extends JFrame implements ActionListener,ItemListener,Shut
             }
             break;
 
+            //服务器回应
             case SHUTTLE_SERVER_RESPONSE:{
-                listModel.add(listModel.getSize(),"服务器IP是 "+message);
+                logAtList("服务器IP是 "+message);
             }
             break;
 
+            //找不到服务器
             case SHUTTLE_SERVER_NOT_FOUNT:{
-                listModel.add(listModel.getSize(),"找不到服务器");
+                logAtList("找不到服务器");
             }break;
 
+            //其他错误
             case SHUTTLE_OTHER_EXCEPTION:{
-                listModel.add(listModel.getSize(),"未知错误" + message);
+                logAtList("未知错误:" + message);
             }break;
 
+            //下线
             case SHUTTLE_OFFLINE:{
-                listModel.add(listModel.getSize(),"下线");
+                logAtList("下线了");
                 btn_login.setText("上线");
                 cb_netcard.setEnabled(true);
                 unlockInputUI();
+            }break;
+
+            //续命成功（雾
+            case SHUTTLE_BREATHE_SUCCESS:{
+                try {
+                    logAtList("[" + (new Date().toString()).split(" ")[3] + "]在线状态续期成功");
+                }catch (Exception e){
+                    logAtList("在线状态续期成功");
+                }
+            }break;
+
+            //续命失败（大雾
+            case SHUTTLE_BREATHE_FAILED:{
+                logAtList("服务器否认在线状态");
+            }break;
+
+            //续命错误（超级雾
+            case SHUTTLE_BREATHE_EXCEPTION:{
+                logAtList("呼吸进程遇到错误：" + message);
             }break;
         }
     }
