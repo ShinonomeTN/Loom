@@ -1,6 +1,7 @@
 package com.shinonometn.Loom.common;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.text.*;
 
@@ -42,6 +43,7 @@ public class Logger {
 
     public static void closeLog(){
         try {
+            Logger.log("Close Log");
             noLogFileMode = true;
             fileWriter.flush();
             fileWriter.close();
@@ -73,10 +75,15 @@ public class Logger {
 
     public static void clearLog(){
         try {
-            File logdir = pathLog.getParentFile();
-            fileWriter.close();
-            logdir.delete();
-            init();
+            Logger.log("Try to clean log directory.");
+            File file_list[] = pathLog.getParentFile().listFiles();
+
+            for(File file : file_list){
+                if(file.getAbsolutePath().equals(pathLog.getAbsolutePath())) continue;
+                file.delete();
+            }
+
+            Logger.log("Cleaning log success");
         }catch (Exception e){
             error("Clean log file failed. cause:" + e.getMessage());
             System.out.println("Clean log file failed. Logs will stay here.");

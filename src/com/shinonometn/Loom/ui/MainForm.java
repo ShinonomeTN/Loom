@@ -25,8 +25,12 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     JTextField t_username;
     JPasswordField t_password;
 
+    JLabel stat_icon;
+
     JButton btn_login;
     JCheckBox cb_remember;
+    JCheckBox cb_Log;
+    JCheckBox cb_printLog;
 
     JComboBox<String> cb_netcard;
 
@@ -36,7 +40,6 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     JMenuBar menuBar;
 
     JMenu menuOptions;
-    JCheckBox menuItemIsLog;
     JMenuItem menuItemCleanLogs;
     JMenuItem menuItemSaveProfile;
 
@@ -47,15 +50,20 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     Shuttle shuttle;
     Vector<NetworkInterface> nf;
 
+    ImageIcon icon_online = new ImageIcon(getClass().getResource("/com/shinonometn/img/mbi_029.gif"));
+    ImageIcon icon_offline = new ImageIcon(getClass().getResource("/com/shinonometn/img/mbi_028.gif"));
+
     public MainForm(){
         super("Loom");
-        setSize(240, 400);
+        setMinimumSize(new Dimension(200, 400));
+        setSize(ConfigModule.windowWidth,ConfigModule.windowHeight);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setupUI();
         setVisible(true);
         setupEvent();
         addWindowListener(this);
+
         //ConfigModule.readProfiles();
     }
 
@@ -64,14 +72,29 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         setJMenuBar(menuBar);
 
         menuOptions = new JMenu("选项");
-        menuItemIsLog = new JCheckBox("启用日志");
-        menuItemIsLog.setSelected(ConfigModule.useLog);
-        menuItemIsLog.addActionListener(this);
+        //-
+        cb_Log = new JCheckBox("启用日志");
+        cb_Log.setSelected(ConfigModule.useLog);
+        cb_Log.addActionListener(this);
+        //-
+        cb_remember = new JCheckBox("自动保存设置");
+        cb_remember.setSelected(ConfigModule.saveUserInfo);
+        cb_remember.addActionListener(this);
+        //-
+        cb_printLog = new JCheckBox("输出日志到终端");
+        cb_printLog.setSelected(ConfigModule.outPrintLog);
+        //cb_printLog.setVisible(Program.isDeveloperMode());
+        cb_printLog.addActionListener(this);
+        //-
         menuItemCleanLogs = new JMenuItem("清除日志目录");
         menuItemCleanLogs.addActionListener(this);
         menuItemSaveProfile = new JMenuItem("立即保存设置");
         menuItemSaveProfile.addActionListener(this);
-        menuOptions.add(menuItemIsLog);
+        //-
+        menuOptions.add(cb_Log);
+        menuOptions.add(cb_printLog);
+        menuOptions.add(new JPopupMenu.Separator());
+        menuOptions.add(cb_remember);
         menuOptions.add(new JPopupMenu.Separator());
         menuOptions.add(menuItemCleanLogs);
         menuOptions.add(menuItemSaveProfile);
@@ -109,12 +132,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridwidth = 1;
+        gridBagConstraints.weightx = 0;
         gridBagConstraints.insets = left_inset;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         add(new JLabel("用户名",JLabel.RIGHT),gridBagConstraints);
 
         gridBagConstraints.gridx++;
         gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.weightx = 0.9;
         gridBagConstraints.insets = right_inset;
         t_username = new JTextField();
         t_username.setText(ConfigModule.username);
@@ -145,10 +170,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.insets = right_inset;
         cb_netcard = new JComboBox<>();
         nf = Networks.getNetworkInterfaces(false);//获取网卡列表
-        if(nf != null){
+        if(nf != null && nf.size() > 0){
             for(NetworkInterface n:nf){
                 cb_netcard.addItem(n.getDisplayName());
-                if(n.getDisplayName().equals(ConfigModule.defaultInterface)) cb_netcard.setSelectedIndex(n.getIndex());
+                if(ConfigModule.defaultInterface.equals(n.getDisplayName())) cb_netcard.setSelectedIndex(n.getIndex());
             }
         }else{
             cb_netcard.addItem("找不到可用网卡");
@@ -159,13 +184,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.gridy++;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.insets = left_inset;
-        cb_remember = new JCheckBox("自动保存设置");
-        cb_remember.setSelected(ConfigModule.saveUserInfo);
-        cb_remember.addActionListener(this);
-        add(cb_remember, gridBagConstraints);
+        gridBagConstraints.weightx = 0.2;
+        stat_icon = new JLabel(icon_offline,JLabel.CENTER);
+        add(stat_icon,gridBagConstraints);
 
-        gridBagConstraints.gridx=+2;
+        gridBagConstraints.gridx = 2;
         gridBagConstraints.gridwidth = 1;
+        gridBagConstraints.weightx = 0.8;
         gridBagConstraints.insets = right_inset;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         btn_login = new JButton("上线");
@@ -184,7 +209,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         add(scrollPane, gridBagConstraints);
 
         //检查一下有没有可用网卡，没有则不给操作
-        if(nf == null){
+        if(nf == null ||nf.size() <= 0){
             setVisible(true);
             t_password.setEditable(false);
             t_username.setEditable(false);
@@ -274,16 +299,19 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             ConfigModule.saveUserInfo = cb_remember.isSelected();
             if(ConfigModule.saveUserInfo) ConfigModule.writeProfile();
-        }else if(e.getSource() == menuItemIsLog){//设置是否启动log
+        }else if(e.getSource() == cb_Log){//设置是否启动log
 
             ConfigModule.useLog = !ConfigModule.useLog;
-            menuItemIsLog.setSelected(ConfigModule.useLog);
+            cb_Log.setSelected(ConfigModule.useLog);
         }else if(e.getSource() == menuItemCleanLogs){//清理日志
 
             Logger.clearLog();
         }else if(e.getSource() == menuItemSaveProfile){//立即保存配置
 
             ConfigModule.writeProfile();
+        }else if(e.getSource() == cb_printLog){
+
+            ConfigModule.outPrintLog = cb_printLog.isSelected();
         }
     }
 
@@ -330,6 +358,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 logAtList("已上线");
                 btn_login.setEnabled(true);
                 btn_login.setText("下线");
+                stat_icon.setIcon(icon_online);
             }break;
 
             //认证失败
@@ -394,6 +423,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 btn_login.setText("上线");
                 cb_netcard.setEnabled(true);
                 unlockInputUI();
+                stat_icon.setIcon(icon_offline);
             }break;
 
             //续命成功（雾
@@ -403,16 +433,19 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 }catch (Exception e){
                     logAtList("在线状态续期成功");
                 }
+                stat_icon.setIcon(icon_online);
             }break;
 
             //续命失败（大雾
             case SHUTTLE_BREATHE_FAILED:{
                 logAtList("服务器否认在线状态");
+                stat_icon.setIcon(icon_offline);
             }break;
 
             //续命错误（超级雾
             case SHUTTLE_BREATHE_EXCEPTION:{
                 logAtList("呼吸进程遇到错误：" + message);
+                stat_icon.setIcon(icon_offline);
             }break;
         }
     }
@@ -430,15 +463,18 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     @Override
     public void windowClosing(WindowEvent e) {
         Logger.log("Window Closing");
+        ConfigModule.windowWidth = getWidth();
+        ConfigModule.windowHeight = getHeight();
+        ConfigModule.writeProfile();
+        if(Logger.isWriteToFile()){
+            Logger.closeLog();
+        }
     }
 
     @Override
     public void windowClosed(WindowEvent e) {
         Logger.log("Window Closed");
-        ConfigModule.writeProfile();
-        if(Logger.isWriteToFile()){
-            Logger.closeLog();
-        }
+
     }
 
     @Override

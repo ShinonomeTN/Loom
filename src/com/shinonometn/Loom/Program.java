@@ -28,7 +28,7 @@ public class Program{
                 developerMode = true;
             }
         }
-        Logger.outPrint = developerMode;
+        //Logger.outPrint = developerMode;
         Logger.log(developerMode ? "DeveloperMode on" +
                 "\n\t\t!!! Warning !!!" +
                 "\nDeveloper mode will record all user data(included account and password)" +
