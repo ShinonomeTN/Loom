@@ -149,8 +149,12 @@ public class Shuttle extends Thread{
                 shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "knock_server_no_response");
                 return;
             } catch (IOException e) {
-                Logger.error("Unknown Exception.");
-                shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, "unknown_exception");
+                if(e.getMessage().equals("No route to host")){
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT,"no_route_to_host");
+                }else{
+                    Logger.error("Unknown Exception. cause:" + e.getMessage());
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, "unknown_exception_knocking");
+                }
                 return;
             }
         } catch (UnknownHostException e) {

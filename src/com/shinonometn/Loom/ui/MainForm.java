@@ -244,6 +244,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         }
     }
 
+    private void uiOffline(){
+        btn_login.setText("上线");
+        cb_netcard.setEnabled(true);
+        unlockInputUI();
+        stat_icon.setIcon(icon_offline);
+    }
+
     //事件监听设置
     private void setupEvent(){
         addWindowListener(this);
@@ -353,8 +360,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     shuttle.dispose();
                     shuttle = null;
                 }else if("certificate_timeout".equals(message)){
-                    unlockInputUI();
-                    btn_login.setText("上线");
+                    uiOffline();
                     logAtList("认证超时，服务器无响应");
                     JOptionPane.showMessageDialog(
                             this,
@@ -402,8 +408,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             this.getTitle(),
                             JOptionPane.WARNING_MESSAGE
                     );
-                    unlockInputUI();
-                    btn_login.setText("上线");
+                    uiOffline();
                     shuttle = null;
                 }else if("get_message_socket_failed".equals(message)){
                     logAtList("消息监听端口被占用，获取Socket失败");
@@ -430,16 +435,18 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //其他错误
             case SHUTTLE_OTHER_EXCEPTION:{
+                if("unknown_exception_knocking".equals(message)){
+                    uiOffline();
+                    shuttle.dispose();
+                    shuttle = null;
+                }
                 logAtList("未知错误:" + message);
             }break;
 
             //下线
             case SHUTTLE_OFFLINE:{
                 logAtList("下线了");
-                btn_login.setText("上线");
-                cb_netcard.setEnabled(true);
-                unlockInputUI();
-                stat_icon.setIcon(icon_offline);
+                uiOffline();
             }break;
 
             //续命成功（雾
@@ -468,6 +475,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 }
                 else logAtList("呼吸进程遇到错误：" + message);
                 //stat_icon.setIcon(icon_offline);
+            }break;
+
+            //消息线程接收到消息
+            case SHUTTLE_SERVER_MESSAGE:{
+                if("offline".equals(message)){
+                    logAtList("服务器要求下线");
+                }else{
+                    logAtList("接收到了一条服务器消息:"+message);
+                }
             }break;
         }
     }
