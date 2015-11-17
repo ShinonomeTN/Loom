@@ -173,7 +173,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         if(nf != null && nf.size() > 0){
             for(NetworkInterface n:nf){
                 cb_netcard.addItem(n.getDisplayName());
-                if(ConfigModule.defaultInterface.equals(n.getDisplayName())) cb_netcard.setSelectedIndex(n.getIndex());
+                if(ConfigModule.defaultInterface.equals(n.getDisplayName())) cb_netcard.setSelectedIndex(cb_netcard.getItemCount() - 1);
             }
         }else{
             cb_netcard.addItem("找不到可用网卡");
@@ -268,6 +268,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 shuttle.setUsername(t_username.getText());
                 shuttle.setPassword(new String(t_password.getPassword()));
                 shuttle.start();
+                ConfigModule.username = t_username.getText();
+                ConfigModule.password = new String(t_password.getPassword());
                 lockInputUI();
                 btn_login.setText("上线中...");
             }
@@ -308,11 +310,24 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             Logger.clearLog();
         }else if(e.getSource() == menuItemSaveProfile){//立即保存配置
 
+            applyProfile();
             ConfigModule.writeProfile();
         }else if(e.getSource() == cb_printLog){
 
             ConfigModule.outPrintLog = cb_printLog.isSelected();
         }
+        applyProfile();
+    }
+
+    private void applyProfile(){
+        ConfigModule.username = t_username.getText();
+        ConfigModule.password = new String(t_password.getPassword());
+        ConfigModule.windowWidth = getWidth();
+        ConfigModule.windowHeight = getHeight();
+        ConfigModule.outPrintLog = cb_printLog.isSelected();
+        ConfigModule.defaultInterface = cb_netcard.getItemAt(cb_netcard.getSelectedIndex());
+        ConfigModule.saveUserInfo = cb_remember.isSelected();
+        ConfigModule.useLog = cb_Log.isSelected();
     }
 
     public void logAtList(String s){
