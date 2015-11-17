@@ -3,12 +3,8 @@ package com.shinonometn.Loom.common;
 import com.shinonometn.Loom.Program;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;
-import com.sun.org.apache.xpath.internal.operations.Bool;
-import sun.rmi.runtime.Log;
 
-import javax.swing.text.StyledEditorKit;
 import java.io.*;
-import java.util.ArrayList;
 
 /**
  * Created by catten on 15/11/17.
@@ -18,7 +14,7 @@ public class ConfigModule {
     public static boolean useLog = true;
     public static String username = "";
     public static String password = "";
-    public static boolean saveUserInfo = true;
+    public static boolean autoSaveSetting = true;
     public static String defaultInterface = "";
     public static boolean outPrintLog = true;
     public static int windowWidth = 240;
@@ -91,7 +87,7 @@ public class ConfigModule {
                         if("useLog".equals(split[0])) useLog = Boolean.parseBoolean(split[1]);
                         else if("username".equals(split[0])) username = split[1];
                         else if("password".equals(split[0])) password = split[1];
-                        else if("saveUserInfo".equals(split[0])) saveUserInfo = Boolean.parseBoolean(split[1]);
+                        else if("autoSaveSetting".equals(split[0])) autoSaveSetting = Boolean.parseBoolean(split[1]);
                         else if("defaultInterface".equals(split[0])) defaultInterface = split[1];
                         else if("outPrintLog".equals(split[0])) outPrintLog = Boolean.parseBoolean(split[1]);
                         else if("windowWidth".equals(split[0])) windowWidth = Integer.parseInt(split[1]);
@@ -121,7 +117,7 @@ public class ConfigModule {
                             "useLog=%s\n" +
                             "username=%s\n" +
                             "password=%s\n" +
-                            "saveUserInfo=%s\n" +
+                            "autoSaveSetting=%s\n" +
                             "defaultInterface=%s\n" +
                             "outPrintLog=%s\n" +
                             "windowWidth=%d\n" +
@@ -131,7 +127,7 @@ public class ConfigModule {
                     useLog,
                     username,
                     password,
-                    saveUserInfo,
+                    autoSaveSetting,
                     defaultInterface,
                     outPrintLog,
                     windowWidth,

@@ -50,19 +50,21 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     Shuttle shuttle;
     Vector<NetworkInterface> nf;
 
-    ImageIcon icon_online = new ImageIcon(getClass().getResource("/com/shinonometn/img/mbi_029.gif"));
-    ImageIcon icon_offline = new ImageIcon(getClass().getResource("/com/shinonometn/img/mbi_028.gif"));
+    ImageIcon icon_online = new ImageIcon(getClass().getResource("/com/shinonometn/img/link.png"));
+    ImageIcon icon_offline = new ImageIcon(getClass().getResource("/com/shinonometn/img/link_break.png"));
+    ImageIcon icon_linking = new ImageIcon(getClass().getResource("/com/shinonometn/img/link_go.png"));
+    ImageIcon icon_app = new ImageIcon(getClass().getResource("/com/shinonometn/img/package_link.png"));
+    ImageIcon icon_dev = new ImageIcon(getClass().getResource("/com/shinonometn/img/bomb.png"));
 
     public MainForm(){
         super("Loom");
         setMinimumSize(new Dimension(200, 400));
-        setSize(ConfigModule.windowWidth,ConfigModule.windowHeight);
+        setSize(ConfigModule.windowWidth, ConfigModule.windowHeight);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setupUI();
         setVisible(true);
         setupEvent();
-        addWindowListener(this);
 
         //ConfigModule.readProfiles();
     }
@@ -75,21 +77,16 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         //-
         cb_Log = new JCheckBox("启用日志");
         cb_Log.setSelected(ConfigModule.useLog);
-        cb_Log.addActionListener(this);
         //-
         cb_remember = new JCheckBox("自动保存设置");
-        cb_remember.setSelected(ConfigModule.saveUserInfo);
-        cb_remember.addActionListener(this);
+        cb_remember.setSelected(ConfigModule.autoSaveSetting);
         //-
         cb_printLog = new JCheckBox("输出日志到终端");
         cb_printLog.setSelected(ConfigModule.outPrintLog);
         //cb_printLog.setVisible(Program.isDeveloperMode());
-        cb_printLog.addActionListener(this);
         //-
         menuItemCleanLogs = new JMenuItem("清除日志目录");
-        menuItemCleanLogs.addActionListener(this);
         menuItemSaveProfile = new JMenuItem("立即保存设置");
-        menuItemSaveProfile.addActionListener(this);
         //-
         menuOptions.add(cb_Log);
         menuOptions.add(cb_printLog);
@@ -249,8 +246,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     //事件监听设置
     private void setupEvent(){
+        addWindowListener(this);
+
         cb_remember.addActionListener(this);
         btn_login.addActionListener(this);
+        cb_Log.addActionListener(this);
+        cb_remember.addActionListener(this);
+        cb_printLog.addActionListener(this);
+        menuItemCleanLogs.addActionListener(this);
+        menuItemSaveProfile.addActionListener(this);
     }
 
     @Override
@@ -279,28 +283,25 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     "\n您可以无偿使用这个软件，用以登录岭南职院校园网。" +
                     "\n\n此软件开源自由，遵循GPL(General Public License)协议" +
                     "\nhttp://www.gnu.org/licenses/gpl.html" +
-                    "\n欢迎在Github上共建此软件" +
-                    "\nhttps://github.com/JohnKozak/Loom" +
+                    "\n源代码托管于Github上" +
                     "\n有关于此软件出现的问题可以邮件至我邮箱：" +
                     "\nkozakcuu@gmail.com";
 
-            JOptionPane.showMessageDialog(null,aboutInfo,"关于 Loom",JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(null,aboutInfo,"关于 Loom",JOptionPane.INFORMATION_MESSAGE,icon_app);
         }else if(e.getSource() == menuItemHelp){//菜单里的帮助
 
             String helpInfo = "欢迎使用Loom" +
-                    "\n\n填写好登录账号和密码之后，选择已经链接到校园网的网卡，然后上线即可。" +
-                    "\n点击保存用户名和密码选项可以保存用户信息方便下次登录" +
+                    "\n\n填写好登录账号和密码之后，选择已经链接到校园网的网卡，然后上线。" +
                     "\n如果提示没有可用网卡，请检查网线或者WLAN是否已经连接上" +
                     "\n如果需要使用WLAN（无线网卡）连接校园网，请把无线路由器调至交换机模式" +
-                    "\n软件本身不能让你无限时长上网，如果想配合网上的方法实现不断网，在线的时候直接关掉程序即可" +
-                    "\n有些区域的校园网是可以强退蝴蝶不掉线的，直接关掉本程序即可尝试" +
-                    "\n如果认证超时，重试即可。如依旧不能解决，请到http://172.19.1.8/selfLogoutAction.do登陆后强制下线" +
-                    "\n更多问题请自己摸摸或者查看关于发邮件于我。";
-            JOptionPane.showMessageDialog(null,helpInfo,"帮助",JOptionPane.INFORMATION_MESSAGE);
+                    "\n软件本身不能让你无限时长上网" +
+                    "\n如果认证超时，重试即可。如依旧不能解决，请到 http://172.19.1.8/selfLogoutAction.do 登陆后强制下线" +
+                    "\n更多问题请自己探索或发邮件于我。";
+            JOptionPane.showMessageDialog(null,helpInfo,"帮助",JOptionPane.INFORMATION_MESSAGE,icon_app);
         }else if(e.getSource() == cb_remember){ //保存用户设置
 
-            ConfigModule.saveUserInfo = cb_remember.isSelected();
-            if(ConfigModule.saveUserInfo) ConfigModule.writeProfile();
+            ConfigModule.autoSaveSetting = cb_remember.isSelected();
+            if(ConfigModule.autoSaveSetting) ConfigModule.writeProfile();
         }else if(e.getSource() == cb_Log){//设置是否启动log
 
             ConfigModule.useLog = !ConfigModule.useLog;
@@ -316,7 +317,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             ConfigModule.outPrintLog = cb_printLog.isSelected();
         }
-        applyProfile();
+        if(ConfigModule.autoSaveSetting) applyProfile();
     }
 
     private void applyProfile(){
@@ -326,7 +327,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         ConfigModule.windowHeight = getHeight();
         ConfigModule.outPrintLog = cb_printLog.isSelected();
         ConfigModule.defaultInterface = cb_netcard.getItemAt(cb_netcard.getSelectedIndex());
-        ConfigModule.saveUserInfo = cb_remember.isSelected();
+        ConfigModule.autoSaveSetting = cb_remember.isSelected();
         ConfigModule.useLog = cb_Log.isSelected();
     }
 
@@ -459,8 +460,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //续命错误（超级雾
             case SHUTTLE_BREATHE_EXCEPTION:{
-                logAtList("呼吸进程遇到错误：" + message);
-                stat_icon.setIcon(icon_offline);
+                if("breathe_timeout".equals(message)){
+                    logAtList("续期超时，重试");
+                    stat_icon.setIcon(icon_linking);
+                }else if("breathe_time_clear".equals(message)){
+                    logAtList("服务器要求在线时常复位");
+                }
+                else logAtList("呼吸进程遇到错误：" + message);
+                //stat_icon.setIcon(icon_offline);
             }break;
         }
     }
@@ -471,18 +478,20 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         if(Program.isDeveloperMode()){
             JOptionPane.showMessageDialog(null,"你开启了开发者模式\n" +
                     "请注意，开发者模式将记录你所有的用户使用信息（包括账号密码）\n" +
-                    "请慎用开发者模式，如有需要请清理日志文件以保护隐私。","Developer Mode on",JOptionPane.WARNING_MESSAGE);
+                    "请慎用开发者模式，如有需要请清理日志文件以保护隐私。","Developer Mode on",JOptionPane.WARNING_MESSAGE,icon_dev);
         }
     }
 
     @Override
     public void windowClosing(WindowEvent e) {
         Logger.log("Window Closing");
-        ConfigModule.windowWidth = getWidth();
-        ConfigModule.windowHeight = getHeight();
-        ConfigModule.writeProfile();
-        if(Logger.isWriteToFile()){
-            Logger.closeLog();
+        if(ConfigModule.autoSaveSetting){
+            ConfigModule.windowWidth = getWidth();
+            ConfigModule.windowHeight = getHeight();
+            ConfigModule.writeProfile();
+            if(Logger.isWriteToFile()){
+                Logger.closeLog();
+            }
         }
     }
 

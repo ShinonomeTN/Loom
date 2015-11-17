@@ -243,9 +243,9 @@ public class Shuttle extends Thread{
         sleepTime = 20000; //20s
         Logger.log("Set breathe time as " + sleepTime + "ms.");
         Pupa breathePupa;
+        boolean noSleep = false;
         while(!logoutFlag){
             state[2] = true;
-            boolean noSleep = false;
             try {
                 //如果有跳过等待直接发送呼吸包
                 if(!noSleep){
@@ -277,22 +277,25 @@ public class Shuttle extends Thread{
 
                 //解释数据包并提取有用的信息
                 data = new byte[datagramPacket.getLength()];
-                System.arraycopy(datagramPacket.getData(),0,data,0,data.length);
+                System.arraycopy(datagramPacket.getData(), 0, data, 0, data.length);
                 breathePupa = new Pupa(Pronunciation.decrypt3848(data));
 
                 //分析
                 byte[] fieldBuffer = Pupa.findField(breathePupa,"is success");
-                if(fieldBuffer != null && HexTools.toBool(fieldBuffer)) {
-                    serialNo += 0x03;
-                    Logger.log("Breathed.");
-                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_SUCCESS,"breathe_success");
+                if(fieldBuffer != null) {
+                    if(HexTools.toBool(fieldBuffer)){
+                        serialNo += 0x03;
+                        Logger.log("Breathed.");
+                        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_SUCCESS,"breathe_success");
+                    }else{
+                        Logger.log("Server Rejected this Breathe.");
+                        shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_FAILED, "server_rejected");
+                    }
                 }else if(Pupa.findField(breathePupa,"serial no") != null){
                     serialNo = 0x01000003;
                     shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION,"breathe_time_clear");
                 }else{
-                    Logger.log("Server Rejected this Breathe.");
-                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_FAILED,"server_rejected");
-                    //break;
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION,"other_exception");
                 }
             } catch (InterruptedException e) {
                 logoutFlag = true;
