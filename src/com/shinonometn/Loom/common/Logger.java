@@ -13,7 +13,7 @@ public class Logger {
     private static boolean noLogFileMode = false;
 
     private static Date date = new Date();
-    private static DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.CHINA);
+    private static DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL, Locale.CHINA);
 
     private static File pathLog;
     private static FileWriter fileWriter;
