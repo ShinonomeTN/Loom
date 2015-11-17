@@ -18,6 +18,10 @@ import java.util.Vector;
 public class Program{
     private static boolean developerMode = false;
 
+    public static boolean isDeveloperMode(){
+        return developerMode;
+    }
+
     public static void main(String[] args){
         if(args.length >= 2){
             if(args[1] != null && "-developerMode".toLowerCase().equals(args[1].toLowerCase())){
@@ -25,40 +29,51 @@ public class Program{
             }
         }
         Logger.outPrint = developerMode;
+        Logger.log(developerMode ? "DeveloperMode on" +
+                "\n\t\t!!! Warning !!!" +
+                "\nDeveloper mode will record all user data(included account and password)" +
+                "\nPlease remember to clear logs for protect your personal Data" : "DeveloperMode off");
 
         if(args.length > 0 && "-consoleMode".toLowerCase().equals(args[0].toLowerCase())){
+            Logger.log("Loom Console Mode");
             LoomConsole();
+            if(Logger.isWriteToFile()){
+                Logger.closeLog();
+            }
         }else if(args.length == 0 || "-graphicMode".toLowerCase().equals(args[0].toLowerCase())){
+            Logger.log("Loom Graphic Mode");
             try{
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             }catch (Exception e){
-                e.printStackTrace();
+                Logger.log(e.toString());
             }
-            MainForm lnkToMainform = new MainForm();
+
+            new MainForm();
 
             Vector<NetworkInterface> nf = Networks.getNetworkInterfaces(false);
+            StringBuilder stringBuilder = new StringBuilder("\n\n");
             if(nf != null) {
-                System.out.println("Network Interfaces found:");
+                stringBuilder.append("Network Interfaces found:\n");
                 for (NetworkInterface n : nf) {
                     try {
-                        System.out.printf("[%s]%n", n.getDisplayName());
+                        stringBuilder.append(String.format("[%s]%n", n.getDisplayName())).append("\n");
                         List<InterfaceAddress> list = n.getInterfaceAddresses();
                         for (InterfaceAddress ia : list) {
                             try {
-                                System.out.println(ia.getAddress());
+                                stringBuilder.append(ia.getAddress()).append("\n");
                             } catch (Exception e) {
-                                System.out.println("null");
+                                stringBuilder.append("null\n");
                             }
                         }
-                        System.out.println(HexTools.byte2HexStr(n.getHardwareAddress()));
+                        stringBuilder.append(HexTools.byte2HexStr(n.getHardwareAddress())).append("\n");
                         //System.out.println();
                     } catch (Exception e) {
-                        System.out.print("Null");
+                        stringBuilder.append("Null\n");
                     }
-                    System.out.println("------------------------");
+                    stringBuilder.append("\n\n");
                 }
             }
-
+            Logger.log(stringBuilder.toString());
         }
     }
 
@@ -87,6 +102,7 @@ public class Program{
             }
 
             shuttle = new Shuttle(networkInterface, null);
+            shuttle.developerMode = Program.isDeveloperMode();
             System.out.println("Prepared to login.");
 
             System.out.println("Please input your account");

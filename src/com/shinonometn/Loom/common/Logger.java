@@ -1,23 +1,93 @@
 package com.shinonometn.Loom.common;
 
-import java.util.Date;
+import java.io.*;
+import java.util.*;
+import java.text.*;
 
 /**
  * Created by catten on 15/11/2.
  */
 public class Logger {
-    //private static Date date = new Date();
     public static boolean outPrint = true;
+    private static boolean noLogFileMode = false;
 
-    public static void log(String message){
-        if(outPrint){
-            System.out.println(String.format("[%s][Log]%s",new Date(),message));
+    private static Date date = new Date();
+    private static DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.CHINA);
+
+    private static File pathLog;
+    private static FileWriter fileWriter;
+
+    static{
+        init();
+    }
+
+    private static void init(){
+        pathLog = new File("./log/" + dateFormat.format(date) + ".log");
+
+        try{
+            if(!pathLog.exists()){
+                pathLog.getParentFile().mkdir();
+                pathLog.createNewFile();
+            }
+
+            fileWriter = new FileWriter(pathLog);
+
+        }catch (IOException e){
+            noLogFileMode = true;
+            System.out.println(e);
+        }finally {
+            if(noLogFileMode) System.out.println("Opening log file failed. Program will run under no-log mode.");
         }
     }
 
-    public static void error(String message){
-        if(outPrint){
-            System.out.println(String.format("[%s][Error]%s",new Date(),message));
+    public static void closeLog(){
+        try {
+            noLogFileMode = true;
+            fileWriter.flush();
+            fileWriter.close();
+        } catch (IOException e) {
+            System.out.println(e);
         }
+    }
+
+    public static boolean isWriteToFile(){
+        return fileWriter != null;
+    }
+
+    private static void makeLog(String log){
+        if(outPrint){
+            System.out.println(log);
+        }
+
+        if(!noLogFileMode){
+            try {
+                fileWriter.write((log + "\n"));
+                fileWriter.flush();
+            } catch (IOException e) {
+                System.out.println(e);
+                noLogFileMode = true;
+                System.out.println("Write log failed. Changed to no-log mode.");
+            }
+        }
+    }
+
+    public static void clearLog(){
+        try {
+            File logdir = pathLog.getParentFile();
+            fileWriter.close();
+            logdir.delete();
+            init();
+        }catch (Exception e){
+            error("Clean log file failed. cause:" + e.getMessage());
+            System.out.println("Clean log file failed. Logs will stay here.");
+        }
+    }
+
+    public static void log(String message){
+        makeLog(String.format("[%s][Log]%s",new Date(),message));
+    }
+
+    public static void error(String message){
+        makeLog(String.format("[%s][Error]%s",new Date(),message));
     }
 }

@@ -45,19 +45,19 @@ public class Pronunciation {
         return null;
     }
 
-    public static int[] encrypt3849(byte[] buffer){
+    public static byte[] encrypt3849(byte[] buffer){
         if(buffer.length > 0){
-            int[] result = new int[buffer.length];
+            byte[] result = new byte[buffer.length];
 
             for (int i = 0; i < buffer.length; i++){
-                result[i] = (buffer[i] & 0x80) >>> 4
-                            | (buffer[i] & 0x40) >>> 1
-                            | (buffer[i] & 0x20) << 1
-                            | (buffer[i] & 0x10) >>> 3
-                            | (buffer[i] & 0x08) << 4
-                            | (buffer[i] & 0x04)
-                            | (buffer[i] & 0x02) >>> 1
-                            | (buffer[i] & 0x01) << 4;
+                result[i] = (byte) ((buffer[i] & 0x80) >>> 4
+                                            | (buffer[i] & 0x40) >>> 1
+                                            | (buffer[i] & 0x20) << 1
+                                            | (buffer[i] & 0x10) >>> 3
+                                            | (buffer[i] & 0x08) << 4
+                                            | (buffer[i] & 0x04)
+                                            | (buffer[i] & 0x02) >>> 1
+                                            | (buffer[i] & 0x01) << 4);
             }
 
             return result;
@@ -65,19 +65,19 @@ public class Pronunciation {
         return null;
     }
 
-    public static int[] decrypt3849(byte[] buffer){
+    public static byte[] decrypt3849(byte[] buffer){
         if(buffer.length > 0){
-            int[] result = new int[buffer.length];
+            byte[] result = new byte[buffer.length];
 
             for (int i = 0; i < buffer.length; i++) {
-                result[i] = (buffer[i] & 0x80) >> 4
-                            | (buffer[i] & 0x40) >> 1
-                            | (buffer[i] & 0x20) << 1
-                            | (buffer[i] & 0x10) >> 4
-                            | (buffer[i] & 0x08) << 4
-                            | (buffer[i] & 0x04)
-                            | (buffer[i] & 0x02) << 3
-                            | (buffer[i] & 0x01) << 1;
+                result[i] = (byte) ((buffer[i] & 0x80) >> 4
+                                            | (buffer[i] & 0x40) >> 1
+                                            | (buffer[i] & 0x20) << 1
+                                            | (buffer[i] & 0x10) >> 4
+                                            | (buffer[i] & 0x08) << 4
+                                            | (buffer[i] & 0x04)
+                                            | (buffer[i] & 0x02) << 3
+                                            | (buffer[i] & 0x01) << 1);
             }
 
             return result;

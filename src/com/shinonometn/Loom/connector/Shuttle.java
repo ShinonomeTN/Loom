@@ -15,6 +15,7 @@ import java.util.List;
  * Created by catten on 15/11/2.
  */
 public class Shuttle extends Thread{
+    public boolean developerMode;
     //一些参数设置
     private final int defaultPacketSize = 1024;
     private final int defaultSocketTimeout = 10000;//默认超时时间10s，因为考虑到是内网环境所以时间设置得比较段
@@ -98,7 +99,7 @@ public class Shuttle extends Thread{
 
         //利用Pupa和Pronunciation生成加密好的数据
         byte[] data = Pronunciation.encrypt3848(new Pupa("get server", fields).getData());
-        Logger.log("[Fields]"+fields);
+        Logger.log("[Fields]"+(developerMode?fields:"----Ignored----"));
 
         //数据包
         DatagramPacket datagramPacket = null;
@@ -134,7 +135,7 @@ public class Shuttle extends Thread{
                         //敲门成功
                         state[0] = true;
                     } catch (UnknownHostException e) {
-                        Logger.log("Server IP unavailable.");
+                        Logger.error("Server IP unavailable.");
                         shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT, "server_ip_unavailable");
                         return;
                     }
@@ -144,11 +145,11 @@ public class Shuttle extends Thread{
                 }
 
             } catch (SocketTimeoutException e) {
-                Logger.log("Server no response.");
+                Logger.error("Server no response.");
                 shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NO_RESPONSE, "knock_server_no_response");
                 return;
             } catch (IOException e) {
-                Logger.log("Unknown Exception.");
+                Logger.error("Unknown Exception.");
                 shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, "unknown_exception");
                 return;
             }
@@ -166,7 +167,7 @@ public class Shuttle extends Thread{
         }
 
         //准备认证用字段，这个认证版本是安朗的3.6.9版协议
-        Logger.log("Try to use account " + username + " to login...");
+        Logger.log("Try to use account " + (developerMode?username:"-not-shown-") + " to login...");
         fields = String.format(
                 "session:%s|username:%s|password:%s|ip address:%s|mac address:%s|access point:%s|version:%s|is dhcp enabled:%s",
                 HexTools.byte2HexStr(init_session),
@@ -179,7 +180,7 @@ public class Shuttle extends Thread{
                 "00"
         );
         //准备数据包
-        Logger.log("[Fields]" + fields);
+        Logger.log("[Fields]"+(developerMode?fields:"----Ignored----"));
         data = Pronunciation.encrypt3848(new Pupa("login",fields).getData());
         datagramPacket = new DatagramPacket(data,data.length,serverInetAddress,3848);
 
@@ -192,7 +193,7 @@ public class Shuttle extends Thread{
 
             //等待服务器回应
             datagramSocket.receive(datagramPacket);
-            Logger.log("Server responsed.");
+            Logger.log("Server response.");
             data = new byte[datagramPacket.getLength()];
             System.arraycopy(datagramPacket.getData(), 0, data, 0, data.length);
             Pupa pupa = new Pupa(Pronunciation.decrypt3848(data));
@@ -261,8 +262,8 @@ public class Shuttle extends Thread{
                         serialNo,
                         HexTools.byte2HexStr(macAddress)
                 );
-                Logger.log("[Field]"+fields);
-                data = Pronunciation.encrypt3848(new Pupa("breathe",fields).getData());
+                Logger.log("[Field]"+(developerMode?fields:"----Ignore----"));
+                data = Pronunciation.encrypt3848(new Pupa("breathe", fields).getData());
                 datagramPacket = new DatagramPacket(data, data.length, serverInetAddress, 3848);
                 datagramSocket.send(datagramPacket);
 
@@ -300,7 +301,7 @@ public class Shuttle extends Thread{
                 shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION, "breathe_timeout");
                 noSleep = true;
             } catch (IOException e){
-                Logger.log(e.toString());
+                Logger.error(e.toString());
                 datagramSocket.close();
                 shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_BREATHE_EXCEPTION,"other_exception");
                 return;
@@ -324,7 +325,7 @@ public class Shuttle extends Thread{
                     HexTools.byte2HexStr(ipAddress.getBytes()),
                     HexTools.byte2HexStr(macAddress)
             );
-            Logger.log(fields);
+            Logger.log("[Field]"+(developerMode?fields:"----Ignore----"));
             Logger.log("Telling Server.....");
 
             //发送数据包
