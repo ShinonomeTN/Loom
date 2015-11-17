@@ -136,7 +136,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         gridBagConstraints.gridx++;
         gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.weightx = 0.9;
+        gridBagConstraints.weightx = 0.5;
         gridBagConstraints.insets = right_inset;
         t_username = new JTextField();
         t_username.setText(ConfigModule.username);
@@ -187,7 +187,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridwidth = 1;
-        gridBagConstraints.weightx = 0.8;
+        gridBagConstraints.weightx = 0.5;
         gridBagConstraints.insets = right_inset;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         btn_login = new JButton("上线");
