@@ -4,11 +4,13 @@ import com.shinonometn.Loom.Program;
 import com.shinonometn.Loom.common.ConfigModule;
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Loom.common.Networks;
+import com.shinonometn.Loom.common.Toolbox;
 import com.shinonometn.Loom.connector.Messenger.ShuttleEvent;
 import com.shinonometn.Loom.connector.Shuttle;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.tools.Tool;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -47,28 +49,39 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     JMenuItem menuItemAbout;
     JMenuItem menuItemHelp;
 
+    TrayIcon trayIcon;
+
     Shuttle shuttle;
     Vector<NetworkInterface> nf;
 
+//图标资源
     ImageIcon icon_online = new ImageIcon(getClass().getResource("/com/shinonometn/img/link.png"));
     ImageIcon icon_offline = new ImageIcon(getClass().getResource("/com/shinonometn/img/link_break.png"));
     ImageIcon icon_linking = new ImageIcon(getClass().getResource("/com/shinonometn/img/link_go.png"));
     ImageIcon icon_app = new ImageIcon(getClass().getResource("/com/shinonometn/img/package_link.png"));
     ImageIcon icon_dev = new ImageIcon(getClass().getResource("/com/shinonometn/img/bomb.png"));
 
+    Image tray_online = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/img/package_link 2.png"));
+    Image tray_linking = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/img/package_go.png"));
+    Image tray_offline = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/img/package.png"));
+    Image image_app = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/img/package_link.png"));
+//--------
+
     public MainForm(){
         super("Loom");
         setMinimumSize(new Dimension(200, 400));
         setSize(ConfigModule.windowWidth, ConfigModule.windowHeight);
+        setIconImage(image_app);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setupUI();
+        setupTray();
         setVisible(true);
         setupEvent();
-
         //ConfigModule.readProfiles();
     }
 
+    //设置界面
     private void setupUI(){
         menuBar = new JMenuBar();
         setJMenuBar(menuBar);
@@ -220,6 +233,68 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         }
     }
 
+//-----系统托盘图标------------------------------------------
+    private void setupTray(){
+        Logger.log("Try to setup tray.");
+        if(trayIcon == null){
+            if(SystemTray.isSupported()){
+                SystemTray systemTray = SystemTray.getSystemTray();
+                trayIcon = new TrayIcon(tray_offline);
+                trayIcon.setToolTip("Loom");
+                trayIcon.addActionListener(this);
+                try {
+                    systemTray.add(trayIcon);
+                    Logger.log("Add TrayIcon success.");
+                } catch (AWTException e) {
+                    Logger.error("Add TrayIcon to System Tray failed.");
+                }
+            }else{
+                Logger.log("Tray not supported.");
+                ConfigModule.hideNoClose = false;
+            }
+        }
+    }
+
+    private void setOfflineIcon(){
+        stat_icon.setIcon(icon_offline);
+        if(trayIcon != null){
+            trayIcon.setImage(tray_offline);
+            setTrayTip("状态：下线");
+        }
+    }
+
+    private void setOnlineIcon(){
+        stat_icon.setIcon(icon_online);
+        if(trayIcon != null){
+            trayIcon.setImage(tray_online);
+            setTrayTip("状态：在线");
+        }
+    }
+
+    private void setLinkingIcon(){
+        stat_icon.setIcon(icon_linking);
+        if(trayIcon != null){
+            trayIcon.setImage(tray_linking);
+            setTrayTip("状态：重新链接中");
+        }
+    }
+
+    private void setTrayTip(String tips){
+        if(trayIcon != null){
+            trayIcon.setToolTip(tips);
+        }
+    }
+
+    private void trayPopMessage(String title,String content){
+        if(trayIcon != null){
+            if(!Toolbox.getSystemName().contains("mac")){
+                trayIcon.displayMessage(title, content, TrayIcon.MessageType.INFO);
+            }
+        }
+    }
+
+//--------------------------------------------------------
+
     //锁定输入UI
     private void lockInputUI(){
         try{
@@ -244,11 +319,17 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         }
     }
 
+    //下线的时候修改UI用
     private void uiOffline(){
         btn_login.setText("上线");
         cb_netcard.setEnabled(true);
         unlockInputUI();
-        stat_icon.setIcon(icon_offline);
+        setOfflineIcon();
+    }
+
+    private void shuttleOffline(){
+        shuttle.dispose();
+        shuttle = null;
     }
 
     //事件监听设置
@@ -313,6 +394,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             ConfigModule.useLog = !ConfigModule.useLog;
             cb_Log.setSelected(ConfigModule.useLog);
+            if(Program.isDeveloperMode() && ConfigModule.useLog){
+                trayPopMessage("Developer Mode On","您开启了开发者模式，您的账号信息有可能会被记录到日志文件内。");
+            }
         }else if(e.getSource() == menuItemCleanLogs){//清理日志
 
             Logger.clearLog();
@@ -357,8 +441,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             this.getTitle(),
                             JOptionPane.WARNING_MESSAGE
                     );
-                    shuttle.dispose();
-                    shuttle = null;
+                    shuttleOffline();
                 }else if("certificate_timeout".equals(message)){
                     uiOffline();
                     logAtList("认证超时，服务器无响应");
@@ -368,8 +451,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             this.getTitle(),
                             JOptionPane.WARNING_MESSAGE
                     );
-                    shuttle.dispose();
-                    shuttle = null;
+                    shuttleOffline();
                 }
             }
             break;
@@ -380,15 +462,16 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 logAtList("已上线");
                 btn_login.setEnabled(true);
                 btn_login.setText("下线");
-                stat_icon.setIcon(icon_online);
+                setOnlineIcon();
             }break;
 
             //认证失败
             case SHUTTLE_CERTIFICATE_FAILED:{
-                logAtList("认证失败:"+message);
+                logAtList("认证失败:" + message);
                 btn_login.setEnabled(true);
                 btn_login.setText("上线");
                 unlockInputUI();
+                shuttleOffline();
                 JOptionPane.showMessageDialog(this,"认证失败\n"+message,this.getTitle(),JOptionPane.WARNING_MESSAGE);
             }break;
 
@@ -409,7 +492,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             JOptionPane.WARNING_MESSAGE
                     );
                     uiOffline();
-                    shuttle = null;
+                    shuttleOffline();
                 }else if("get_message_socket_failed".equals(message)){
                     logAtList("消息监听端口被占用，获取Socket失败");
                     JOptionPane.showMessageDialog(
@@ -431,14 +514,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             //找不到服务器
             case SHUTTLE_SERVER_NOT_FOUNT:{
                 logAtList("找不到服务器");
+                shuttleOffline();
+                uiOffline();
             }break;
 
             //其他错误
             case SHUTTLE_OTHER_EXCEPTION:{
                 if("unknown_exception_knocking".equals(message)){
                     uiOffline();
-                    shuttle.dispose();
-                    shuttle = null;
+                    shuttleOffline();
                 }
                 logAtList("未知错误:" + message);
             }break;
@@ -456,33 +540,37 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 }catch (Exception e){
                     logAtList("在线状态续期成功");
                 }
-                stat_icon.setIcon(icon_online);
+                setOnlineIcon();
             }break;
 
             //续命失败（大雾
             case SHUTTLE_BREATHE_FAILED:{
                 logAtList("服务器否认在线状态");
-                stat_icon.setIcon(icon_offline);
+                setOfflineIcon();
             }break;
 
             //续命错误（超级雾
             case SHUTTLE_BREATHE_EXCEPTION:{
                 if("breathe_timeout".equals(message)){
                     logAtList("续期超时，重试");
-                    stat_icon.setIcon(icon_linking);
+                    setLinkingIcon();
+                    if(trayIcon != null){
+                        trayIcon.setImage(tray_linking);
+                    }
                 }else if("breathe_time_clear".equals(message)){
                     logAtList("服务器要求在线时常复位");
                 }
                 else logAtList("呼吸进程遇到错误：" + message);
-                //stat_icon.setIcon(icon_offline);
             }break;
 
             //消息线程接收到消息
             case SHUTTLE_SERVER_MESSAGE:{
                 if("offline".equals(message)){
                     logAtList("服务器要求下线");
+                    trayPopMessage(getTitle(),"服务器要求下线");
                 }else{
                     logAtList("接收到了一条服务器消息:"+message);
+                    trayPopMessage("接收到了一条服务器消息",message);
                 }
             }break;
         }
@@ -514,17 +602,20 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     @Override
     public void windowClosed(WindowEvent e) {
         Logger.log("Window Closed");
-
     }
 
     @Override
     public void windowIconified(WindowEvent e) {
         Logger.log("Window Iconified");
+        if(ConfigModule.hideNoClose){
+            setVisible(false);
+        }
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
         Logger.log("Window Deiconified");
+        setVisible(true);
     }
 
     @Override

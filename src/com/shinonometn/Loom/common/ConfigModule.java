@@ -19,6 +19,7 @@ public class ConfigModule {
     public static boolean outPrintLog = true;
     public static int windowWidth = 240;
     public static int windowHeight = 400;
+    public static boolean hideNoClose = true;
 
     //配置文件目录
     private static File profilePath;

@@ -2,6 +2,7 @@ package com.shinonometn.Loom;
 
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Loom.common.Networks;
+import com.shinonometn.Loom.common.Toolbox;
 import com.shinonometn.Loom.connector.Shuttle;
 import com.shinonometn.Loom.ui.MainForm;
 import com.shinonometn.Pupa.ToolBox.HexTools;
@@ -23,6 +24,7 @@ public class Program{
     }
 
     public static void main(String[] args){
+        Logger.log("System: " + Toolbox.getSystemName());
         if(args.length >= 2){
             if(args[1] != null && "-developerMode".toLowerCase().equals(args[1].toLowerCase())){
                 developerMode = true;
