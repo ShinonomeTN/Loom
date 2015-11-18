@@ -19,7 +19,7 @@ public class ConfigModule {
     public static boolean outPrintLog = true;
     public static int windowWidth = 240;
     public static int windowHeight = 400;
-    public static boolean hideNoClose = true;
+    public static boolean hideOnIconfied = true;
 
     //配置文件目录
     private static File profilePath;
@@ -93,6 +93,7 @@ public class ConfigModule {
                         else if("outPrintLog".equals(split[0])) outPrintLog = Boolean.parseBoolean(split[1]);
                         else if("windowWidth".equals(split[0])) windowWidth = Integer.parseInt(split[1]);
                         else if("windowHeight".equals(split[0])) windowHeight = Integer.parseInt(split[1]);
+                        else if("hideOnIconfied".equals(split[0])) hideOnIconfied = Boolean.parseBoolean(split[1]);
 
                         Logger.log(Program.isDeveloperMode()?field + " copied.":"----Ignored----");
                     }catch (NullPointerException | ArrayIndexOutOfBoundsException e){
@@ -122,7 +123,8 @@ public class ConfigModule {
                             "defaultInterface=%s\n" +
                             "outPrintLog=%s\n" +
                             "windowWidth=%d\n" +
-                            "windowHeight=%d\n"
+                            "windowHeight=%d\n" +
+                            "hideOnIconfied=%s"
                     ,
                     "crypt3849",
                     useLog,
@@ -132,7 +134,8 @@ public class ConfigModule {
                     defaultInterface,
                     outPrintLog,
                     windowWidth,
-                    windowHeight
+                    windowHeight,
+                    hideOnIconfied
             ).getBytes());
 
             fileWriter = new FileOutputStream(profilePath);

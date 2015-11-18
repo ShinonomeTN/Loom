@@ -73,21 +73,24 @@ public class Logger {
         }
     }
 
-    public static void clearLog(){
+    public static int clearLog(){
         try {
+            int count = 0;
             Logger.log("Try to clean log directory.");
             File file_list[] = pathLog.getParentFile().listFiles();
 
             for(File file : file_list){
                 if(file.getAbsolutePath().equals(pathLog.getAbsolutePath())) continue;
                 file.delete();
+                count++;
             }
-
-            Logger.log("Cleaning log success");
+            Logger.log("Cleaning log success, " + count + " log(s).");
+            return count;
         }catch (Exception e){
             error("Clean log file failed. cause:" + e.getMessage());
             System.out.println("Clean log file failed. Logs will stay here.");
         }
+        return -1;
     }
 
     public static void log(String message){
