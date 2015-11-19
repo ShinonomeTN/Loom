@@ -16,10 +16,11 @@ import java.net.NetworkInterface;
 import java.util.*;
 
 
+
 /**
  * Created by catten on 15/10/20.
  */
-public class MainForm extends JFrame implements ActionListener,ShuttleEvent,WindowListener, MouseListener {
+public class MainForm extends JFrame implements ActionListener,ShuttleEvent,WindowListener, MouseListener{
 
     JTextField t_username;
     JPasswordField t_password;
@@ -27,25 +28,35 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     JLabel stat_icon;
 
     JButton btn_login;
+
     JCheckBox cb_remember;
-    JCheckBox cb_Log;
-    JCheckBox cb_printLog;
     JCheckBox cb_hideOnIconfied;
+    JCheckBox cb_notShownAtLaunch;
 
     JComboBox<String> cb_netcard;
 
     JList<String> list1;
-    DefaultListModel<String> listModel = new DefaultListModel<String>();
+    JScrollPane scrollPane;
+    DefaultListModel<String> listModel;
 
     JMenuBar menuBar;
 
-    JMenu menuOptions;
+    //JMenu menuOptions;
+    JMenu menuLogs;
+    JCheckBox cb_showInfo;
+    JCheckBox cb_Log;
+    JCheckBox cb_printLog;
+    JMenuItem menuItemCleanInfos;
     JMenuItem menuItemCleanLogs;
     JMenuItem menuItemSaveProfile;
 
-    JMenu menuAbout;
+    //JMenu menuAbout;
     JMenuItem menuItemAbout;
     JMenuItem menuItemHelp;
+
+    MenuItem menuItemOnline;
+    MenuItem menuItemState;
+    MenuItem menuItemExit;
 
     TrayIcon trayIcon;
 
@@ -67,14 +78,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     public MainForm(){
         super("Loom");
-        setMinimumSize(new Dimension(200, 400));
+        setMinimumSize(new Dimension(200, 180));
         setSize(ConfigModule.windowWidth, ConfigModule.windowHeight);
         setIconImage(image_app);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setupUI();
         setupTray();
-        setVisible(true);
+        setVisible(!ConfigModule.notShownAtLaunch);
         setupEvent();
     }
 
@@ -83,7 +94,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuBar = new JMenuBar();
         setJMenuBar(menuBar);
 
-        menuOptions = new JMenu("选项");
+        //menuOptions = new JMenu("选项");
         //-
         cb_Log = new JCheckBox("启用日志");
         cb_Log.setSelected(ConfigModule.useLog);
@@ -96,43 +107,61 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         //cb_printLog.setVisible(Program.isDeveloperMode());
         //-
         cb_hideOnIconfied = new JCheckBox("最小化时隐藏");
-        cb_hideOnIconfied.setSelected(ConfigModule.hideOnIconfied);
+        cb_hideOnIconfied.setSelected(ConfigModule.hideOnIconified);
+        //-
+        cb_showInfo = new JCheckBox("显示连接信息");
+        cb_showInfo.setSelected(ConfigModule.showInfo);
+        //-
+        cb_notShownAtLaunch = new JCheckBox("启动时不显示窗体");
+        cb_notShownAtLaunch.setSelected(ConfigModule.notShownAtLaunch);
         //-
         menuItemCleanLogs = new JMenuItem("清除日志目录");
         menuItemSaveProfile = new JMenuItem("立即保存设置");
+        menuItemCleanInfos = new JMenuItem("清除链接信息");
+        menuItemCleanInfos.setEnabled(ConfigModule.showInfo);
         //-
-        menuOptions.add(cb_Log);
-        menuOptions.add(cb_printLog);
-        menuOptions.add(new JPopupMenu.Separator());
-        menuOptions.add(cb_remember);
-        menuOptions.add(cb_hideOnIconfied);
-        menuOptions.add(new JPopupMenu.Separator());
-        menuOptions.add(menuItemCleanLogs);
-        menuOptions.add(menuItemSaveProfile);
+        menuItemState = new MenuItem("状态：下线");
+        menuItemState.setEnabled(false);
+        menuItemOnline = new MenuItem("上线");
+        menuItemExit = new MenuItem("退出");
 
-        menuAbout = new JMenu("关于");
+        JMenu menu = new JMenu("设置");
+        menu.add(cb_remember);
+        menu.add(cb_hideOnIconfied);
+        menu.add(cb_notShownAtLaunch);
+        menu.add(cb_showInfo);
+        menu.add(new JPopupMenu.Separator());
+        menu.add(menuItemSaveProfile);
+        menuBar.add(menu);
+
+        menuLogs = new JMenu("日志");
+        menuLogs.add(cb_Log);
+        menuLogs.add(cb_printLog);
+        menuLogs.add(cb_showInfo);
+        menuLogs.add(new JPopupMenu.Separator());
+        menuLogs.add(menuItemCleanInfos);
+        menuLogs.add(menuItemCleanLogs);
+        menuBar.add(menuLogs);
+
+        menu = new JMenu("关于");
         menuItemHelp = new JMenuItem("帮助");
-        menuItemHelp.addActionListener(this);
         menuItemAbout = new JMenuItem("关于软件");
-        menuItemAbout.addActionListener(this);
-
-        menuAbout.add(menuItemHelp);
-        menuAbout.add(new JPopupMenu.Separator());
-        menuAbout.add(menuItemAbout);
-        menuAbout.add(new JPopupMenu.Separator());
+        menu.add(menuItemHelp);
+        menu.add(new JPopupMenu.Separator());
+        menu.add(menuItemAbout);
+        menu.add(new JPopupMenu.Separator());
         JMenuItem m1;
         m1 = new JMenuItem("Loom v1.0");
         m1.setEnabled(false);
-        menuAbout.add(m1);
+        menu.add(m1);
         m1 = new JMenuItem("Pupa version:3.6");
         m1.setEnabled(false);
-        menuAbout.add(m1);
+        menu.add(m1);
         m1 = new JMenuItem("Amnoon Auth. v3.6.9");
         m1.setEnabled(false);
-        menuAbout.add(m1);
+        menu.add(m1);
+        menuBar.add(menu);
 
-        menuBar.add(menuOptions);
-        menuBar.add(menuAbout);
 
         setLayout(new GridBagLayout());
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
@@ -215,10 +244,12 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1;
         gridBagConstraints.weighty = 1;
+        listModel = new DefaultListModel<String>();
         list1 = new JList<>(listModel);
-        JScrollPane scrollPane = new JScrollPane(list1);
+        scrollPane = new JScrollPane(list1);
         scrollPane.setBorder(new TitledBorder("信息"));
         add(scrollPane, gridBagConstraints);
+        scrollPane.setVisible(ConfigModule.showInfo);
 
         //检查一下有没有可用网卡，没有则不给操作
         if(nf == null ||nf.size() <= 0){
@@ -233,6 +264,31 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         }
     }
 
+    //事件监听设置
+    private void setupEvent(){
+        addWindowListener(this);
+
+        btn_login.addActionListener(this);
+
+        cb_remember.addActionListener(this);
+        cb_Log.addActionListener(this);
+        cb_remember.addActionListener(this);
+        cb_printLog.addActionListener(this);
+        cb_hideOnIconfied.addActionListener(this);
+        cb_notShownAtLaunch.addActionListener(this);
+        cb_showInfo.addActionListener(this);
+
+        menuItemCleanLogs.addActionListener(this);
+        menuItemSaveProfile.addActionListener(this);
+        menuItemAbout.addActionListener(this);
+        menuItemHelp.addActionListener(this);
+        menuItemCleanInfos.addActionListener(this);
+        menuItemOnline.addActionListener(this);
+        menuItemExit.addActionListener(this);
+
+        //cb_hideOnIconfied.addChangeListener(this);
+    }
+
 //-----系统托盘图标------------------------------------------
     private void setupTray(){
         Logger.log("Try to setup tray.");
@@ -242,6 +298,12 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 trayIcon = new TrayIcon(tray_offline);
                 trayIcon.setToolTip("Loom");
                 trayIcon.addMouseListener(this);
+                PopupMenu popupMenu = new PopupMenu();
+                popupMenu.add(menuItemState);
+                popupMenu.add(menuItemOnline);
+                popupMenu.addSeparator();
+                popupMenu.add(menuItemExit);
+                trayIcon.setPopupMenu(popupMenu);
                 try {
                     systemTray.add(trayIcon);
                     Logger.log("Add TrayIcon success.");
@@ -250,7 +312,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 }
             }else{
                 Logger.log("Tray not supported.");
-                ConfigModule.hideOnIconfied = false;
+                ConfigModule.hideOnIconified = false;
             }
         }
     }
@@ -282,6 +344,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     public void setTrayTip(String tips){
         if(trayIcon != null){
             trayIcon.setToolTip(tips);
+            menuItemState.setLabel(tips);
         }
     }
 
@@ -301,6 +364,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             t_username.setEnabled(false);
             t_password.setEnabled(false);
             btn_login.setEnabled(false);
+            menuItemOnline.setEnabled(false);
             cb_netcard.setEnabled(false);
         }catch (Exception e){
             e.printStackTrace();
@@ -313,6 +377,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             t_username.setEnabled(true);
             t_password.setEnabled(true);
             btn_login.setEnabled(true);
+            menuItemOnline.setEnabled(true);
             cb_netcard.setEnabled(true);
         }catch (Exception e){
             e.printStackTrace();
@@ -322,34 +387,24 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     //下线的时候修改UI用
     private void uiOffline(){
         btn_login.setText("上线");
-        cb_netcard.setEnabled(true);
+        //cb_netcard.setEnabled(true);
+        menuItemOnline.setLabel(btn_login.getText());
         unlockInputUI();
         setOfflineIcon();
     }
 
     private void shuttleOffline(){
-        shuttle.dispose();
-        shuttle = null;
+        if(shuttle != null){
+            shuttle.dispose();
+            shuttle = null;
+        }
     }
 
-    //事件监听设置
-    private void setupEvent(){
-        addWindowListener(this);
-
-        cb_remember.addActionListener(this);
-        btn_login.addActionListener(this);
-        cb_Log.addActionListener(this);
-        cb_remember.addActionListener(this);
-        cb_printLog.addActionListener(this);
-        menuItemCleanLogs.addActionListener(this);
-        menuItemSaveProfile.addActionListener(this);
-        cb_hideOnIconfied.addActionListener(this);
-    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         //登录按钮的动作
-        if(e.getSource() == btn_login){
+        if(e.getSource() == btn_login || e.getSource() == menuItemOnline){
 
             if (shuttle != null && shuttle.isOnline()) {
                 shuttle.Offline();
@@ -366,6 +421,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 lockInputUI();
                 btn_login.setText("上线中...");
             }
+            menuItemOnline.setLabel(btn_login.getText());
         }else if(e.getSource() == menuItemAbout){ //菜单里的关于
 
             String aboutInfo = "Loom\t(不是真的纺纱机啦)" +
@@ -416,7 +472,46 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             ConfigModule.outPrintLog = cb_printLog.isSelected();
         }else if(e.getSource() == cb_hideOnIconfied){
 
-            ConfigModule.hideOnIconfied = cb_hideOnIconfied.isSelected();
+            ConfigModule.hideOnIconified = cb_hideOnIconfied.isSelected();
+        }else if(e.getSource() == cb_notShownAtLaunch){
+
+            ConfigModule.notShownAtLaunch = cb_notShownAtLaunch.isSelected();
+        }else if(e.getSource() == cb_showInfo){
+
+            ConfigModule.showInfo = cb_showInfo.isSelected();
+            menuItemCleanInfos.setEnabled(ConfigModule.showInfo);
+            scrollPane.setVisible(ConfigModule.showInfo);
+            if(ConfigModule.showInfo && getHeight() < 240){
+                setSize(getWidth(),240);
+            }else if(!ConfigModule.showInfo){
+                setSize(getWidth(),(getHeight() < getMinimumSize().height?getMinimumSize().height:ConfigModule.windowHeight));
+            }
+        }else if(e.getSource() == menuItemCleanInfos){
+            listModel.clear();
+        }else if(e.getSource() == menuItemExit){
+            if(shuttle != null){
+                int result = JOptionPane.showConfirmDialog(null,"是否先下线再退出？",getTitle(),JOptionPane.YES_NO_CANCEL_OPTION);
+                switch (result){
+                    case JOptionPane.YES_OPTION:
+                        shuttleOffline();
+                        while (shuttle.isOnline());
+                        dispose();
+                        System.exit(0);
+                    case JOptionPane.NO_OPTION:
+                        dispose();
+                        Logger.log("Exit without offline.");
+                        System.exit(0);
+                        break;
+                    case JOptionPane.CANCEL_OPTION:
+                        //do nothing;
+                        break;
+                }
+            }else{
+                dispose();
+                System.exit(0);
+            }
+        }else if(e.getSource() == cb_notShownAtLaunch){
+            ConfigModule.notShownAtLaunch = cb_notShownAtLaunch.isSelected();
         }
 
         if(ConfigModule.autoSaveSetting) applyProfile();
@@ -434,7 +529,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     }
 
     public void logAtList(String s){
-        listModel.add(listModel.getSize(),s);
+        if(list1 != null && listModel != null && ConfigModule.showInfo){
+            listModel.add(listModel.getSize(),s);
+        }
     }
 
     @Override
@@ -443,8 +540,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             //服务器无响应
             case SHUTTLE_SERVER_NO_RESPONSE:{
                 if("knock_server_no_response".equals(message)){
-                    unlockInputUI();
-                    btn_login.setText("上线");
+                    uiOffline();
                     logAtList("获取认证服务器失败:服务器无响应");
                     JOptionPane.showMessageDialog(
                             this,
@@ -468,19 +564,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             break;
 
             //认证成功
-            case SHUTTLE_CERTIFICATE_SUCCESS:{
+            case SHUTTLE_CERTIFICATE_SUCCESS: {
                 logAtList("认证成功");
                 logAtList("已上线");
-                btn_login.setEnabled(true);
-                btn_login.setText("下线");
                 setOnlineIcon();
             }break;
 
             //认证失败
             case SHUTTLE_CERTIFICATE_FAILED:{
                 logAtList("认证失败:" + message);
-                btn_login.setEnabled(true);
-                btn_login.setText("上线");
                 unlockInputUI();
                 shuttleOffline();
                 JOptionPane.showMessageDialog(this,"认证失败\n"+message,this.getTitle(),JOptionPane.WARNING_MESSAGE);
@@ -594,9 +686,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     public void windowOpened(WindowEvent e) {
         Logger.log("Window Opened");
         if(Program.isDeveloperMode()){
-            JOptionPane.showMessageDialog(null,"你开启了开发者模式\n" +
+            JOptionPane.showMessageDialog(null, "你开启了开发者模式\n" +
                     "请注意，开发者模式将记录你所有的用户使用信息（包括账号密码）\n" +
-                    "请慎用开发者模式，如有需要请清理日志文件以保护隐私。","Developer Mode on",JOptionPane.WARNING_MESSAGE,icon_dev);
+                    "请慎用开发者模式，如有需要请清理日志文件以保护隐私。", "Developer Mode on", JOptionPane.WARNING_MESSAGE, icon_dev);
         }
     }
 
@@ -621,15 +713,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     @Override
     public void windowIconified(WindowEvent e) {
         Logger.log("Window Iconified");
-        if(ConfigModule.hideOnIconfied){
-            setVisible(false);
-        }
+        setVisible(!ConfigModule.hideOnIconified);
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
         Logger.log("Window Deiconified");
-        setVisible(true);
+        //setVisible(true);
     }
 
     @Override
@@ -644,9 +734,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if(e.getSource() == trayIcon && e.getButton() == MouseEvent.BUTTON1){
-            setState(JFrame.NORMAL);
+        if(e.getSource() == trayIcon && (e.getButton() == MouseEvent.BUTTON2 || e.getButton() == MouseEvent.BUTTON3)){
             setVisible(true);
+            //setState(JFrame.NORMAL);
         }
     }
 
@@ -669,4 +759,5 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     public void mouseExited(MouseEvent e) {
 
     }
+
 }

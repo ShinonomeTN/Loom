@@ -9,17 +9,22 @@ import java.io.*;
 /**
  * Created by catten on 15/11/17.
  */
-public class ConfigModule {
+public class ConfigModule{
+
+    private static ConfigModule configModule = new ConfigModule();
+    public static ConfigModule getConfigModule() { return configModule; }
     //公开的可读取的字段
-    public static boolean useLog = true;
+    public static Boolean useLog = true;
     public static String username = "";
     public static String password = "";
-    public static boolean autoSaveSetting = true;
+    public static Boolean autoSaveSetting = true;
     public static String defaultInterface = "";
-    public static boolean outPrintLog = true;
-    public static int windowWidth = 240;
-    public static int windowHeight = 400;
-    public static boolean hideOnIconfied = true;
+    public static Boolean outPrintLog = true;
+    public static Integer windowWidth = 240;
+    public static Integer windowHeight = 400;
+    public static Boolean hideOnIconified = true;
+    public static Boolean showInfo = false;
+    public static Boolean notShownAtLaunch = false;
 
     //配置文件目录
     private static File profilePath;
@@ -93,7 +98,9 @@ public class ConfigModule {
                         else if("outPrintLog".equals(split[0])) outPrintLog = Boolean.parseBoolean(split[1]);
                         else if("windowWidth".equals(split[0])) windowWidth = Integer.parseInt(split[1]);
                         else if("windowHeight".equals(split[0])) windowHeight = Integer.parseInt(split[1]);
-                        else if("hideOnIconfied".equals(split[0])) hideOnIconfied = Boolean.parseBoolean(split[1]);
+                        else if("hideOnIconified".equals(split[0])) hideOnIconified = Boolean.parseBoolean(split[1]);
+                        else if("showInfo".equals(split[0])) showInfo = Boolean.parseBoolean(split[1]);
+                        else if("notShownAtLaunch".equals(split[0])) notShownAtLaunch = Boolean.parseBoolean(split[1]);
 
                         Logger.log(Program.isDeveloperMode()?field + " copied.":"----Ignored----");
                     }catch (NullPointerException | ArrayIndexOutOfBoundsException e){
@@ -114,29 +121,32 @@ public class ConfigModule {
 
         try {
             Logger.log("Writing profile.");
-            profileBuffer = Pronunciation.encrypt3849(String.format(
-                    "%s\n" +
-                            "useLog=%s\n" +
-                            "username=%s\n" +
-                            "password=%s\n" +
-                            "autoSaveSetting=%s\n" +
-                            "defaultInterface=%s\n" +
-                            "outPrintLog=%s\n" +
-                            "windowWidth=%d\n" +
-                            "windowHeight=%d\n" +
-                            "hideOnIconfied=%s"
-                    ,
-                    "crypt3849",
-                    useLog,
-                    username,
-                    password,
-                    autoSaveSetting,
-                    defaultInterface,
-                    outPrintLog,
-                    windowWidth,
-                    windowHeight,
-                    hideOnIconfied
-            ).getBytes());
+            profileBuffer = Pronunciation.encrypt3849(
+                    String.format(  "%s\n" +
+                                    "useLog=%s\n" +
+                                    "username=%s\n" +
+                                    "password=%s\n" +
+                                    "autoSaveSetting=%s\n" +
+                                    "defaultInterface=%s\n" +
+                                    "outPrintLog=%s\n" +
+                                    "windowWidth=%d\n" +
+                                    "windowHeight=%d\n" +
+                                    "hideOnIconified=%s\n" +
+                                    "showInfo=%s\n" +
+                                    "notShownAtLaunch=%s\n",
+                            "crypt3849",
+                            useLog,
+                            username,
+                            password,
+                            autoSaveSetting,
+                            defaultInterface,
+                            outPrintLog,
+                            windowWidth,
+                            windowHeight,
+                            hideOnIconified,
+                            showInfo,
+                            notShownAtLaunch
+                    ).getBytes());
 
             fileWriter = new FileOutputStream(profilePath);
             fileWriter.write(profileBuffer);
