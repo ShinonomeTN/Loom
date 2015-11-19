@@ -162,10 +162,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menu.add(m1);
         menuBar.add(menu);
 
-
         setLayout(new GridBagLayout());
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.anchor = GridBagConstraints.BELOW_BASELINE_LEADING;
+        gridBagConstraints.anchor = GridBagConstraints.WEST;
         Insets left_inset = new Insets(2,10,2,0);
         Insets right_inset = new Insets(2,0,2,10);
         Insets normal_inset = new Insets(2,2,2,2);
@@ -179,8 +178,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         add(new JLabel("用户名:",JLabel.RIGHT),gridBagConstraints);
 
         gridBagConstraints.gridx++;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.weightx = 1;
         gridBagConstraints.insets = right_inset;
         t_username = new JTextField();
         t_username.setText(ConfigModule.username);
@@ -194,7 +193,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         add(new JLabel("密码:",JLabel.RIGHT),gridBagConstraints);
 
         gridBagConstraints.gridx++;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridwidth = 3;
         gridBagConstraints.insets = right_inset;
         t_password = new JPasswordField();
         t_password.setText(ConfigModule.password);
@@ -204,10 +203,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.gridy++;
         gridBagConstraints.insets = left_inset;
         gridBagConstraints.gridwidth = 1;
+        gridBagConstraints.weightx = 0;
         add(new JLabel("网卡:",JLabel.RIGHT),gridBagConstraints);
 
         gridBagConstraints.gridx++;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridwidth = 3;
         gridBagConstraints.insets = right_inset;
         cb_netcard = new JComboBox<>();
         nf = Networks.getNetworkInterfaces(false);//获取网卡列表
@@ -225,12 +225,12 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.gridy++;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.insets = left_inset;
-        gridBagConstraints.weightx = 0.2;
+        gridBagConstraints.weightx = 0.5;
         stat_icon = new JLabel(icon_offline,JLabel.CENTER);
         add(stat_icon,gridBagConstraints);
 
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridwidth = 1;
+        gridBagConstraints.gridx += 2;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.weightx = 0.5;
         gridBagConstraints.insets = right_inset;
         //gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -239,7 +239,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         gridBagConstraints.gridy++;
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.insets = normal_inset;
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1;
@@ -429,8 +429,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     "\n\n此软件开源自由，遵循GPL(General Public License)协议" +
                     "\nhttp://www.gnu.org/licenses/gpl.html" +
                     "\n源代码托管于Github上" +
-                    "\n有关于此软件出现的问题可以邮件至我邮箱：" +
-                    "\nkozakcuu@gmail.com";
+                    "\nhttps://github.com/shinonometn/Loom" +
+                    "\n有关于此软件出现的问题可以邮件至：" +
+                    "\nfsmany@126.com" +
+                    "\n\n東雲電気通信網　2015-11-19";
 
             JOptionPane.showMessageDialog(null,aboutInfo,"关于 Loom",JOptionPane.INFORMATION_MESSAGE,icon_app);
         }else if(e.getSource() == menuItemHelp){//菜单里的帮助
