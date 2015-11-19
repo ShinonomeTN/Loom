@@ -1,5 +1,6 @@
 package com.shinonometn.Loom.connector;
 
+import com.shinonometn.Loom.common.ConfigModule;
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Loom.connector.Messenger.Messenger;
 import com.shinonometn.Loom.connector.Messenger.ShuttleEvent;
@@ -61,12 +62,19 @@ public class Shuttle extends Thread{
         for(InterfaceAddress iA:interfaceAddressList){
             if(iA.toString().contains(".")) {
                 localInetAddress = iA.getAddress();
-                ipAddress = iA.getAddress().toString().replace("/", "");
-                Logger.log("Shuttle change IP to " + ipAddress);
-                try {
-                    macAddress = networkInterface.getHardwareAddress();
-                } catch (SocketException e) {
-                    Logger.error(e.getMessage());
+                if(ConfigModule.fakeIP.toLowerCase().equals("null") && ConfigModule.fakeMac.toLowerCase().equals("null")){
+                    ipAddress = iA.getAddress().toString().replace("/", "");
+                    Logger.log("Shuttle change IP to " + ipAddress);
+                    try {
+                        macAddress = networkInterface.getHardwareAddress();
+                    } catch (SocketException e) {
+                        Logger.error(e.getMessage());
+                    }
+                }else{
+                    ipAddress = ConfigModule.fakeIP;
+                    Logger.log("Shuttle changed fake IP to " + ipAddress);
+                    macAddress = HexTools.hexStr2Bytes(ConfigModule.fakeMac);
+                    Logger.log("Shuttle change fake mac to " + ConfigModule.fakeMac);
                 }
             }
         }

@@ -25,6 +25,8 @@ public class ConfigModule{
     public static Boolean hideOnIconified = true;
     public static Boolean showInfo = false;
     public static Boolean notShownAtLaunch = false;
+    public static String fakeIP = "null";
+    public static String fakeMac = "null";
 
     //配置文件目录
     private static File profilePath;
@@ -101,6 +103,11 @@ public class ConfigModule{
                         else if("hideOnIconified".equals(split[0])) hideOnIconified = Boolean.parseBoolean(split[1]);
                         else if("showInfo".equals(split[0])) showInfo = Boolean.parseBoolean(split[1]);
                         else if("notShownAtLaunch".equals(split[0])) notShownAtLaunch = Boolean.parseBoolean(split[1]);
+                        else if("fakeIP".equals(split[0])) fakeIP = split[1];
+                        else if("fakeMac".equals(split[0])) fakeMac = split[1];
+
+                        if(fakeIP.equals("")) fakeIP = "null";
+                        if(fakeMac.equals("")) fakeMac = "null";
 
                         Logger.log(Program.isDeveloperMode()?field + " copied.":"----Ignored----");
                     }catch (NullPointerException | ArrayIndexOutOfBoundsException e){
@@ -133,7 +140,9 @@ public class ConfigModule{
                                     "windowHeight=%d\n" +
                                     "hideOnIconified=%s\n" +
                                     "showInfo=%s\n" +
-                                    "notShownAtLaunch=%s\n",
+                                    "notShownAtLaunch=%s\n" +
+                                    "fakeIP=%s\n" +
+                                    "fakeMac=%s\n",
                             "crypt3849",
                             useLog,
                             username,
@@ -145,7 +154,9 @@ public class ConfigModule{
                             windowHeight,
                             hideOnIconified,
                             showInfo,
-                            notShownAtLaunch
+                            notShownAtLaunch,
+                            fakeIP,
+                            fakeMac
                     ).getBytes());
 
             fileWriter = new FileOutputStream(profilePath);

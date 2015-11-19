@@ -78,7 +78,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     public MainForm(){
         super("Loom");
-        setMinimumSize(new Dimension(200, 180));
+        setMinimumSize(new Dimension(200, 200));
         setSize(ConfigModule.windowWidth, ConfigModule.windowHeight);
         setIconImage(image_app);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -151,7 +151,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menu.add(menuItemAbout);
         menu.add(new JPopupMenu.Separator());
         JMenuItem m1;
-        m1 = new JMenuItem("Loom v1.0");
+        m1 = new JMenuItem("Loom v1.8");
         m1.setEnabled(false);
         menu.add(m1);
         m1 = new JMenuItem("Pupa version:3.6");
@@ -160,6 +160,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         m1 = new JMenuItem("Amnoon Auth. v3.6.9");
         m1.setEnabled(false);
         menu.add(m1);
+        if(!(ConfigModule.fakeMac.toLowerCase().equals("null") && ConfigModule.fakeIP.toLowerCase().equals("null"))){
+            m1 = new JMenuItem("Fake Mode on");
+            m1.setEnabled(false);
+            menu.add(m1);
+        }
         menuBar.add(menu);
 
         setLayout(new GridBagLayout());
@@ -171,10 +176,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        add(new JLabel("Loom v1.8",icon_app,JLabel.CENTER), gridBagConstraints);
+
+        gridBagConstraints.gridy++;
         gridBagConstraints.gridwidth = 1;
         gridBagConstraints.weightx = 0;
         gridBagConstraints.insets = left_inset;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         add(new JLabel("用户名:",JLabel.RIGHT),gridBagConstraints);
 
         gridBagConstraints.gridx++;
@@ -486,7 +495,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             if(ConfigModule.showInfo && getHeight() < 240){
                 setSize(getWidth(),240);
             }else if(!ConfigModule.showInfo){
-                setSize(getWidth(),(getHeight() < getMinimumSize().height?getMinimumSize().height:ConfigModule.windowHeight));
+                setSize(getWidth(),getMinimumSize().height);
             }
         }else if(e.getSource() == menuItemCleanInfos){
             listModel.clear();
@@ -570,6 +579,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 logAtList("认证成功");
                 logAtList("已上线");
                 setOnlineIcon();
+                unlockInputUI();
             }break;
 
             //认证失败
@@ -721,7 +731,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     @Override
     public void windowDeiconified(WindowEvent e) {
         Logger.log("Window Deiconified");
-        //setVisible(true);
+        if(Toolbox.getSystemName().contains("mac")) setVisible(true);
     }
 
     @Override
@@ -736,9 +746,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if(e.getSource() == trayIcon && (e.getButton() == MouseEvent.BUTTON2 || e.getButton() == MouseEvent.BUTTON3)){
-            setVisible(true);
-            //setState(JFrame.NORMAL);
+        if(e.getSource() == trayIcon){
+            if(Toolbox.getSystemName().contains("mac")){
+                if(e.getButton() == MouseEvent.BUTTON2 || e.getButton() == MouseEvent.BUTTON3)
+                    setVisible(true);
+            }
+            else if(e.getButton() == MouseEvent.BUTTON1)
+                setVisible(true);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.shinonometn.Loom;
 
+import com.shinonometn.Loom.common.ConfigModule;
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Loom.common.Networks;
 import com.shinonometn.Loom.common.Toolbox;
@@ -29,6 +30,19 @@ public class Program{
             if(args[1] != null && "-developerMode".toLowerCase().equals(args[1].toLowerCase())){
                 developerMode = true;
             }
+
+            if(args.length == 4){
+                if(args[0].toLowerCase().equals("-fakeip")){
+                    if(args[2].toLowerCase().equals("-fakemac")){
+                        Logger.log("Writing fake IP and Mac to profile.");
+                        System.out.println("Writing fake IP and Mac to profile.");
+                        ConfigModule.fakeIP = args[1];
+                        ConfigModule.fakeMac = args[3];
+                        ConfigModule.writeProfile();
+                        return;
+                    }
+                }
+            }
         }
         //Logger.outPrint = developerMode;
         Logger.log(developerMode ? "DeveloperMode on" +
@@ -42,6 +56,12 @@ public class Program{
             if(Logger.isWriteToFile()){
                 Logger.closeLog();
             }
+        }else if(args.length == 1 && args[0].toLowerCase().equals("-clearfakeinfo")){
+            ConfigModule.fakeIP = "null";
+            ConfigModule.fakeMac = "null";
+            ConfigModule.writeProfile();
+            Logger.log("Fake IP and Mac Cleared");
+            System.out.println("Fake IP and Mac Cleared");
         }else if(args.length == 0 || "-graphicMode".toLowerCase().equals(args[0].toLowerCase())){
             Logger.log("Loom Graphic Mode");
             try{
@@ -81,7 +101,7 @@ public class Program{
 
     public static void LoomConsole(){
         try {
-            System.out.println("Welcome to use Loom v0.4!\n");
+            System.out.println("Welcome to use Loom v1.8 Console!\n");
 
             String ip;
             String username;
