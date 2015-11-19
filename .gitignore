@@ -7,3 +7,5 @@ out/
 *.log
 
 profile/
+log/
+product/

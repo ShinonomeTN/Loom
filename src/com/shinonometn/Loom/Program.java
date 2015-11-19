@@ -9,6 +9,9 @@ import com.shinonometn.Loom.ui.MainForm;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 
 import javax.swing.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.*;
 import java.util.List;
 import java.util.Scanner;
@@ -25,6 +28,22 @@ public class Program{
     }
 
     public static void main(String[] args){
+        File lockfile = new File("./profile/.lock");
+        FileWriter wlock;
+        if(lockfile.exists()){
+            System.out.println("You have already running a loom. If not, please delete ./profile/.lock.");
+            return;
+        }else{
+            try {
+                lockfile.createNewFile();
+                wlock = new FileWriter(lockfile);
+                wlock.write("Loom is running.");
+                lockfile.deleteOnExit();
+            } catch (IOException e) {
+                Logger.log("Get Lock failed.");
+            }
+        }
+
         Logger.log("System: " + Toolbox.getSystemName());
         if(args.length >= 2){
             if(args[1] != null && "-developerMode".toLowerCase().equals(args[1].toLowerCase())){
