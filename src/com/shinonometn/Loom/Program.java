@@ -10,9 +10,11 @@ import com.shinonometn.Pupa.ToolBox.HexTools;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.*;
+import java.nio.channels.FileLock;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Vector;
@@ -29,18 +31,18 @@ public class Program{
 
     public static void main(String[] args){
         File lockfile = new File("./profile/.lock");
-        FileWriter wlock;
-        if(lockfile.exists()){
-            System.out.println("You have already running a loom. If not, please delete ./profile/.lock.");
-            return;
-        }else{
+        FileLock wlock;
+        if(!lockfile.exists()){
             try {
                 lockfile.createNewFile();
-                wlock = new FileWriter(lockfile);
-                wlock.write("Loom is running.");
+                wlock = new FileOutputStream(lockfile).getChannel().tryLock();
                 lockfile.deleteOnExit();
+                if(wlock == null){
+                    System.out.println("Not Allow more than one Loom use same profile. Program exits.");
+                    return;
+                }
             } catch (IOException e) {
-                Logger.log("Get Lock failed.");
+                Logger.log("Lock failed.");
             }
         }
 

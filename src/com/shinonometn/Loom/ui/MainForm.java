@@ -188,7 +188,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.insets = normal_inset;
         if(ConfigModule.isFakeMode()){
-            add(new JLabel("Loom v1.8(Fake Mode)",new ImageIcon(getClass().getResource("/com/shinonometn/img/key.png")),JLabel.CENTER),gridBagConstraints);
+            add(new JLabel("Loom v1.8 (Fake Mode)", new ImageIcon(getClass().getResource("/com/shinonometn/img/key.png")), JLabel.CENTER), gridBagConstraints);
         }else
             add(new JLabel("Loom v1.8",icon_app,JLabel.CENTER), gridBagConstraints);
 
@@ -438,11 +438,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         if(e.getSource() == btn_login || e.getSource() == menuItemOnline){
 
             if (shuttle != null && shuttle.isOnline()) {
-                shuttle.Offline();
                 lockInputUI();
-                //btn_login.setEnabled(false);
                 btn_login.setText("下线中");
+                shuttle.Offline();
+                //btn_login.setEnabled(false);
             }else{
+                lockInputUI();
+                btn_login.setText("上线中...");
                 shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
                 shuttle.developerMode = Program.isDeveloperMode();
                 shuttle.setUsername(t_username.getText());
@@ -450,9 +452,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 shuttle.start();
                 ConfigModule.username = t_username.getText();
                 ConfigModule.password = new String(t_password.getPassword());
-                lockInputUI();
                 //btn_login.setEnabled(false);
-                btn_login.setText("上线中...");
             }
             menuItemOnline.setLabel(btn_login.getText());
         }else if(e.getSource() == menuItemAbout){ //菜单里的关于
