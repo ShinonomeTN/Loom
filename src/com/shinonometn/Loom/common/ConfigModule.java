@@ -70,6 +70,10 @@ public class ConfigModule{
         }
     }
 
+    public static boolean isFakeMode(){
+        return (!ConfigModule.fakeIP.toLowerCase().equals("null") && !ConfigModule.fakeMac.toLowerCase().equals("null"));
+    }
+
     private static void readProfile() throws IOException {
         Logger.log("Try to read profile.");
         fileReader = new FileInputStream(profilePath);

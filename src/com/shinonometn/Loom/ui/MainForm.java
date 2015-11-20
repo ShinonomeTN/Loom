@@ -7,6 +7,8 @@ import com.shinonometn.Loom.common.Networks;
 import com.shinonometn.Loom.common.Toolbox;
 import com.shinonometn.Loom.connector.Messenger.ShuttleEvent;
 import com.shinonometn.Loom.connector.Shuttle;
+import sun.lwawt.macosx.CMenu;
+import sun.lwawt.macosx.CMenuBar;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -78,7 +80,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     public MainForm(){
         super("Loom");
-        setMinimumSize(new Dimension(200, 200));
+        if(Toolbox.getSystemName().contains("mac"))
+            com.apple.eawt.Application.getApplication().setDockIconImage(image_app);
+        setMinimumSize(new Dimension(200, 217));
         setSize(ConfigModule.windowWidth, ConfigModule.windowHeight);
         setIconImage(image_app);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -92,7 +96,6 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     //设置界面
     private void setupUI(){
         menuBar = new JMenuBar();
-        setJMenuBar(menuBar);
 
         //menuOptions = new JMenu("选项");
         //-
@@ -160,12 +163,17 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         m1 = new JMenuItem("Amnoon Auth. v3.6.9");
         m1.setEnabled(false);
         menu.add(m1);
-        if(!(ConfigModule.fakeMac.toLowerCase().equals("null") && ConfigModule.fakeIP.toLowerCase().equals("null"))){
+        if(ConfigModule.isFakeMode()){
             m1 = new JMenuItem("Fake Mode on");
             m1.setEnabled(false);
             menu.add(m1);
         }
         menuBar.add(menu);
+
+        if(Toolbox.getSystemName().contains("mac")){
+            com.apple.eawt.Application.getApplication().setDefaultMenuBar(menuBar);
+        }
+        setJMenuBar(menuBar);
 
         setLayout(new GridBagLayout());
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
@@ -178,7 +186,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        add(new JLabel("Loom v1.8",icon_app,JLabel.CENTER), gridBagConstraints);
+        gridBagConstraints.insets = normal_inset;
+        if(ConfigModule.isFakeMode()){
+            add(new JLabel("Loom v1.8(Fake Mode)",new ImageIcon(getClass().getResource("/com/shinonometn/img/key.png")),JLabel.CENTER),gridBagConstraints);
+        }else
+            add(new JLabel("Loom v1.8",icon_app,JLabel.CENTER), gridBagConstraints);
 
         gridBagConstraints.gridy++;
         gridBagConstraints.gridwidth = 1;
@@ -313,6 +325,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 popupMenu.addSeparator();
                 popupMenu.add(menuItemExit);
                 trayIcon.setPopupMenu(popupMenu);
+                //if(Toolbox.getSystemName().contains("mac")) com.apple.eawt.Application.getApplication().setDockMenu((CMenu)popupMenu);
                 try {
                     systemTray.add(trayIcon);
                     Logger.log("Add TrayIcon success.");
@@ -328,6 +341,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     public void setOfflineIcon(){
         stat_icon.setIcon(icon_offline);
+        //stat_icon.setText("");
         if(trayIcon != null){
             trayIcon.setImage(tray_offline);
             setTrayTip("状态：下线");
@@ -335,6 +349,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     }
 
     public void setOnlineIcon(){
+        btn_login.setText("下线");
+        stat_icon.setText("");
+        menuItemOnline.setLabel(btn_login.getText());
         stat_icon.setIcon(icon_online);
         if(trayIcon != null){
             trayIcon.setImage(tray_online);
@@ -361,6 +378,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         if(trayIcon != null){
             if(!Toolbox.getSystemName().contains("mac")){
                 trayIcon.displayMessage(title, content, TrayIcon.MessageType.INFO);
+            }else{
+                com.apple.eawt.Application.getApplication().requestUserAttention(true);
             }
         }
     }
@@ -394,12 +413,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     }
 
     //下线的时候修改UI用
-    private void uiOffline(){
+    private void uiOffline() {
         btn_login.setText("上线");
         //cb_netcard.setEnabled(true);
         menuItemOnline.setLabel(btn_login.getText());
         unlockInputUI();
+        btn_login.setEnabled(true);
+        menuItemOnline.setEnabled(true);
         setOfflineIcon();
+        stat_icon.setText("");
     }
 
     private void shuttleOffline(){
@@ -418,6 +440,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             if (shuttle != null && shuttle.isOnline()) {
                 shuttle.Offline();
                 lockInputUI();
+                //btn_login.setEnabled(false);
                 btn_login.setText("下线中");
             }else{
                 shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
@@ -428,6 +451,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 ConfigModule.username = t_username.getText();
                 ConfigModule.password = new String(t_password.getPassword());
                 lockInputUI();
+                //btn_login.setEnabled(false);
                 btn_login.setText("上线中...");
             }
             menuItemOnline.setLabel(btn_login.getText());
@@ -498,6 +522,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 setSize(getWidth(),getMinimumSize().height);
             }
         }else if(e.getSource() == menuItemCleanInfos){
+
             listModel.clear();
         }else if(e.getSource() == menuItemExit){
             if(shuttle != null){
@@ -522,6 +547,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 System.exit(0);
             }
         }else if(e.getSource() == cb_notShownAtLaunch){
+
             ConfigModule.notShownAtLaunch = cb_notShownAtLaunch.isSelected();
         }
 
@@ -579,13 +605,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 logAtList("认证成功");
                 logAtList("已上线");
                 setOnlineIcon();
-                unlockInputUI();
+                lockInputUI();
+                btn_login.setEnabled(true);
+                menuItemOnline.setEnabled(true);
             }break;
 
             //认证失败
-            case SHUTTLE_CERTIFICATE_FAILED:{
+            case SHUTTLE_CERTIFICATE_FAILED: {
                 logAtList("认证失败:" + message);
-                unlockInputUI();
+                uiOffline();
                 shuttleOffline();
                 JOptionPane.showMessageDialog(this,"认证失败\n"+message,this.getTitle(),JOptionPane.WARNING_MESSAGE);
             }break;
@@ -599,16 +627,16 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             //端口被占用
             case SHUTTLE_PORT_IN_USE:{
                 if("get_connect_socket_failed".equals(message)){
-                    logAtList("目的网卡端口号正在被使用，获取Socket失败");
+                    logAtList("无法建立链接");
                     JOptionPane.showMessageDialog(
                             this,
-                            "端口正在被使用：目的网卡拨号端口被占用\n请查看您是否已经启动了其他拨号器，或者尝试更换目的网卡",
+                            "无法建立链接，可以稍后再试或者重启程序再试试",
                             this.getTitle(),
                             JOptionPane.WARNING_MESSAGE
                     );
                     uiOffline();
                     shuttleOffline();
-                    trayPopMessage(getTitle(),"目的网卡端口号正在被使用，上线失败");
+                    trayPopMessage(getTitle(),"由于链接问题，上线失败");
                 }else if("get_message_socket_failed".equals(message)){
                     logAtList("消息监听端口被占用，获取Socket失败");
                     JOptionPane.showMessageDialog(
@@ -617,7 +645,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             getTitle(),
                             JOptionPane.INFORMATION_MESSAGE
                     );
-                    trayPopMessage(getTitle(), "消息监听端口被占用，无法监听服务器消息了。");
+                    trayPopMessage(getTitle(), "消息监听出了问题，无法监听服务器消息了。");
                 }
             }
             break;
@@ -641,6 +669,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     uiOffline();
                     shuttleOffline();
                     trayPopMessage(getTitle(),"敲门不成功，上线失败");
+                }else if("certificate_info_not_filled".equals(message)){
+                    uiOffline();
+                    shuttleOffline();
+                    JOptionPane.showMessageDialog(this,"密码或帐号为空",getTitle(),JOptionPane.ERROR_MESSAGE);
                 }
                 logAtList("未知错误:" + message);
             }break;
@@ -659,16 +691,19 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     logAtList("在线状态续期成功");
                 }
                 setOnlineIcon();
+                stat_icon.setText("");
             }break;
 
             //续命失败（大雾
             case SHUTTLE_BREATHE_FAILED:{
                 logAtList("服务器否认在线状态");
                 setOfflineIcon();
+                stat_icon.setText("被下线");
             }break;
 
             //续命错误（超级雾
             case SHUTTLE_BREATHE_EXCEPTION:{
+                stat_icon.setText("");
                 if("breathe_timeout".equals(message)){
                     logAtList("续期超时，重试");
                     setLinkingIcon();
@@ -685,7 +720,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             case SHUTTLE_SERVER_MESSAGE:{
                 if("offline".equals(message)){
                     logAtList("服务器要求下线");
-                    trayPopMessage(getTitle(),"服务器要求下线");
+                    trayPopMessage(getTitle(), "服务器要求下线");
+                    //stat_icon.setText("被下线");
                 }else{
                     logAtList("接收到了一条服务器消息:"+message);
                     trayPopMessage("接收到了一条服务器消息",message);
@@ -722,21 +758,26 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         Logger.log("Window Closed");
     }
 
+    //private boolean deiconifiedFlag = false;
     @Override
     public void windowIconified(WindowEvent e) {
         Logger.log("Window Iconified");
-        setVisible(!ConfigModule.hideOnIconified);
+        //if(ConfigModule.hideOnIconified && !deiconifiedFlag) setVisible(false);
+        if(ConfigModule.hideOnIconified && !Toolbox.getSystemName().contains("mac")) setVisible(false);
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
         Logger.log("Window Deiconified");
-        if(Toolbox.getSystemName().contains("mac")) setVisible(true);
+        //deiconifiedFlag = false;
+        //if(Toolbox.getSystemName().contains("mac")) setVisible(true);
+        setVisible(true);
     }
 
     @Override
     public void windowActivated(WindowEvent e) {
         Logger.log("Window Activated");
+        if(Toolbox.getSystemName().contains("mac")) com.apple.eawt.Application.getApplication().requestUserAttention(false);
     }
 
     @Override
@@ -748,11 +789,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     public void mouseClicked(MouseEvent e) {
         if(e.getSource() == trayIcon){
             if(Toolbox.getSystemName().contains("mac")){
-                if(e.getButton() == MouseEvent.BUTTON2 || e.getButton() == MouseEvent.BUTTON3)
+                if(e.getButton() == MouseEvent.BUTTON2 || e.getButton() == MouseEvent.BUTTON3) {
                     setVisible(true);
+                    //deiconifiedFlag = true;
+                }
             }
-            else if(e.getButton() == MouseEvent.BUTTON1)
+            else if(e.getButton() == MouseEvent.BUTTON1) {
                 setVisible(true);
+                //deiconifiedFlag = true;
+            }
         }
     }
 

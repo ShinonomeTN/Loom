@@ -62,7 +62,7 @@ public class Shuttle extends Thread{
         for(InterfaceAddress iA:interfaceAddressList){
             if(iA.toString().contains(".")) {
                 localInetAddress = iA.getAddress();
-                if(ConfigModule.fakeIP.toLowerCase().equals("null") && ConfigModule.fakeMac.toLowerCase().equals("null")){
+                if(!ConfigModule.isFakeMode()){
                     ipAddress = iA.getAddress().toString().replace("/", "");
                     Logger.log("Shuttle change IP to " + ipAddress);
                     try {
@@ -85,7 +85,7 @@ public class Shuttle extends Thread{
             datagramSocket = new DatagramSocket(3848,localInetAddress);
             datagramSocket.setSoTimeout(defaultSocketTimeout);
             Logger.log("Get socket success.");
-            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_GET_SOCKET_SUCCESS, "get_socket_success");
+            shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_GET_SOCKET_SUCCESS, "get_connect_socket_success");
         } catch (SocketException e) {
             Logger.error("Get socket Failed." + e.getMessage());
             shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_PORT_IN_USE, "get_connect_socket_failed");
@@ -158,7 +158,7 @@ public class Shuttle extends Thread{
                 return;
             } catch (IOException e) {
                 if(e.getMessage().equals("No route to host")){
-                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT,"no_route_to_host");
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT,e.getMessage().toLowerCase().replace(" ","_"));
                 }else{
                     Logger.error("Unknown Exception. cause:" + e.getMessage());
                     shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, "unknown_exception_knocking");
