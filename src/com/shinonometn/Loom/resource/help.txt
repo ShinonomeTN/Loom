@@ -30,6 +30,8 @@ java -jar Loom.jar -setAutoMode [onlineTime]-[offlineTime] [mode:both|online|off
     at 23:45. If change mode to "online" will only execute online action or change to
     "offline" mode will only execute offline action the time you set.
 
+    **Please note that auto-online mode not work under command line mode.
+
 Loom Help Document
 2015/11/21
 By John Kozak

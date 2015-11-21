@@ -86,6 +86,10 @@ public class Program{
         }
 
         if(args.length >= 2 && "-setautomode".equals(args[0].toLowerCase())){
+            Logger.closeLog();
+            Logger.deleteLog();
+            Logger.outPrint = false;
+            System.out.println("Please note that auto-online mode not support command line mode.");
             if(args[1].matches(ConfigModule.timeFormat + "\\-" + ConfigModule.timeFormat)){
                 String[] matchBuffer = args[1].split("\\-");
                 ConfigModule.autoOnlineTime = matchBuffer[0];
@@ -100,7 +104,7 @@ public class Program{
                         ConfigModule.autoOnlineMode
                 );
                 System.out.println(temp);
-                Logger.log(temp);
+                //Logger.log(temp);
             }
         }
 

@@ -15,7 +15,7 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.NetworkInterface;
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -72,8 +72,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     Shuttle shuttle;
     Vector<NetworkInterface> nf;
     Resource resource = Resource.getResource();
+    Timer timer;
+    private boolean timerAlertedFlag = false;
 
-//图标资源
+    //图标资源
     ImageIcon icon_online = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/link.png"));
     ImageIcon icon_offline = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/link_break.png"));
     ImageIcon icon_linking = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/link_go.png"));
@@ -130,25 +132,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         buttonGroup.add(rbmi_AutoModeOffline);
 
         menuItemSetAutoOnline = new JMenuItem((ConfigModule.allowAutoMode()?"关闭自动上下线":"设置自动上下线"));
+        Logger.log(String.format(
+                        "Auto online/offline mode was %s Mode: %s",
+                        ConfigModule.allowAutoMode() ? "opend." : "closed.",
+                        ConfigModule.autoOnlineMode)
+        );
         menuItemStateAutoOnline = new JMenuItem();
-        switch (ConfigModule.autoOnlineMode) {
-            case "both":
-                menuItemStateAutoOnline.setText(
-                        String.format("将于%s上线，%s下线", ConfigModule.autoOnlineTime, ConfigModule.autoOfflineTime)
-                );
-                break;
-            case "online":
-                menuItemStateAutoOnline.setText(
-                        String.format("将于%s上线", ConfigModule.autoOnlineTime)
-                );
-                break;
-            case "offline":
-                menuItemStateAutoOnline.setText(
-                        String.format("将于%s下线", ConfigModule.autoOfflineTime)
-                );
-                break;
-        }
         menuItemStateAutoOnline.setEnabled(false);
+        updateAutoModeState();
 
         menuItemCleanLogs = new JMenuItem("清除日志目录");
         menuItemSaveProfile = new JMenuItem("立即保存设置");
@@ -418,26 +409,20 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         actionListener = new ActionListener() {
 
-            Timer timer = new Timer(10000,this);
-            DateFormat dateFormat = DateFormat.getTimeInstance(DateFormat.MEDIUM);
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+            String date = simpleDateFormat.format(new Date());
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(e.getSource() == rbmi_AutoModeBoth){
                     ConfigModule.autoOnlineMode = "both";
-                    menuItemStateAutoOnline.setText(
-                            String.format("将于%s上线，%s下线", ConfigModule.autoOnlineTime, ConfigModule.autoOfflineTime)
-                    );
+                    updateAutoModeState();
                 }else if(e.getSource() == rbmi_AutoModeOnline){
                     ConfigModule.autoOnlineMode = "online";
-                    menuItemStateAutoOnline.setText(
-                            String.format("将于%s上线", ConfigModule.autoOnlineTime)
-                    );
+                    updateAutoModeState();
                 }else if(e.getSource() == rbmi_AutoModeOffline){
                     ConfigModule.autoOnlineMode = "offline";
-                    menuItemStateAutoOnline.setText(
-                            String.format("将于%s下线", ConfigModule.autoOfflineTime)
-                    );
+                    updateAutoModeState();
                 }else if(e.getSource() == menuItemSetAutoOnline){
                     if(ConfigModule.allowAutoMode()){
                         int sele = JOptionPane.showConfirmDialog(getOwner(),"关闭自动上下线功能？",getTitle(),JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
@@ -445,7 +430,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             menuItemSetAutoOnline.setText("设置定时上下线");
                             ConfigModule.autoOfflineTime = "";
                             ConfigModule.autoOnlineTime = "";
-                            menuItemStateAutoOnline.setText("定时上下线已关闭");
+                            //menuItemStateAutoOnline.setText("定时上下线已关闭");
+                            Logger.log("Auto-online mode off.");
                         }
                     }else{
                         String filed = JOptionPane.showInputDialog(getOwner(),"请输入一个时间范围（例如01:00-03:00）");
@@ -457,27 +443,39 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             }
                             if(ConfigModule.allowAutoMode()) {
                                 JOptionPane.showMessageDialog(getOwner(), "已设置！", getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                                menuItemSetAutoOnline.setText("关闭定时上下线");
                                 timer.setDelay(10000);
+                                Logger.log("Auto-Online mode on.");
                             }else{
                                 JOptionPane.showMessageDialog(getOwner(), "启动自动上下线功能失败，请检查输入",getTitle(),JOptionPane.WARNING_MESSAGE);
                             }
                         }
                     }
+                    updateAutoModeState();
                 }else if(e.getSource() == timer){
                     if(ConfigModule.allowAutoMode()){
-                        if(shuttle!=null){
-                            if(dateFormat.format(new Date()).equals(ConfigModule.autoOnlineTime)){
-                                onClick_btn_login();
-                                Logger.log("Timer auto click login button because reach the online time point.");
-                            }
+                        String timeNow = simpleDateFormat.format(new Date());
+                        if(Program.isDeveloperMode()) Logger.log("Timer tick. Check Time: " + timeNow + "");
+                        if(shuttle == null){
+                            if(timeNow.equals(ConfigModule.autoOnlineTime)){
+                                if(!timerAlertedFlag){
+                                    onClick_btn_login();
+                                    timerAlertedFlag = true;
+                                    Logger.log("Timer auto click login button because reach the online time point.");
+                                }
+                            }else timerAlertedFlag = false;
                         }else{
-                            if(dateFormat.format(new Date()).equals(ConfigModule.autoOfflineTime)){
-                                onClick_btn_login();
-                                Logger.log("Timer auto click login button because reach the offline time point.");
-                            }
+                            if(timeNow.equals(ConfigModule.autoOfflineTime)){
+                                if(!timerAlertedFlag){
+                                    onClick_btn_login();
+                                    timerAlertedFlag = true;
+                                    Logger.log("Timer auto click login button because reach the offline time point.");
+                                }
+                            }else timerAlertedFlag = false;
                         }
                     }else{
-                        timer.setDelay(30000);
+                        if(Program.isDeveloperMode()) Logger.log("AutoMode is false.");
+                        //timer.setDelay(30000);
                     }
                 }
             }
@@ -486,6 +484,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         rbmi_AutoModeBoth.addActionListener(actionListener);
         rbmi_AutoModeOnline.addActionListener(actionListener);
         rbmi_AutoModeOffline.addActionListener(actionListener);
+        timer = new Timer(10000,actionListener);
+        timer.start();
 
     }
 
@@ -564,6 +564,32 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
 //--------------------------------------------------------
 
+    public void updateAutoModeState(){
+        if(ConfigModule.allowAutoMode()){
+            Logger.log(String.format("Online : %s; Offline: %s",ConfigModule.autoOnlineTime,ConfigModule.autoOfflineTime));
+            switch (ConfigModule.autoOnlineMode) {
+                case "both":
+                    menuItemStateAutoOnline.setText(
+                            String.format("将于%s上线，%s下线", ConfigModule.autoOnlineTime, ConfigModule.autoOfflineTime)
+                    );
+                    Logger.log("Auto-online mode switch to both.");
+                    break;
+                case "online":
+                    menuItemStateAutoOnline.setText(
+                            String.format("将于%s上线", ConfigModule.autoOnlineTime)
+                    );
+                    Logger.log("Auto-online mode switch to online only.");
+                    break;
+                case "offline":
+                    menuItemStateAutoOnline.setText(
+                            String.format("将于%s下线", ConfigModule.autoOfflineTime)
+                    );
+                    Logger.log("Auto-online mode switch to offline only.");
+                    break;
+            }
+        }else menuItemStateAutoOnline.setText("定时上下线已关闭");
+    }
+
     //锁定输入UI
     public void lockInputUI(){
         try{
@@ -632,6 +658,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         //登录按钮的动作
         if(e.getSource() == btn_login || e.getSource() == menuItemOnline){
             onClick_btn_login();
+            timerAlertedFlag = true;
         }else if(e.getSource() == menuItemExit){
             if(shuttle != null){
                 int result = JOptionPane.showConfirmDialog(null,"是否先下线再退出？",getTitle(),JOptionPane.YES_NO_CANCEL_OPTION);
