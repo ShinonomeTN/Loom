@@ -2,6 +2,7 @@ package com.shinonometn.Loom.resource;
 
 import com.shinonometn.Loom.common.Logger;
 
+import javax.swing.*;
 import java.io.*;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -28,7 +29,7 @@ public class Resource {
         hashMap.clear();
     }
 
-    //获取资源文本
+    //鑾峰彇璧勬簮鏂囨湰
     public String getResourceText(String path){
         if(hashMap.containsKey(path)) return (String)hashMap.get(path);
         try{

@@ -30,9 +30,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     JButton btn_login;
 
-    JCheckBox cb_remember;
-    JCheckBox cb_hideOnIconfied;
-    JCheckBox cb_notShownAtLaunch;
+    JCheckBoxMenuItem cbmi_remember;
+    JCheckBoxMenuItem cbmi_hideOnIconfied;
+    JCheckBoxMenuItem cbmi_notShownAtLaunch;
 
     JComboBox<String> cb_netcard;
 
@@ -44,9 +44,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     //JMenu menuOptions;
     JMenu menuLogs;
-    JCheckBox cb_showInfo;
-    JCheckBox cb_Log;
-    JCheckBox cb_printLog;
+    JCheckBoxMenuItem cbmi_showInfo;
+    JCheckBoxMenuItem cbmi_Log;
+    JCheckBoxMenuItem cbmi_printLog;
     //JComboBox<String> cb_autoMode;
     //JMenuItem menuItemSetAutoOnline;
     //JMenuItem menuItemDisableAutoOnline;
@@ -103,52 +103,44 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         //menuOptions = new JMenu("选项");
         //-
-        cb_Log = new JCheckBox("启用日志");
-        cb_Log.setSelected(ConfigModule.useLog);
-        //-
-        cb_remember = new JCheckBox("自动保存设置");
-        cb_remember.setSelected(ConfigModule.autoSaveSetting);
-        //-
-        cb_printLog = new JCheckBox("输出日志到终端");
-        cb_printLog.setSelected(ConfigModule.outPrintLog);
-        //cb_printLog.setVisible(Program.isDeveloperMode());
-        //-
-        cb_hideOnIconfied = new JCheckBox("最小化时隐藏");
-        cb_hideOnIconfied.setSelected(ConfigModule.hideOnIconified);
-        //-
-        cb_showInfo = new JCheckBox("显示连接信息");
-        cb_showInfo.setSelected(ConfigModule.showInfo);
-        //-
-        cb_notShownAtLaunch = new JCheckBox("启动时不显示窗体");
-        cb_notShownAtLaunch.setSelected(ConfigModule.notShownAtLaunch);
-        //-
-        //menuItemSetAutoOnline = new JCheckBoxMenuItem()
-        //-
+        cbmi_Log = new JCheckBoxMenuItem("启用日志");
+        cbmi_Log.setSelected(ConfigModule.useLog);
+        cbmi_remember = new JCheckBoxMenuItem("自动保存设置");
+        cbmi_remember.setSelected(ConfigModule.autoSaveSetting);
+        cbmi_printLog = new JCheckBoxMenuItem("输出日志到终端");
+        cbmi_printLog.setSelected(ConfigModule.outPrintLog);
+        cbmi_hideOnIconfied = new JCheckBoxMenuItem("最小化时隐藏");
+        cbmi_hideOnIconfied.setSelected(ConfigModule.hideOnIconified);
+        cbmi_showInfo = new JCheckBoxMenuItem("显示连接信息");
+        cbmi_showInfo.setSelected(ConfigModule.showInfo);
+        cbmi_notShownAtLaunch = new JCheckBoxMenuItem("启动时不显示窗体");
+        cbmi_notShownAtLaunch.setSelected(ConfigModule.notShownAtLaunch);
+
         menuItemCleanLogs = new JMenuItem("清除日志目录");
         menuItemSaveProfile = new JMenuItem("立即保存设置");
         menuItemCleanInfo = new JMenuItem("清除链接信息");
         menuItemCleanInfo.setEnabled(ConfigModule.showInfo);
-        //-
+
         menuItemState = new MenuItem("状态：下线");
         menuItemState.setEnabled(false);
         menuItemOnline = new MenuItem("上线");
         menuItemExit = new MenuItem("退出");
 
         JMenu menu = new JMenu("设置");
-        menu.add(cb_hideOnIconfied);
-        menu.add(cb_notShownAtLaunch);
+        menu.add(cbmi_hideOnIconfied);
+        menu.add(cbmi_notShownAtLaunch);
+        //menu.add(new JPopupMenu.Separator());
+        //menu.add(cbmi_showInfo);
+        //menu.add(new JPopupMenu.Separator());
         menu.add(new JPopupMenu.Separator());
-        menu.add(cb_showInfo);
-        menu.add(new JPopupMenu.Separator());
-        menu.add(new JPopupMenu.Separator());
-        menu.add(cb_remember);
+        menu.add(cbmi_remember);
         menu.add(menuItemSaveProfile);
         menuBar.add(menu);
 
         menuLogs = new JMenu("日志");
-        menuLogs.add(cb_Log);
-        menuLogs.add(cb_printLog);
-        menuLogs.add(cb_showInfo);
+        menuLogs.add(cbmi_Log);
+        menuLogs.add(cbmi_printLog);
+        menuLogs.add(cbmi_showInfo);
         menuLogs.add(new JPopupMenu.Separator());
         menuLogs.add(menuItemCleanInfo);
         menuLogs.add(menuItemCleanLogs);
@@ -299,13 +291,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         btn_login.addActionListener(this);
 
-        cb_remember.addActionListener(this);
-        cb_Log.addActionListener(this);
-        cb_remember.addActionListener(this);
-        cb_printLog.addActionListener(this);
-        cb_hideOnIconfied.addActionListener(this);
-        cb_notShownAtLaunch.addActionListener(this);
-        cb_showInfo.addActionListener(this);
+        cbmi_remember.addActionListener(this);
+        cbmi_Log.addActionListener(this);
+        cbmi_remember.addActionListener(this);
+        cbmi_printLog.addActionListener(this);
+        cbmi_hideOnIconfied.addActionListener(this);
+        cbmi_notShownAtLaunch.addActionListener(this);
+        cbmi_showInfo.addActionListener(this);
 
         menuItemCleanLogs.addActionListener(this);
         menuItemSaveProfile.addActionListener(this);
@@ -314,8 +306,6 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuItemCleanInfo.addActionListener(this);
         menuItemOnline.addActionListener(this);
         menuItemExit.addActionListener(this);
-
-        //cb_hideOnIconfied.addChangeListener(this);
     }
 
 //-----系统托盘图标------------------------------------------
@@ -472,14 +462,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     "Hey guy.\nYou maybe already read the help doc. under console mode.\nThe help info only for green hands. :P"
                     :resource.getResourceText("/com/shinonometn/Loom/resource/helpInfo.txt"));
             JOptionPane.showMessageDialog(null,helpInfo,"帮助",JOptionPane.INFORMATION_MESSAGE,icon_app);
-        }else if(e.getSource() == cb_remember){ //保存用户设置
+        }else if(e.getSource() == cbmi_remember){ //保存用户设置
 
-            ConfigModule.autoSaveSetting = cb_remember.isSelected();
+            ConfigModule.autoSaveSetting = cbmi_remember.isSelected();
             if(ConfigModule.autoSaveSetting) ConfigModule.writeProfile();
-        }else if(e.getSource() == cb_Log){ //设置是否启动log
+        }else if(e.getSource() == cbmi_Log){ //设置是否启动log
 
             ConfigModule.useLog = !ConfigModule.useLog;
-            cb_Log.setSelected(ConfigModule.useLog);
+            cbmi_Log.setSelected(ConfigModule.useLog);
             if(Program.isDeveloperMode() && ConfigModule.useLog){
                 trayPopMessage("Developer Mode On","您开启了开发者模式，您的账号信息有可能会被记录到日志文件内。");
             }
@@ -496,18 +486,18 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             applyProfile();
             ConfigModule.writeProfile();
             trayPopMessage(getTitle(),"日志已保存");
-        }else if(e.getSource() == cb_printLog){
+        }else if(e.getSource() == cbmi_printLog){
 
-            ConfigModule.outPrintLog = cb_printLog.isSelected();
-        }else if(e.getSource() == cb_hideOnIconfied){
+            ConfigModule.outPrintLog = cbmi_printLog.isSelected();
+        }else if(e.getSource() == cbmi_hideOnIconfied){
 
-            ConfigModule.hideOnIconified = cb_hideOnIconfied.isSelected();
-        }else if(e.getSource() == cb_notShownAtLaunch){
+            ConfigModule.hideOnIconified = cbmi_hideOnIconfied.isSelected();
+        }else if(e.getSource() == cbmi_notShownAtLaunch){
 
-            ConfigModule.notShownAtLaunch = cb_notShownAtLaunch.isSelected();
-        }else if(e.getSource() == cb_showInfo){
+            ConfigModule.notShownAtLaunch = cbmi_notShownAtLaunch.isSelected();
+        }else if(e.getSource() == cbmi_showInfo){
 
-            ConfigModule.showInfo = cb_showInfo.isSelected();
+            ConfigModule.showInfo = cbmi_showInfo.isSelected();
             menuItemCleanInfo.setEnabled(ConfigModule.showInfo);
             scrollPane.setVisible(ConfigModule.showInfo);
             if(ConfigModule.showInfo && getHeight() < 240){
@@ -540,9 +530,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 dispose();
                 System.exit(0);
             }
-        }else if(e.getSource() == cb_notShownAtLaunch){
+        }else if(e.getSource() == cbmi_notShownAtLaunch){
 
-            ConfigModule.notShownAtLaunch = cb_notShownAtLaunch.isSelected();
+            ConfigModule.notShownAtLaunch = cbmi_notShownAtLaunch.isSelected();
         }
 
         if(ConfigModule.autoSaveSetting) applyProfile();
@@ -553,10 +543,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         ConfigModule.password = new String(t_password.getPassword());
         ConfigModule.windowWidth = getWidth();
         ConfigModule.windowHeight = getHeight();
-        ConfigModule.outPrintLog = cb_printLog.isSelected();
+        ConfigModule.outPrintLog = cbmi_printLog.isSelected();
         ConfigModule.defaultInterface = cb_netcard.getItemAt(cb_netcard.getSelectedIndex());
-        ConfigModule.autoSaveSetting = cb_remember.isSelected();
-        ConfigModule.useLog = cb_Log.isSelected();
+        ConfigModule.autoSaveSetting = cbmi_remember.isSelected();
+        ConfigModule.useLog = cbmi_Log.isSelected();
     }
 
     public void logAtList(String s){
