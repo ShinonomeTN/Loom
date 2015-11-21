@@ -10,12 +10,13 @@ import com.shinonometn.Loom.core.Shuttle;
 import com.shinonometn.Loom.resource.Resource;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.NetworkInterface;
+import java.text.DateFormat;
 import java.util.*;
-
 
 
 /**
@@ -30,9 +31,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     JButton btn_login;
 
-    JCheckBoxMenuItem cbmi_remember;
-    JCheckBoxMenuItem cbmi_hideOnIconfied;
-    JCheckBoxMenuItem cbmi_notShownAtLaunch;
+    JCheckBoxMenuItem micb_remember;
+    JCheckBoxMenuItem micb_hideOnIconfied;
+    JCheckBoxMenuItem micb_notShownAtLaunch;
 
     JComboBox<String> cb_netcard;
 
@@ -44,12 +45,16 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     //JMenu menuOptions;
     JMenu menuLogs;
-    JCheckBoxMenuItem cbmi_showInfo;
-    JCheckBoxMenuItem cbmi_Log;
-    JCheckBoxMenuItem cbmi_printLog;
-    //JComboBox<String> cb_autoMode;
-    //JMenuItem menuItemSetAutoOnline;
-    //JMenuItem menuItemDisableAutoOnline;
+    JCheckBoxMenuItem micb_showInfo;
+    JCheckBoxMenuItem micb_Log;
+    JCheckBoxMenuItem micb_printLog;
+
+    JRadioButtonMenuItem rbmi_AutoModeBoth;
+    JRadioButtonMenuItem rbmi_AutoModeOnline;
+    JRadioButtonMenuItem rbmi_AutoModeOffline;
+
+    JMenuItem menuItemSetAutoOnline;
+    JMenuItem menuItemStateAutoOnline;
     JMenuItem menuItemCleanInfo;
     JMenuItem menuItemCleanLogs;
     JMenuItem menuItemSaveProfile;
@@ -84,7 +89,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     public MainForm(){
         super("Loom");
         if(Toolbox.getSystemName().contains("mac")) {
-            //com.apple.eawt.Application.getApplication().setDockIconImage(image_app);
+            com.apple.eawt.Application.getApplication().setDockIconImage(image_app);
         }
         setMinimumSize(new Dimension(200, 217));
         setSize(ConfigModule.windowWidth, ConfigModule.windowHeight);
@@ -103,18 +108,47 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         //menuOptions = new JMenu("选项");
         //-
-        cbmi_Log = new JCheckBoxMenuItem("启用日志");
-        cbmi_Log.setSelected(ConfigModule.useLog);
-        cbmi_remember = new JCheckBoxMenuItem("自动保存设置");
-        cbmi_remember.setSelected(ConfigModule.autoSaveSetting);
-        cbmi_printLog = new JCheckBoxMenuItem("输出日志到终端");
-        cbmi_printLog.setSelected(ConfigModule.outPrintLog);
-        cbmi_hideOnIconfied = new JCheckBoxMenuItem("最小化时隐藏");
-        cbmi_hideOnIconfied.setSelected(ConfigModule.hideOnIconified);
-        cbmi_showInfo = new JCheckBoxMenuItem("显示连接信息");
-        cbmi_showInfo.setSelected(ConfigModule.showInfo);
-        cbmi_notShownAtLaunch = new JCheckBoxMenuItem("启动时不显示窗体");
-        cbmi_notShownAtLaunch.setSelected(ConfigModule.notShownAtLaunch);
+        micb_Log = new JCheckBoxMenuItem("启用日志");
+        micb_Log.setSelected(ConfigModule.useLog);
+        micb_remember = new JCheckBoxMenuItem("自动保存设置");
+        micb_remember.setSelected(ConfigModule.autoSaveSetting);
+        micb_printLog = new JCheckBoxMenuItem("输出日志到终端");
+        micb_printLog.setSelected(ConfigModule.outPrintLog);
+        micb_hideOnIconfied = new JCheckBoxMenuItem("最小化时隐藏");
+        micb_hideOnIconfied.setSelected(ConfigModule.hideOnIconified);
+        micb_showInfo = new JCheckBoxMenuItem("显示连接信息");
+        micb_showInfo.setSelected(ConfigModule.showInfo);
+        micb_notShownAtLaunch = new JCheckBoxMenuItem("启动时不显示窗体");
+        micb_notShownAtLaunch.setSelected(ConfigModule.notShownAtLaunch);
+
+        rbmi_AutoModeBoth = new JRadioButtonMenuItem("上线和下线");
+        rbmi_AutoModeOnline = new JRadioButtonMenuItem("仅上线");
+        rbmi_AutoModeOffline = new JRadioButtonMenuItem("仅下线");
+        ButtonGroup buttonGroup = new ButtonGroup();
+        buttonGroup.add(rbmi_AutoModeBoth);
+        buttonGroup.add(rbmi_AutoModeOnline);
+        buttonGroup.add(rbmi_AutoModeOffline);
+
+        menuItemSetAutoOnline = new JMenuItem((ConfigModule.allowAutoMode()?"关闭自动上下线":"设置自动上下线"));
+        menuItemStateAutoOnline = new JMenuItem();
+        switch (ConfigModule.autoOnlineMode) {
+            case "both":
+                menuItemStateAutoOnline.setText(
+                        String.format("将于%s上线，%s下线", ConfigModule.autoOnlineTime, ConfigModule.autoOfflineTime)
+                );
+                break;
+            case "online":
+                menuItemStateAutoOnline.setText(
+                        String.format("将于%s上线", ConfigModule.autoOnlineTime)
+                );
+                break;
+            case "offline":
+                menuItemStateAutoOnline.setText(
+                        String.format("将于%s下线", ConfigModule.autoOfflineTime)
+                );
+                break;
+        }
+        menuItemStateAutoOnline.setEnabled(false);
 
         menuItemCleanLogs = new JMenuItem("清除日志目录");
         menuItemSaveProfile = new JMenuItem("立即保存设置");
@@ -127,20 +161,26 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuItemExit = new MenuItem("退出");
 
         JMenu menu = new JMenu("设置");
-        menu.add(cbmi_hideOnIconfied);
-        menu.add(cbmi_notShownAtLaunch);
-        //menu.add(new JPopupMenu.Separator());
-        //menu.add(cbmi_showInfo);
-        //menu.add(new JPopupMenu.Separator());
+        menu.add(micb_hideOnIconfied);
+        menu.add(micb_notShownAtLaunch);
         menu.add(new JPopupMenu.Separator());
-        menu.add(cbmi_remember);
+        menu.add(menuItemSetAutoOnline);
+        menu.add(menuItemStateAutoOnline);
+        JMenu submenu1 = new JMenu("自动上下线方式");
+            submenu1.add(rbmi_AutoModeBoth);
+            submenu1.add(rbmi_AutoModeOnline);
+            submenu1.add(rbmi_AutoModeOffline);
+        menu.add(submenu1);
+        menu.add(new JPopupMenu.Separator());
+        menu.add(new JPopupMenu.Separator());
+        menu.add(micb_remember);
         menu.add(menuItemSaveProfile);
         menuBar.add(menu);
 
         menuLogs = new JMenu("日志");
-        menuLogs.add(cbmi_Log);
-        menuLogs.add(cbmi_printLog);
-        menuLogs.add(cbmi_showInfo);
+        menuLogs.add(micb_Log);
+        menuLogs.add(micb_printLog);
+        menuLogs.add(micb_showInfo);
         menuLogs.add(new JPopupMenu.Separator());
         menuLogs.add(menuItemCleanInfo);
         menuLogs.add(menuItemCleanLogs);
@@ -154,7 +194,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menu.add(menuItemAbout);
         menu.add(new JPopupMenu.Separator());
         JMenuItem m1;
-        m1 = new JMenuItem("Loom v1.8");
+        m1 = new JMenuItem(Program.appName);
         m1.setEnabled(false);
         menu.add(m1);
         m1 = new JMenuItem("Pupa version:3.6");
@@ -171,9 +211,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuBar.add(menu);
 
         if(Toolbox.getSystemName().contains("mac")){
-            //com.apple.eawt.Application.getApplication().setDefaultMenuBar(menuBar);
-        }
-        setJMenuBar(menuBar);
+            com.apple.eawt.Application.getApplication().setDefaultMenuBar(menuBar);
+        }else setJMenuBar(menuBar);
 
         setLayout(new GridBagLayout());
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
@@ -188,9 +227,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.insets = normal_inset;
         if(ConfigModule.isFakeMode()){
-            add(new JLabel("Loom v1.8 (Fake Mode)", new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/key.png")), JLabel.CENTER), gridBagConstraints);
+            add(new JLabel(
+                            Program.appName + " (Fake Mode)",
+                            new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/key.png")),
+                            JLabel.CENTER
+                    ), gridBagConstraints
+            );
         }else
-            add(new JLabel("Loom v1.8",icon_app,JLabel.CENTER), gridBagConstraints);
+            add(new JLabel(Program.appName,icon_app,JLabel.CENTER), gridBagConstraints);
 
         gridBagConstraints.gridy++;
         gridBagConstraints.gridwidth = 1;
@@ -254,7 +298,6 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.weightx = 0.5;
         gridBagConstraints.insets = right_inset;
-        //gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         btn_login = new JButton("上线");
         add(btn_login, gridBagConstraints);
 
@@ -289,26 +332,164 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     private void setupEvent(){
         addWindowListener(this);
 
+        ActionListener actionListener;
+
         btn_login.addActionListener(this);
-
-        cbmi_remember.addActionListener(this);
-        cbmi_Log.addActionListener(this);
-        cbmi_remember.addActionListener(this);
-        cbmi_printLog.addActionListener(this);
-        cbmi_hideOnIconfied.addActionListener(this);
-        cbmi_notShownAtLaunch.addActionListener(this);
-        cbmi_showInfo.addActionListener(this);
-
-        menuItemCleanLogs.addActionListener(this);
-        menuItemSaveProfile.addActionListener(this);
-        menuItemAbout.addActionListener(this);
-        menuItemHelp.addActionListener(this);
-        menuItemCleanInfo.addActionListener(this);
         menuItemOnline.addActionListener(this);
         menuItemExit.addActionListener(this);
+
+
+        actionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(e.getSource() == micb_notShownAtLaunch){
+                    ConfigModule.notShownAtLaunch = micb_notShownAtLaunch.isSelected();
+                }else if(e.getSource() == menuItemSaveProfile){ //立即保存配置
+
+                    applyProfile();
+                    ConfigModule.writeProfile();
+                    trayPopMessage(getTitle(),"日志已保存");
+                }else if(e.getSource() == micb_printLog){
+
+                    ConfigModule.outPrintLog = micb_printLog.isSelected();
+                }else if(e.getSource() == micb_hideOnIconfied){
+
+                    ConfigModule.hideOnIconified = micb_hideOnIconfied.isSelected();
+                }else if(e.getSource() == menuItemCleanLogs){
+                    int count;
+                    if((count = Logger.clearLog()) >= 0){
+                        JOptionPane.showMessageDialog(null, count + " 个日志已清理.", getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                    }else{
+                        JOptionPane.showMessageDialog(null, "清理日志失败", getTitle(), JOptionPane.WARNING_MESSAGE);
+                    }
+                }else if(e.getSource() == micb_remember){ //保存用户设置
+
+                    ConfigModule.autoSaveSetting = micb_remember.isSelected();
+                    if(ConfigModule.autoSaveSetting) ConfigModule.writeProfile();
+                }else if(e.getSource() == micb_Log){ //设置是否启动log
+
+                    ConfigModule.useLog = !ConfigModule.useLog;
+                    micb_Log.setSelected(ConfigModule.useLog);
+                    if(Program.isDeveloperMode() && ConfigModule.useLog){
+                        trayPopMessage("Developer Mode On","您开启了开发者模式，您的账号信息有可能会被记录到日志文件内。");
+                    }
+                }else if(e.getSource() == menuItemCleanInfo){
+
+                    listModel.clear();
+                }else if(e.getSource() == menuItemAbout){
+                    JOptionPane.showMessageDialog(
+                            null,
+                            resource.getResourceText("/com/shinonometn/Loom/resource/about.txt"),
+                            "关于 Loom",
+                            JOptionPane.INFORMATION_MESSAGE,
+                            icon_app
+                    );
+                }else if(e.getSource() == menuItemHelp){
+                    String helpInfo = (ConfigModule.isFakeMode() ?
+                            "Hey guy.\nYou maybe already read the help doc. under console mode.\nThe help info only for green hands. :P"
+                            :resource.getResourceText("/com/shinonometn/Loom/resource/helpInfo.txt"));
+                    JOptionPane.showMessageDialog(null, helpInfo, "帮助", JOptionPane.INFORMATION_MESSAGE, icon_app);
+                }else if(e.getSource() == micb_showInfo){
+
+                    ConfigModule.showInfo = micb_showInfo.isSelected();
+                    menuItemCleanInfo.setEnabled(ConfigModule.showInfo);
+                    scrollPane.setVisible(ConfigModule.showInfo);
+                    if(ConfigModule.showInfo && getHeight() < 240){
+                        setSize(getWidth(), 240);
+                    }else if(!ConfigModule.showInfo){
+                        setSize(getWidth(),getMinimumSize().height);
+                    }
+                }
+
+                if(ConfigModule.autoSaveSetting) applyProfile();
+            }
+        };
+        micb_showInfo.addActionListener(actionListener);
+        menuItemCleanInfo.addActionListener(actionListener);
+        micb_Log.addActionListener(actionListener);
+        micb_remember.addActionListener(actionListener);
+        micb_notShownAtLaunch.addActionListener(actionListener);
+        micb_printLog.addActionListener(actionListener);
+        menuItemCleanLogs.addActionListener(actionListener);
+        menuItemSaveProfile.addActionListener(actionListener);
+        micb_hideOnIconfied.addActionListener(actionListener);
+        menuItemAbout.addActionListener(actionListener);
+        menuItemHelp.addActionListener(actionListener);
+
+        actionListener = new ActionListener() {
+
+            Timer timer = new Timer(10000,this);
+            DateFormat dateFormat = DateFormat.getTimeInstance(DateFormat.MEDIUM);
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(e.getSource() == rbmi_AutoModeBoth){
+                    ConfigModule.autoOnlineMode = "both";
+                    menuItemStateAutoOnline.setText(
+                            String.format("将于%s上线，%s下线", ConfigModule.autoOnlineTime, ConfigModule.autoOfflineTime)
+                    );
+                }else if(e.getSource() == rbmi_AutoModeOnline){
+                    ConfigModule.autoOnlineMode = "online";
+                    menuItemStateAutoOnline.setText(
+                            String.format("将于%s上线", ConfigModule.autoOnlineTime)
+                    );
+                }else if(e.getSource() == rbmi_AutoModeOffline){
+                    ConfigModule.autoOnlineMode = "offline";
+                    menuItemStateAutoOnline.setText(
+                            String.format("将于%s下线", ConfigModule.autoOfflineTime)
+                    );
+                }else if(e.getSource() == menuItemSetAutoOnline){
+                    if(ConfigModule.allowAutoMode()){
+                        int sele = JOptionPane.showConfirmDialog(getOwner(),"关闭自动上下线功能？",getTitle(),JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
+                        if(sele == JOptionPane.YES_OPTION){
+                            menuItemSetAutoOnline.setText("设置定时上下线");
+                            ConfigModule.autoOfflineTime = "";
+                            ConfigModule.autoOnlineTime = "";
+                            menuItemStateAutoOnline.setText("定时上下线已关闭");
+                        }
+                    }else{
+                        String filed = JOptionPane.showInputDialog(getOwner(),"请输入一个时间范围（例如01:00-03:00）");
+                        if(!filed.equals("")){
+                            String[] fieldSplit = filed.split("\\-");
+                            if(fieldSplit.length == 2){
+                                ConfigModule.autoOnlineTime = fieldSplit[0];
+                                ConfigModule.autoOfflineTime = fieldSplit[1];
+                            }
+                            if(ConfigModule.allowAutoMode()) {
+                                JOptionPane.showMessageDialog(getOwner(), "已设置！", getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                                timer.setDelay(10000);
+                            }else{
+                                JOptionPane.showMessageDialog(getOwner(), "启动自动上下线功能失败，请检查输入",getTitle(),JOptionPane.WARNING_MESSAGE);
+                            }
+                        }
+                    }
+                }else if(e.getSource() == timer){
+                    if(ConfigModule.allowAutoMode()){
+                        if(shuttle!=null){
+                            if(dateFormat.format(new Date()).equals(ConfigModule.autoOnlineTime)){
+                                onClick_btn_login();
+                                Logger.log("Timer auto click login button because reach the online time point.");
+                            }
+                        }else{
+                            if(dateFormat.format(new Date()).equals(ConfigModule.autoOfflineTime)){
+                                onClick_btn_login();
+                                Logger.log("Timer auto click login button because reach the offline time point.");
+                            }
+                        }
+                    }else{
+                        timer.setDelay(30000);
+                    }
+                }
+            }
+        };
+        menuItemSetAutoOnline.addActionListener(actionListener);
+        rbmi_AutoModeBoth.addActionListener(actionListener);
+        rbmi_AutoModeOnline.addActionListener(actionListener);
+        rbmi_AutoModeOffline.addActionListener(actionListener);
+
     }
 
-//-----系统托盘图标------------------------------------------
+    //-----系统托盘图标------------------------------------------
     private void setupTray(){
         Logger.log("Try to setup tray.");
         if(trayIcon == null){
@@ -323,7 +504,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 popupMenu.addSeparator();
                 popupMenu.add(menuItemExit);
                 trayIcon.setPopupMenu(popupMenu);
-                //if(Toolbox.getSystemName().contains("mac")) com.apple.eawt.Application.getApplication().setDockMenu((CMenu)popupMenu);
+
                 try {
                     systemTray.add(trayIcon);
                     Logger.log("Add TrayIcon success.");
@@ -339,7 +520,6 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     public void setOfflineIcon(){
         stat_icon.setIcon(icon_offline);
-        //stat_icon.setText("");
         if(trayIcon != null){
             trayIcon.setImage(tray_offline);
             setTrayTip("状态：下线");
@@ -377,7 +557,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             if(!Toolbox.getSystemName().contains("mac")){
                 trayIcon.displayMessage(title, content, TrayIcon.MessageType.INFO);
             }else{
-                //com.apple.eawt.Application.getApplication().requestUserAttention(true);
+                com.apple.eawt.Application.getApplication().requestUserAttention(true);
             }
         }
     }
@@ -413,7 +593,6 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     //下线的时候修改UI用
     private void uiOffline() {
         btn_login.setText("上线");
-        //cb_netcard.setEnabled(true);
         menuItemOnline.setLabel(btn_login.getText());
         unlockInputUI();
         btn_login.setEnabled(true);
@@ -429,93 +608,36 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         }
     }
 
+    private void onClick_btn_login(){
+        if (shuttle != null && shuttle.isOnline()) {
+            lockInputUI();
+            btn_login.setText("下线中");
+            shuttle.Offline();
+        }else{
+            lockInputUI();
+            btn_login.setText("上线中...");
+            shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
+            shuttle.developerMode = Program.isDeveloperMode();
+            shuttle.setUsername(t_username.getText());
+            shuttle.setPassword(new String(t_password.getPassword()));
+            shuttle.start();
+            ConfigModule.username = t_username.getText();
+            ConfigModule.password = new String(t_password.getPassword());
+        }
+        menuItemOnline.setLabel(btn_login.getText());
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         //登录按钮的动作
         if(e.getSource() == btn_login || e.getSource() == menuItemOnline){
-
-            if (shuttle != null && shuttle.isOnline()) {
-                lockInputUI();
-                btn_login.setText("下线中");
-                shuttle.Offline();
-                //btn_login.setEnabled(false);
-            }else{
-                lockInputUI();
-                btn_login.setText("上线中...");
-                shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
-                shuttle.developerMode = Program.isDeveloperMode();
-                shuttle.setUsername(t_username.getText());
-                shuttle.setPassword(new String(t_password.getPassword()));
-                shuttle.start();
-                ConfigModule.username = t_username.getText();
-                ConfigModule.password = new String(t_password.getPassword());
-                //btn_login.setEnabled(false);
-            }
-            menuItemOnline.setLabel(btn_login.getText());
-        }else if(e.getSource() == menuItemAbout){ //菜单里的关于
-
-            JOptionPane.showMessageDialog(null,resource.getResourceText("/com/shinonometn/Loom/resource/about.txt"),"关于 Loom",JOptionPane.INFORMATION_MESSAGE,icon_app);
-        }else if(e.getSource() == menuItemHelp){//菜单里的帮助
-
-            String helpInfo = (ConfigModule.isFakeMode() ?
-                    "Hey guy.\nYou maybe already read the help doc. under console mode.\nThe help info only for green hands. :P"
-                    :resource.getResourceText("/com/shinonometn/Loom/resource/helpInfo.txt"));
-            JOptionPane.showMessageDialog(null,helpInfo,"帮助",JOptionPane.INFORMATION_MESSAGE,icon_app);
-        }else if(e.getSource() == cbmi_remember){ //保存用户设置
-
-            ConfigModule.autoSaveSetting = cbmi_remember.isSelected();
-            if(ConfigModule.autoSaveSetting) ConfigModule.writeProfile();
-        }else if(e.getSource() == cbmi_Log){ //设置是否启动log
-
-            ConfigModule.useLog = !ConfigModule.useLog;
-            cbmi_Log.setSelected(ConfigModule.useLog);
-            if(Program.isDeveloperMode() && ConfigModule.useLog){
-                trayPopMessage("Developer Mode On","您开启了开发者模式，您的账号信息有可能会被记录到日志文件内。");
-            }
-        }else if(e.getSource() == menuItemCleanLogs){ //清理日志
-
-            int count;
-            if((count = Logger.clearLog()) >= 0){
-                JOptionPane.showMessageDialog(this,count +" 个日志已清理.",getTitle(),JOptionPane.INFORMATION_MESSAGE);
-            }else{
-                JOptionPane.showMessageDialog(this,"清理日志失败",getTitle(),JOptionPane.WARNING_MESSAGE);
-            }
-        }else if(e.getSource() == menuItemSaveProfile){ //立即保存配置
-
-            applyProfile();
-            ConfigModule.writeProfile();
-            trayPopMessage(getTitle(),"日志已保存");
-        }else if(e.getSource() == cbmi_printLog){
-
-            ConfigModule.outPrintLog = cbmi_printLog.isSelected();
-        }else if(e.getSource() == cbmi_hideOnIconfied){
-
-            ConfigModule.hideOnIconified = cbmi_hideOnIconfied.isSelected();
-        }else if(e.getSource() == cbmi_notShownAtLaunch){
-
-            ConfigModule.notShownAtLaunch = cbmi_notShownAtLaunch.isSelected();
-        }else if(e.getSource() == cbmi_showInfo){
-
-            ConfigModule.showInfo = cbmi_showInfo.isSelected();
-            menuItemCleanInfo.setEnabled(ConfigModule.showInfo);
-            scrollPane.setVisible(ConfigModule.showInfo);
-            if(ConfigModule.showInfo && getHeight() < 240){
-                setSize(getWidth(),240);
-            }else if(!ConfigModule.showInfo){
-                setSize(getWidth(),getMinimumSize().height);
-            }
-        }else if(e.getSource() == menuItemCleanInfo){
-
-            listModel.clear();
+            onClick_btn_login();
         }else if(e.getSource() == menuItemExit){
             if(shuttle != null){
                 int result = JOptionPane.showConfirmDialog(null,"是否先下线再退出？",getTitle(),JOptionPane.YES_NO_CANCEL_OPTION);
                 switch (result){
                     case JOptionPane.YES_OPTION:
-                        shuttleOffline();
-                        //while (shuttle.isOnline());
-                        dispose();
+                        onClick_btn_login();
                         System.exit(0);
                     case JOptionPane.NO_OPTION:
                         dispose();
@@ -530,12 +652,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 dispose();
                 System.exit(0);
             }
-        }else if(e.getSource() == cbmi_notShownAtLaunch){
-
-            ConfigModule.notShownAtLaunch = cbmi_notShownAtLaunch.isSelected();
         }
 
-        if(ConfigModule.autoSaveSetting) applyProfile();
+        if(ConfigModule.autoSaveSetting) ConfigModule.writeProfile();
     }
 
     public void applyProfile(){
@@ -543,10 +662,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         ConfigModule.password = new String(t_password.getPassword());
         ConfigModule.windowWidth = getWidth();
         ConfigModule.windowHeight = getHeight();
-        ConfigModule.outPrintLog = cbmi_printLog.isSelected();
+        ConfigModule.outPrintLog = micb_printLog.isSelected();
         ConfigModule.defaultInterface = cb_netcard.getItemAt(cb_netcard.getSelectedIndex());
-        ConfigModule.autoSaveSetting = cbmi_remember.isSelected();
-        ConfigModule.useLog = cbmi_Log.isSelected();
+        ConfigModule.autoSaveSetting = micb_remember.isSelected();
+        ConfigModule.useLog = micb_Log.isSelected();
     }
 
     public void logAtList(String s){
@@ -742,26 +861,22 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         Logger.log("Window Closed");
     }
 
-    //private boolean deiconifiedFlag = false;
     @Override
     public void windowIconified(WindowEvent e) {
         Logger.log("Window Iconified");
-        //if(ConfigModule.hideOnIconified && !deiconifiedFlag) setVisible(false);
         if(ConfigModule.hideOnIconified && !Toolbox.getSystemName().contains("mac")) setVisible(false);
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
         Logger.log("Window Deiconified");
-        //deiconifiedFlag = false;
-        //if(Toolbox.getSystemName().contains("mac")) setVisible(true);
         setVisible(true);
     }
 
     @Override
     public void windowActivated(WindowEvent e) {
         Logger.log("Window Activated");
-        //if(Toolbox.getSystemName().contains("mac")) com.apple.eawt.Application.getApplication().requestUserAttention(false);
+        if(Toolbox.getSystemName().contains("mac")) com.apple.eawt.Application.getApplication().requestUserAttention(false);
     }
 
     @Override
@@ -775,12 +890,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             if(Toolbox.getSystemName().contains("mac")){
                 if(e.getButton() == MouseEvent.BUTTON2 || e.getButton() == MouseEvent.BUTTON3) {
                     setVisible(true);
-                    //deiconifiedFlag = true;
                 }
             }
             else if(e.getButton() == MouseEvent.BUTTON1) {
                 setVisible(true);
-                //deiconifiedFlag = true;
             }
         }
     }

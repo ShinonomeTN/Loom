@@ -82,7 +82,7 @@ public class ConfigModule{
 
     public final static String timeFormat = "([0-2]\\d\\:[0-5]\\d)";
     public static boolean allowAutoMode(){
-        return (autoOnlineTime.matches(timeFormat) && autoOfflineTime.matches(timeFormat));
+        return (autoOnlineTime.matches(timeFormat) && autoOfflineTime.matches(timeFormat)) && !autoOnlineTime.equals(autoOfflineTime);
     }
 
     private static void readProfile() throws IOException {
