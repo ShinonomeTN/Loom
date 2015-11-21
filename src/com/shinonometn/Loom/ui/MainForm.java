@@ -457,21 +457,25 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                         String timeNow = simpleDateFormat.format(new Date());
                         if(Program.isDeveloperMode()) Logger.log("Timer tick. Check Time: " + timeNow + "");
                         if(shuttle == null){
-                            if(timeNow.equals(ConfigModule.autoOnlineTime)){
-                                if(!timerAlertedFlag){
-                                    onClick_btn_login();
-                                    timerAlertedFlag = true;
-                                    Logger.log("Timer auto click login button because reach the online time point.");
-                                }
-                            }else timerAlertedFlag = false;
+                            if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("online")){
+                                if(timeNow.equals(ConfigModule.autoOnlineTime)){
+                                    if(!timerAlertedFlag){
+                                        onClick_btn_login();
+                                        timerAlertedFlag = true;
+                                        Logger.log("Timer auto click login button because reach the online time point.");
+                                    }
+                                }else timerAlertedFlag = false;
+                            }
                         }else{
-                            if(timeNow.equals(ConfigModule.autoOfflineTime)){
-                                if(!timerAlertedFlag){
-                                    onClick_btn_login();
-                                    timerAlertedFlag = true;
-                                    Logger.log("Timer auto click login button because reach the offline time point.");
-                                }
-                            }else timerAlertedFlag = false;
+                            if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("offline")){
+                                if(timeNow.equals(ConfigModule.autoOfflineTime)){
+                                    if(!timerAlertedFlag){
+                                        onClick_btn_login();
+                                        timerAlertedFlag = true;
+                                        Logger.log("Timer auto click login button because reach the offline time point.");
+                                    }
+                                }else timerAlertedFlag = false;
+                            }
                         }
                     }else{
                         if(Program.isDeveloperMode()) Logger.log("AutoMode is false.");
