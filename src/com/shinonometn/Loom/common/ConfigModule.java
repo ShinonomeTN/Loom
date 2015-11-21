@@ -27,6 +27,8 @@ public class ConfigModule{
     public static Boolean notShownAtLaunch = false;
     public static String fakeIP = "null";
     public static String fakeMac = "null";
+    public static String autoOnlineTime = "";
+    public static String autoOfflineTime = "";
 
     //配置文件目录
     private static File profilePath;
@@ -70,8 +72,15 @@ public class ConfigModule{
         }
     }
 
+    private static String ipFormat = "([1,2]?\\d?\\d\\.?){4}";
+    private static String macForamt = "[0-f,0-F]{12}";
     public static boolean isFakeMode(){
-        return (!ConfigModule.fakeIP.toLowerCase().equals("null") && !ConfigModule.fakeMac.toLowerCase().equals("null"));
+        return (ConfigModule.fakeIP.matches(ipFormat) && ConfigModule.fakeMac.matches(macForamt));
+    }
+
+    private static String timeFormat = "([0-2]\\d.?){2}";
+    public static boolean isAutoModeOn(){
+        return (autoOnlineTime.matches(timeFormat) && autoOnlineTime.matches(timeFormat));
     }
 
     private static void readProfile() throws IOException {
