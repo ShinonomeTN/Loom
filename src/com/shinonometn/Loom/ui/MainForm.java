@@ -5,10 +5,9 @@ import com.shinonometn.Loom.common.ConfigModule;
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Loom.common.Networks;
 import com.shinonometn.Loom.common.Toolbox;
-import com.shinonometn.Loom.connector.Messenger.ShuttleEvent;
-import com.shinonometn.Loom.connector.Shuttle;
-import sun.lwawt.macosx.CMenu;
-import sun.lwawt.macosx.CMenuBar;
+import com.shinonometn.Loom.core.Messenger.ShuttleEvent;
+import com.shinonometn.Loom.core.Shuttle;
+import com.shinonometn.Loom.resource.Resource;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -48,7 +47,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     JCheckBox cb_showInfo;
     JCheckBox cb_Log;
     JCheckBox cb_printLog;
-    JMenuItem menuItemCleanInfos;
+    //JComboBox<String> cb_autoMode;
+    //JMenuItem menuItemSetAutoOnline;
+    //JMenuItem menuItemDisableAutoOnline;
+    JMenuItem menuItemCleanInfo;
     JMenuItem menuItemCleanLogs;
     JMenuItem menuItemSaveProfile;
 
@@ -64,24 +66,26 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     Shuttle shuttle;
     Vector<NetworkInterface> nf;
+    Resource resource = Resource.getResource();
 
 //图标资源
-    ImageIcon icon_online = new ImageIcon(getClass().getResource("/com/shinonometn/img/link.png"));
-    ImageIcon icon_offline = new ImageIcon(getClass().getResource("/com/shinonometn/img/link_break.png"));
-    ImageIcon icon_linking = new ImageIcon(getClass().getResource("/com/shinonometn/img/link_go.png"));
-    ImageIcon icon_app = new ImageIcon(getClass().getResource("/com/shinonometn/img/package_link.png"));
-    ImageIcon icon_dev = new ImageIcon(getClass().getResource("/com/shinonometn/img/bomb.png"));
+    ImageIcon icon_online = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/link.png"));
+    ImageIcon icon_offline = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/link_break.png"));
+    ImageIcon icon_linking = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/link_go.png"));
+    ImageIcon icon_app = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/package_link.png"));
+    ImageIcon icon_dev = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/bomb.png"));
 
-    Image tray_online = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/img/package_link 2.png"));
-    Image tray_linking = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/img/package_go.png"));
-    Image tray_offline = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/img/package.png"));
-    Image image_app = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/img/package_link.png"));
+    Image tray_online = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/Loom/resource/img/package_link 2.png"));
+    Image tray_linking = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/Loom/resource/img/package_go.png"));
+    Image tray_offline = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/Loom/resource/img/package.png"));
+    Image image_app = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/Loom/resource/img/package_link.png"));
 //--------
 
     public MainForm(){
         super("Loom");
-        if(Toolbox.getSystemName().contains("mac"))
-            com.apple.eawt.Application.getApplication().setDockIconImage(image_app);
+        if(Toolbox.getSystemName().contains("mac")) {
+            //com.apple.eawt.Application.getApplication().setDockIconImage(image_app);
+        }
         setMinimumSize(new Dimension(200, 217));
         setSize(ConfigModule.windowWidth, ConfigModule.windowHeight);
         setIconImage(image_app);
@@ -118,10 +122,12 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         cb_notShownAtLaunch = new JCheckBox("启动时不显示窗体");
         cb_notShownAtLaunch.setSelected(ConfigModule.notShownAtLaunch);
         //-
+        //menuItemSetAutoOnline = new JCheckBoxMenuItem()
+        //-
         menuItemCleanLogs = new JMenuItem("清除日志目录");
         menuItemSaveProfile = new JMenuItem("立即保存设置");
-        menuItemCleanInfos = new JMenuItem("清除链接信息");
-        menuItemCleanInfos.setEnabled(ConfigModule.showInfo);
+        menuItemCleanInfo = new JMenuItem("清除链接信息");
+        menuItemCleanInfo.setEnabled(ConfigModule.showInfo);
         //-
         menuItemState = new MenuItem("状态：下线");
         menuItemState.setEnabled(false);
@@ -129,11 +135,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuItemExit = new MenuItem("退出");
 
         JMenu menu = new JMenu("设置");
-        menu.add(cb_remember);
         menu.add(cb_hideOnIconfied);
         menu.add(cb_notShownAtLaunch);
+        menu.add(new JPopupMenu.Separator());
         menu.add(cb_showInfo);
         menu.add(new JPopupMenu.Separator());
+        menu.add(new JPopupMenu.Separator());
+        menu.add(cb_remember);
         menu.add(menuItemSaveProfile);
         menuBar.add(menu);
 
@@ -142,7 +150,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuLogs.add(cb_printLog);
         menuLogs.add(cb_showInfo);
         menuLogs.add(new JPopupMenu.Separator());
-        menuLogs.add(menuItemCleanInfos);
+        menuLogs.add(menuItemCleanInfo);
         menuLogs.add(menuItemCleanLogs);
         menuBar.add(menuLogs);
 
@@ -171,7 +179,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuBar.add(menu);
 
         if(Toolbox.getSystemName().contains("mac")){
-            com.apple.eawt.Application.getApplication().setDefaultMenuBar(menuBar);
+            //com.apple.eawt.Application.getApplication().setDefaultMenuBar(menuBar);
         }
         setJMenuBar(menuBar);
 
@@ -188,7 +196,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.insets = normal_inset;
         if(ConfigModule.isFakeMode()){
-            add(new JLabel("Loom v1.8 (Fake Mode)", new ImageIcon(getClass().getResource("/com/shinonometn/img/key.png")), JLabel.CENTER), gridBagConstraints);
+            add(new JLabel("Loom v1.8 (Fake Mode)", new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/key.png")), JLabel.CENTER), gridBagConstraints);
         }else
             add(new JLabel("Loom v1.8",icon_app,JLabel.CENTER), gridBagConstraints);
 
@@ -303,7 +311,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuItemSaveProfile.addActionListener(this);
         menuItemAbout.addActionListener(this);
         menuItemHelp.addActionListener(this);
-        menuItemCleanInfos.addActionListener(this);
+        menuItemCleanInfo.addActionListener(this);
         menuItemOnline.addActionListener(this);
         menuItemExit.addActionListener(this);
 
@@ -379,7 +387,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             if(!Toolbox.getSystemName().contains("mac")){
                 trayIcon.displayMessage(title, content, TrayIcon.MessageType.INFO);
             }else{
-                com.apple.eawt.Application.getApplication().requestUserAttention(true);
+                //com.apple.eawt.Application.getApplication().requestUserAttention(true);
             }
         }
     }
@@ -457,26 +465,12 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             menuItemOnline.setLabel(btn_login.getText());
         }else if(e.getSource() == menuItemAbout){ //菜单里的关于
 
-            String aboutInfo = "Loom\t(不是真的纺纱机啦)" +
-                    "\n您可以无偿使用这个软件，用以登录岭南职院校园网。" +
-                    "\n\n此软件开源自由，遵循GPL(General Public License)协议" +
-                    "\nhttp://www.gnu.org/licenses/gpl.html" +
-                    "\n源代码托管于Github上" +
-                    "\nhttps://github.com/shinonometn/Loom" +
-                    "\n有关于此软件出现的问题可以邮件至：" +
-                    "\nfsmany@126.com" +
-                    "\n\n東雲電気通信網　2015-11-19";
-
-            JOptionPane.showMessageDialog(null,aboutInfo,"关于 Loom",JOptionPane.INFORMATION_MESSAGE,icon_app);
+            JOptionPane.showMessageDialog(null,resource.getResourceText("/com/shinonometn/Loom/resource/about.txt"),"关于 Loom",JOptionPane.INFORMATION_MESSAGE,icon_app);
         }else if(e.getSource() == menuItemHelp){//菜单里的帮助
 
-            String helpInfo = "欢迎使用Loom" +
-                    "\n\n填写好登录账号和密码之后，选择已经链接到校园网的网卡，然后上线。" +
-                    "\n如果提示没有可用网卡，请检查网线或者WLAN是否已经连接上" +
-                    "\n如果需要使用WLAN（无线网卡）连接校园网，请把无线路由器调至交换机模式" +
-                    "\n软件本身不能让你无限时长上网" +
-                    "\n如果认证超时，重试即可。如依旧不能解决，请到 http://172.19.1.8/selfLogoutAction.do 登陆后强制下线" +
-                    "\n更多问题请自己探索或发邮件于我。";
+            String helpInfo = (ConfigModule.isFakeMode() ?
+                    "Hey guy.\nYou maybe already read the help doc. under console mode.\nThe help info only for green hands. :P"
+                    :resource.getResourceText("/com/shinonometn/Loom/resource/helpInfo.txt"));
             JOptionPane.showMessageDialog(null,helpInfo,"帮助",JOptionPane.INFORMATION_MESSAGE,icon_app);
         }else if(e.getSource() == cb_remember){ //保存用户设置
 
@@ -514,14 +508,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         }else if(e.getSource() == cb_showInfo){
 
             ConfigModule.showInfo = cb_showInfo.isSelected();
-            menuItemCleanInfos.setEnabled(ConfigModule.showInfo);
+            menuItemCleanInfo.setEnabled(ConfigModule.showInfo);
             scrollPane.setVisible(ConfigModule.showInfo);
             if(ConfigModule.showInfo && getHeight() < 240){
                 setSize(getWidth(),240);
             }else if(!ConfigModule.showInfo){
                 setSize(getWidth(),getMinimumSize().height);
             }
-        }else if(e.getSource() == menuItemCleanInfos){
+        }else if(e.getSource() == menuItemCleanInfo){
 
             listModel.clear();
         }else if(e.getSource() == menuItemExit){
@@ -530,7 +524,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 switch (result){
                     case JOptionPane.YES_OPTION:
                         shuttleOffline();
-                        while (shuttle.isOnline());
+                        //while (shuttle.isOnline());
                         dispose();
                         System.exit(0);
                     case JOptionPane.NO_OPTION:
@@ -777,7 +771,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     @Override
     public void windowActivated(WindowEvent e) {
         Logger.log("Window Activated");
-        if(Toolbox.getSystemName().contains("mac")) com.apple.eawt.Application.getApplication().requestUserAttention(false);
+        //if(Toolbox.getSystemName().contains("mac")) com.apple.eawt.Application.getApplication().requestUserAttention(false);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.shinonometn.Loom.connector.Messenger;
+package com.shinonometn.Loom.core.Messenger;
 
 /**
  * Created by catten on 15/11/3.

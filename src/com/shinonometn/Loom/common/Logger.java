@@ -35,10 +35,14 @@ public class Logger {
 
         }catch (IOException e){
             noLogFileMode = true;
-            System.out.println(e);
+            System.out.println(e.getMessage());
         }finally {
             if(noLogFileMode) System.out.println("Opening log file failed. Program will run under no-log mode.");
         }
+    }
+
+    public static void deleteLog(){
+        pathLog.delete();
     }
 
     public static void closeLog(){
@@ -48,7 +52,7 @@ public class Logger {
             fileWriter.flush();
             fileWriter.close();
         } catch (IOException e) {
-            System.out.println(e);
+            System.out.println(e.getMessage());
         }
     }
 
@@ -66,7 +70,7 @@ public class Logger {
                 fileWriter.write((log + "\n"));
                 fileWriter.flush();
             } catch (IOException e) {
-                System.out.println(e);
+                System.out.println(e.getMessage());
                 noLogFileMode = true;
                 System.out.println("Write log failed. Changed to no-log mode.");
             }

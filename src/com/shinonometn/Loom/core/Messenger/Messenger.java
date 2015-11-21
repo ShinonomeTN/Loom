@@ -1,4 +1,4 @@
-package com.shinonometn.Loom.connector.Messenger;
+package com.shinonometn.Loom.core.Messenger;
 
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Pupa.Pupa;

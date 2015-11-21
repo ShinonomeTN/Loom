@@ -1,0 +1,12 @@
+Loom
+
+您可以无偿使用这个软件，用以登录岭南职院校园网。
+
+此软件开源自由，遵循GPL(General Public License)协议
+http://www.gnu.org/licenses/gpl.html
+源代码托管于Github上
+https://github.com/shinonometn/Loom
+有关于此软件出现的问题可以邮件至：
+kozakcuu@gmail.com
+
+東雲研究所　2015-11-19

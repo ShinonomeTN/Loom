@@ -1,9 +1,9 @@
-package com.shinonometn.Loom.connector;
+package com.shinonometn.Loom.core;
 
 import com.shinonometn.Loom.common.ConfigModule;
 import com.shinonometn.Loom.common.Logger;
-import com.shinonometn.Loom.connector.Messenger.Messenger;
-import com.shinonometn.Loom.connector.Messenger.ShuttleEvent;
+import com.shinonometn.Loom.core.Messenger.Messenger;
+import com.shinonometn.Loom.core.Messenger.ShuttleEvent;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;

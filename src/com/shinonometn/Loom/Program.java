@@ -4,15 +4,13 @@ import com.shinonometn.Loom.common.ConfigModule;
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Loom.common.Networks;
 import com.shinonometn.Loom.common.Toolbox;
-import com.shinonometn.Loom.connector.Shuttle;
+import com.shinonometn.Loom.core.Shuttle;
+import com.shinonometn.Loom.resource.Resource;
 import com.shinonometn.Loom.ui.MainForm;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.nio.channels.FileLock;
 import java.util.List;
@@ -29,7 +27,19 @@ public class Program{
         return developerMode;
     }
 
+    public final static String appName = "Loom v2.0";
+
     public static void main(String[] args){
+
+        if(args.length == 1 && args[0].toLowerCase().equals("-help")){
+            Logger.closeLog();
+            Logger.deleteLog();
+            Logger.outPrint = false;
+            System.out.println(appName);
+            System.out.println(Resource.getResource().getResourceText("/com/shinonometn/Loom/resource/help.txt"));
+            return;
+        }
+
         File lockfile = new File("./profile/.lock");
         FileLock wlock;
         if(!lockfile.exists()){
@@ -44,25 +54,13 @@ public class Program{
             } catch (IOException e) {
                 Logger.log("Lock failed.");
             }
+            Logger.log("Get lock success.");
         }
 
         Logger.log("System: " + Toolbox.getSystemName());
         if(args.length >= 2){
-            if(args[1] != null && "-developerMode".toLowerCase().equals(args[1].toLowerCase())){
+            if("-developerMode".toLowerCase().equals(args[1].toLowerCase())){
                 developerMode = true;
-            }
-
-            if(args.length == 4){
-                if(args[0].toLowerCase().equals("-fakeip")){
-                    if(args[2].toLowerCase().equals("-fakemac")){
-                        Logger.log("Writing fake IP and Mac to profile.");
-                        System.out.println("Writing fake IP and Mac to profile.");
-                        ConfigModule.fakeIP = args[1];
-                        ConfigModule.fakeMac = args[3];
-                        ConfigModule.writeProfile();
-                        return;
-                    }
-                }
             }
         }
         //Logger.outPrint = developerMode;
@@ -77,13 +75,49 @@ public class Program{
             if(Logger.isWriteToFile()){
                 Logger.closeLog();
             }
-        }else if(args.length == 1 && args[0].toLowerCase().equals("-clearfakeinfo")){
+        }
+
+        if(args.length == 1 && args[0].toLowerCase().equals("-clearfakeinfo")){
             ConfigModule.fakeIP = "null";
             ConfigModule.fakeMac = "null";
             ConfigModule.writeProfile();
             Logger.log("Fake IP and Mac Cleared");
             System.out.println("Fake IP and Mac Cleared");
-        }else if(args.length == 0 || "-graphicMode".toLowerCase().equals(args[0].toLowerCase())){
+        }
+
+        if(args.length >= 2 && "-setautomode".equals(args[0].toLowerCase())){
+            if(args[1].matches(ConfigModule.timeFormat + "\\-" + ConfigModule.timeFormat)){
+                String[] matchBuffer = args[1].split("\\-");
+                ConfigModule.autoOnlineTime = matchBuffer[0];
+                ConfigModule.autoOfflineTime = matchBuffer[1];
+                if(args.length == 3){
+                    if(args[2].matches("(both|online|offline)")) ConfigModule.autoOnlineMode = args[2];
+                }
+                String temp = String.format(
+                        "Set auto online at %s, auto offline at %s, mode: %s.",
+                        ConfigModule.autoOnlineTime,
+                        ConfigModule.autoOfflineTime,
+                        ConfigModule.autoOnlineMode
+                );
+                System.out.println(temp);
+                Logger.log(temp);
+            }
+        }
+
+        if(args.length == 4){
+            if(args[0].toLowerCase().equals("-fakeip")){
+                if(args[2].toLowerCase().equals("-fakemac")){
+                    Logger.log("Writing fake IP and Mac to profile.");
+                    System.out.println("Writing fake IP and Mac to profile.");
+                    ConfigModule.fakeIP = args[1];
+                    ConfigModule.fakeMac = args[3].replace(":","");
+                    ConfigModule.writeProfile();
+                    return;
+                }
+            }
+        }
+
+        if(args.length == 0 || "-graphicMode".toLowerCase().equals(args[0].toLowerCase())){
             Logger.log("Loom Graphic Mode");
             try{
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

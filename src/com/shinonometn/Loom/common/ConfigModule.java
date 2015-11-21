@@ -27,8 +27,10 @@ public class ConfigModule{
     public static Boolean notShownAtLaunch = false;
     public static String fakeIP = "null";
     public static String fakeMac = "null";
+    //public static Boolean autoModeOn = false;
     public static String autoOnlineTime = "";
     public static String autoOfflineTime = "";
+    public static String autoOnlineMode = "both";
 
     //配置文件目录
     private static File profilePath;
@@ -72,15 +74,15 @@ public class ConfigModule{
         }
     }
 
-    private static String ipFormat = "([1,2]?\\d?\\d\\.?){4}";
-    private static String macForamt = "[0-f,0-F]{12}";
+    public final static String ipFormat = "([1,2]?(\\d){1,2}\\.){3}[1,2]?(\\d){1,2}";
+    public final static String macFormat = "[0-f,0-F]{12}";
     public static boolean isFakeMode(){
-        return (ConfigModule.fakeIP.matches(ipFormat) && ConfigModule.fakeMac.matches(macForamt));
+        return (ConfigModule.fakeIP.matches(ipFormat) && ConfigModule.fakeMac.matches(macFormat));
     }
 
-    private static String timeFormat = "([0-2]\\d.?){2}";
-    public static boolean isAutoModeOn(){
-        return (autoOnlineTime.matches(timeFormat) && autoOnlineTime.matches(timeFormat));
+    public final static String timeFormat = "([0-2]\\d\\:[0-5]\\d)";
+    public static boolean allowAutoMode(){
+        return (autoOnlineTime.matches(timeFormat) && autoOfflineTime.matches(timeFormat));
     }
 
     private static void readProfile() throws IOException {
@@ -104,7 +106,7 @@ public class ConfigModule{
                 for(String field:fields){
                     try{
                         String split[] = field.split("=");
-
+                        //判断字段并存入相应的变量
                         if("useLog".equals(split[0])) useLog = Boolean.parseBoolean(split[1]);
                         else if("username".equals(split[0])) username = split[1];
                         else if("password".equals(split[0])) password = split[1];
@@ -118,9 +120,16 @@ public class ConfigModule{
                         else if("notShownAtLaunch".equals(split[0])) notShownAtLaunch = Boolean.parseBoolean(split[1]);
                         else if("fakeIP".equals(split[0])) fakeIP = split[1];
                         else if("fakeMac".equals(split[0])) fakeMac = split[1];
+                        else if("autoOnlineTime".equals(split[0])) autoOnlineTime = split[1];
+                        else if("autoOfflineTime".equals(split[0])) autoOfflineTime = split[1];
 
-                        if(fakeIP.equals("")) fakeIP = "null";
-                        if(fakeMac.equals("")) fakeMac = "null";
+                        //保证配置的健壮性
+                        if(!fakeIP.matches(ipFormat)) fakeIP = "null";
+                        if(!fakeMac.matches(macFormat)) fakeMac = "null";
+                        if(!autoOfflineTime.matches(timeFormat)) autoOfflineTime = "";
+                        if(!autoOnlineTime.matches(timeFormat)) autoOnlineTime = "";
+                        if(!(autoOnlineMode.equals("online") || autoOnlineMode.equals("offline"))) autoOnlineMode = "both";
+
 
                         Logger.log(Program.isDeveloperMode()?field + " copied.":"----Ignored----");
                     }catch (NullPointerException | ArrayIndexOutOfBoundsException e){
@@ -155,7 +164,10 @@ public class ConfigModule{
                                     "showInfo=%s\n" +
                                     "notShownAtLaunch=%s\n" +
                                     "fakeIP=%s\n" +
-                                    "fakeMac=%s\n",
+                                    "fakeMac=%s\n" +
+                                    "autoOnlineTime=%s\n" +
+                                    "autoOfflineTime=%s\n" +
+                                    "autoOnlineMode=%s\n",
                             "crypt3849",
                             useLog,
                             username,
@@ -169,7 +181,10 @@ public class ConfigModule{
                             showInfo,
                             notShownAtLaunch,
                             fakeIP,
-                            fakeMac
+                            fakeMac,
+                            autoOnlineTime,
+                            autoOfflineTime,
+                            autoOnlineMode
                     ).getBytes());
 
             fileWriter = new FileOutputStream(profilePath);
