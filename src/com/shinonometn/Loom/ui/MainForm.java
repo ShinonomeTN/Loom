@@ -124,8 +124,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         micb_notShownAtLaunch.setSelected(ConfigModule.notShownAtLaunch);
 
         rbmi_AutoModeBoth = new JRadioButtonMenuItem("上线和下线");
+        if(ConfigModule.autoOnlineMode.equals("both")) rbmi_AutoModeBoth.setSelected(true);
         rbmi_AutoModeOnline = new JRadioButtonMenuItem("仅上线");
+        if(ConfigModule.autoOnlineMode.equals("online")) rbmi_AutoModeOnline.setSelected(true);
         rbmi_AutoModeOffline = new JRadioButtonMenuItem("仅下线");
+        if(ConfigModule.autoOnlineMode.equals("both")) rbmi_AutoModeOffline.setSelected(true);
         ButtonGroup buttonGroup = new ButtonGroup();
         buttonGroup.add(rbmi_AutoModeBoth);
         buttonGroup.add(rbmi_AutoModeOnline);
@@ -715,7 +718,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     logAtList("获取认证服务器失败:服务器无响应");
                     JOptionPane.showMessageDialog(
                             this,
-                            "敲门无响应\n请检查您所选择的网卡是否已连接到校园网",
+                            "敲门无响应\n请检查您所选择的网卡是否已就绪并稍后重试",
                             this.getTitle(),
                             JOptionPane.WARNING_MESSAGE
                     );
