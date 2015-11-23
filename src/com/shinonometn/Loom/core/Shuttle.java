@@ -158,8 +158,9 @@ public class Shuttle extends Thread{
                 return;
             } catch (IOException e) {
                 if(e.getMessage().equals("No route to host")){
-                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT,e.getMessage().toLowerCase().replace(" ","_"));
-                }else{
+                    shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_SERVER_NOT_FOUNT,"no_route_to_host");
+                    Logger.error(e.getMessage());
+                } else {
                     Logger.error("Unknown Exception. cause:" + e.getMessage());
                     shuttleEvent.onMessage(ShuttleEvent.SHUTTLE_OTHER_EXCEPTION, "unknown_exception_knocking");
                 }

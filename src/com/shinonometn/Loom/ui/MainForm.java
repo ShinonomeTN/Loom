@@ -93,7 +93,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         if(Toolbox.getSystemName().contains("mac")) {
             com.apple.eawt.Application.getApplication().setDockIconImage(image_app);
         }
-        setMinimumSize(new Dimension(200, 217));
+        setMinimumSize(new Dimension(200, 240));
         setSize(ConfigModule.windowWidth, ConfigModule.windowHeight);
         setIconImage(image_app);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -219,7 +219,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.insets = normal_inset;
+        gridBagConstraints.insets = new Insets(10,2,10,2);
         if(ConfigModule.isFakeMode()){
             add(new JLabel(
                             Program.appName + " (Fake Mode)",
@@ -389,9 +389,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     menuItemCleanInfo.setEnabled(ConfigModule.showInfo);
                     scrollPane.setVisible(ConfigModule.showInfo);
                     if(ConfigModule.showInfo && getHeight() < 240){
-                        setSize(getWidth(), 240);
+                        setSize(getWidth(), 300);
+                        getMinimumSize().setSize(200, 300);
                     }else if(!ConfigModule.showInfo){
                         setSize(getWidth(),getMinimumSize().height);
+                        getMinimumSize().setSize(200,240);
                     }
                 }
 
@@ -795,7 +797,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //找不到服务器
             case SHUTTLE_SERVER_NOT_FOUNT:{
-                logAtList("找不到服务器");
+                if("no_route_to_host".equals(message)){
+                    logAtList("无路由到服务器");
+                    JOptionPane.showMessageDialog(this,"数据包不能路由到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
+                }else if("server_ip_unavailable".equals(message) || "knock_server_not_found".equals(message)){
+                    logAtList("找不到服务器");
+                    JOptionPane.showMessageDialog(this,"找不到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
+                }
                 shuttleOffline();
                 uiOffline();
             }break;
@@ -811,12 +819,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     shuttleOffline();
                     JOptionPane.showMessageDialog(this,"密码或帐号为空",getTitle(),JOptionPane.ERROR_MESSAGE);
                 }
-                logAtList("未知错误:" + message);
+                logAtList("错误:" + message);
             }break;
 
             //下线
             case SHUTTLE_OFFLINE:{
                 logAtList("下线了");
+                trayPopMessage(getTitle(),"下线了");
                 uiOffline();
             }break;
 

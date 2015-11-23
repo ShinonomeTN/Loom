@@ -20,8 +20,8 @@ public class ConfigModule{
     public static Boolean autoSaveSetting = true;
     public static String defaultInterface = "";
     public static Boolean outPrintLog = true;
-    public static Integer windowWidth = 240;
-    public static Integer windowHeight = 400;
+    public static Integer windowWidth = 230;
+    public static Integer windowHeight = 240;
     public static Boolean hideOnIconified = true;
     public static Boolean showInfo = false;
     public static Boolean notShownAtLaunch = false;

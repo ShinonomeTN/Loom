@@ -5,4 +5,4 @@
 如果需要使用WLAN（无线网卡）连接校园网，请把无线路由器调至交换机模式
 软件本身不能让你无限时长上网
 如果认证超时，重试即可。如依旧不能解决，请到 http://172.19.1.8/selfLogoutAction.do 登陆后强制下线
-更多问题请自己探索或发邮件于我。
+Loom Wiki：https://github.com/shinonometn/Loom/wiki

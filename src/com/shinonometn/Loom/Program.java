@@ -73,7 +73,7 @@ public class Program{
 
         if(args.length > 0 && "-consoleMode".toLowerCase().equals(args[0].toLowerCase())){
             Logger.log("Loom Console Mode");
-            LoomConsole();
+            LoomConsole(null);
             if(Logger.isWriteToFile()){
                 Logger.closeLog();
             }
@@ -163,7 +163,7 @@ public class Program{
         }
     }
 
-    public static void LoomConsole(){
+    public static void LoomConsole(String args[]){
         try {
             System.out.println("Welcome to use " + appName + " Console!\n");
 
@@ -175,8 +175,13 @@ public class Program{
 
             Scanner scanner = new Scanner(System.in);
 
-            System.out.println("Input your IP address:");
-            ip = scanner.next();
+            if(args.length == 1){
+                System.out.print("Loom now running under pre-fix mode.");
+                ip = args[0];
+            }else{
+                System.out.println("Input your IP address:");
+                ip = scanner.next();
+            }
             System.out.println("Getting Network Interface with " + ip);
             InetAddress inetAddress = InetAddress.getByName(ip);
             final NetworkInterface networkInterface = NetworkInterface.getByInetAddress(inetAddress);
@@ -192,14 +197,24 @@ public class Program{
             shuttle.developerMode = Program.isDeveloperMode();
             System.out.println("Prepared to login.");
 
-            System.out.println("Please input your account");
-            username = scanner.next();
-            System.out.println("PIN Code?(Password)");
-            password = scanner.next();
+            if(args.length == 0){
+                System.out.println("Please input your account");
+                username = scanner.next();
+                System.out.println("PIN Code?(Password)");
+                password = scanner.next();
+            }else{
+                username = null;
+                password = null;
+            }
 
             if(!ConfigModule.allowAutoMode()){
-                shuttle.setUsername(username);
-                shuttle.setPassword(password);
+                if(args.length == 0){
+                    shuttle.setUsername(username);
+                    shuttle.setPassword(password);
+                }else{
+                    shuttle.setUsername(ConfigModule.username);
+                    shuttle.setPassword(ConfigModule.password);
+                }
                 System.out.println("Loom Start.");
                 shuttle.start();
 
