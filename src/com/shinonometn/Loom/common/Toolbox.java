@@ -4,7 +4,9 @@ package com.shinonometn.Loom.common;
  * Created by catten on 15/11/18.
  */
 public class Toolbox {
+
     private static String systemName = null;
+    private static boolean macOSX = getSystemName().contains("mac");
 
     public static String getSystemName(){
         if(systemName == null){
@@ -12,4 +14,9 @@ public class Toolbox {
         }
         return systemName;
     }
+
+    public static boolean isMacOSX(){
+        return macOSX;
+    }
+
 }

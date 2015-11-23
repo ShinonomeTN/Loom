@@ -23,6 +23,7 @@ public class ConfigModule{
     public static Integer windowWidth = 230;
     public static Integer windowHeight = 240;
     public static Boolean hideOnIconified = true;
+    public static Boolean hideOnClose = true;
     public static Boolean showInfo = false;
     public static Boolean notShownAtLaunch = false;
     public static String fakeIP = "null";
@@ -122,6 +123,7 @@ public class ConfigModule{
                         else if("fakeMac".equals(split[0])) fakeMac = split[1];
                         else if("autoOnlineTime".equals(split[0])) autoOnlineTime = split[1];
                         else if("autoOfflineTime".equals(split[0])) autoOfflineTime = split[1];
+                        else if("hindOnClose".equals(split[0])) hideOnClose = Boolean.parseBoolean(split[1]);
 
                         //保证配置的健壮性
                         if(!fakeIP.matches(ipFormat)) fakeIP = "null";
@@ -167,7 +169,8 @@ public class ConfigModule{
                                     "fakeMac=%s\n" +
                                     "autoOnlineTime=%s\n" +
                                     "autoOfflineTime=%s\n" +
-                                    "autoOnlineMode=%s\n",
+                                    "autoOnlineMode=%s\n" +
+                                    "hideOnClose=%s\n",
                             "crypt3849",
                             useLog,
                             username,
@@ -184,7 +187,8 @@ public class ConfigModule{
                             fakeMac,
                             autoOnlineTime,
                             autoOfflineTime,
-                            autoOnlineMode
+                            autoOnlineMode,
+                            hideOnClose
                     ).getBytes());
 
             fileWriter = new FileOutputStream(profilePath);

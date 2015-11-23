@@ -58,6 +58,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     JMenuItem menuItemCleanInfo;
     JMenuItem menuItemCleanLogs;
     JMenuItem menuItemSaveProfile;
+    JMenuItem menuItemHideOnClose;
 
     //JMenu menuAbout;
     JMenuItem menuItemAbout;
@@ -82,21 +83,29 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     ImageIcon icon_app = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/package_link.png"));
     ImageIcon icon_dev = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/bomb.png"));
 
-    Image tray_online = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/Loom/resource/img/package_link 2.png"));
-    Image tray_linking = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/Loom/resource/img/package_go.png"));
-    Image tray_offline = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/Loom/resource/img/package.png"));
+    Image tray_online;
+    Image tray_linking;
+    Image tray_offline;
     Image image_app = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/Loom/resource/img/package_link.png"));
 //--------
 
     public MainForm(){
         super("Loom");
-        if(Toolbox.getSystemName().contains("mac")) {
+
+        tray_online = Toolkit.getDefaultToolkit().getImage(
+                getClass().getResource("/com/shinonometn/Loom/resource/img/" + (Toolbox.isMacOSX() ? "icon_link.png" : "package_link 2.png")));
+        tray_linking = Toolkit.getDefaultToolkit().getImage(
+                getClass().getResource("/com/shinonometn/Loom/resource/img/" + (Toolbox.isMacOSX() ? "icon_loading.png" : "package_go.png")));
+        tray_offline = Toolkit.getDefaultToolkit().getImage(
+                getClass().getResource("/com/shinonometn/Loom/resource/img/" + (Toolbox.isMacOSX() ? "icon_link_alt.png" : "package.png")));
+
+        if(Toolbox.isMacOSX()) {
             com.apple.eawt.Application.getApplication().setDockIconImage(image_app);
         }
         setMinimumSize(new Dimension(200, 240));
         setSize(ConfigModule.windowWidth, ConfigModule.windowHeight);
         setIconImage(image_app);
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation((ConfigModule.hideOnClose ? WindowConstants.HIDE_ON_CLOSE : WindowConstants.EXIT_ON_CLOSE));
         setLocationRelativeTo(null);
         setupUI();
         setupTray();
@@ -143,6 +152,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuItemStateAutoOnline = new JMenuItem();
         menuItemStateAutoOnline.setEnabled(false);
         updateAutoModeState();
+        menuItemHideOnClose = new JCheckBoxMenuItem("关闭窗口时隐藏");
+        menuItemHideOnClose.setSelected(ConfigModule.hideOnClose);
 
         menuItemCleanLogs = new JMenuItem("清除日志目录");
         menuItemSaveProfile = new JMenuItem("立即保存设置");
@@ -157,6 +168,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         JMenu menu = new JMenu("设置");
         menu.add(micb_hideOnIconfied);
         menu.add(micb_notShownAtLaunch);
+        menu.add(menuItemHideOnClose);
         menu.add(new JPopupMenu.Separator());
         menu.add(menuItemSetAutoOnline);
         menu.add(menuItemStateAutoOnline);
@@ -204,7 +216,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         }
         menuBar.add(menu);
 
-        if(Toolbox.getSystemName().contains("mac")){
+        if(Toolbox.isMacOSX()){
             com.apple.eawt.Application.getApplication().setDefaultMenuBar(menuBar);
         }else setJMenuBar(menuBar);
 
@@ -395,6 +407,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                         setSize(getWidth(),getMinimumSize().height);
                         getMinimumSize().setSize(200,240);
                     }
+                }else if(e.getSource() == menuItemHideOnClose){
+
+                    ConfigModule.hideOnClose = menuItemHideOnClose.isSelected();
+                    setDefaultCloseOperation((ConfigModule.hideOnClose ? WindowConstants.HIDE_ON_CLOSE : WindowConstants.EXIT_ON_CLOSE));
                 }
 
                 if(ConfigModule.autoSaveSetting) applyProfile();
@@ -411,6 +427,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         micb_hideOnIconfied.addActionListener(actionListener);
         menuItemAbout.addActionListener(actionListener);
         menuItemHelp.addActionListener(actionListener);
+        menuItemHideOnClose.addActionListener(actionListener);
 
         actionListener = new ActionListener() {
 
@@ -531,7 +548,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         stat_icon.setIcon(icon_offline);
         if(trayIcon != null){
             trayIcon.setImage(tray_offline);
-            setTrayTip("状态：下线");
+            setTrayTip("Loom ：下线");
         }
     }
 
@@ -542,7 +559,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         stat_icon.setIcon(icon_online);
         if(trayIcon != null){
             trayIcon.setImage(tray_online);
-            setTrayTip("状态：在线");
+            setTrayTip("Loom ：在线");
         }
     }
 
@@ -550,7 +567,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         stat_icon.setIcon(icon_linking);
         if(trayIcon != null){
             trayIcon.setImage(tray_linking);
-            setTrayTip("状态：重新链接中");
+            setTrayTip("Loom ：链接中");
         }
     }
 
@@ -563,7 +580,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     public void trayPopMessage(String title,String content){
         if(trayIcon != null){
-            if(!Toolbox.getSystemName().contains("mac")){
+            if(!Toolbox.isMacOSX()){
                 trayIcon.displayMessage(title, content, TrayIcon.MessageType.INFO);
             }else{
                 com.apple.eawt.Application.getApplication().requestUserAttention(true);
@@ -651,6 +668,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         }else{
             lockInputUI();
             btn_login.setText("上线中...");
+            setLinkingIcon();
             shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
             shuttle.developerMode = Program.isDeveloperMode();
             shuttle.setUsername(t_username.getText());
@@ -858,8 +876,16 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     }
                 }else if("breathe_time_clear".equals(message)){
                     logAtList("服务器要求在线时常复位");
+                } else {
+                    logAtList("呼吸进程遇到错误：" + message);
+                    if(Toolbox.isMacOSX()){
+                        JOptionPane.showMessageDialog(this,"呼吸进程遇到错误: " + message,getTitle(),JOptionPane.WARNING_MESSAGE);
+                    }else{
+                        trayPopMessage(getTitle(),"呼吸进程遇到错误，下线了");
+                    }
+                    shuttleOffline();
+                    uiOffline();
                 }
-                else logAtList("呼吸进程遇到错误：" + message);
             }break;
 
             //消息线程接收到消息
@@ -889,11 +915,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     @Override
     public void windowClosing(WindowEvent e) {
         Logger.log("Window Closing");
-        if(ConfigModule.autoSaveSetting){
+        if (!ConfigModule.hideOnClose && ConfigModule.autoSaveSetting) {
             ConfigModule.windowWidth = getWidth();
             ConfigModule.windowHeight = getHeight();
             ConfigModule.writeProfile();
-            if(Logger.isWriteToFile()){
+            if (Logger.isWriteToFile()) {
                 Logger.closeLog();
             }
         }
@@ -907,7 +933,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     @Override
     public void windowIconified(WindowEvent e) {
         Logger.log("Window Iconified");
-        if(ConfigModule.hideOnIconified && !Toolbox.getSystemName().contains("mac")) setVisible(false);
+        if(ConfigModule.hideOnIconified && !Toolbox.isMacOSX()) setVisible(false);
     }
 
     @Override
@@ -919,7 +945,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     @Override
     public void windowActivated(WindowEvent e) {
         Logger.log("Window Activated");
-        if(Toolbox.getSystemName().contains("mac")) com.apple.eawt.Application.getApplication().requestUserAttention(false);
+        if(Toolbox.isMacOSX()) com.apple.eawt.Application.getApplication().requestUserAttention(false);
     }
 
     @Override
@@ -930,7 +956,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     @Override
     public void mouseClicked(MouseEvent e) {
         if(e.getSource() == trayIcon){
-            if(Toolbox.getSystemName().contains("mac")){
+            if(Toolbox.isMacOSX()){
                 if(e.getButton() == MouseEvent.BUTTON2 || e.getButton() == MouseEvent.BUTTON3) {
                     setVisible(true);
                 }
