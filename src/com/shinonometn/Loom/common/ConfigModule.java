@@ -32,6 +32,8 @@ public class ConfigModule{
     public static String autoOnlineTime = "";
     public static String autoOfflineTime = "";
     public static String autoOnlineMode = "both";
+    public static Boolean autoOnline = false;
+    public static String specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri,Sat,Sun";
 
     //配置文件目录
     private static File profilePath;
@@ -86,6 +88,25 @@ public class ConfigModule{
         return (autoOnlineTime.matches(timeFormat) && autoOfflineTime.matches(timeFormat)) && !autoOnlineTime.equals(autoOfflineTime);
     }
 
+    public static String getSpecialDays(){
+        String s = specialDays;
+        StringBuilder stringBuilder = new StringBuilder();
+        String[] fields = s.split(";");
+        int c;
+        for(String field : fields){
+            c = 0;
+            for(int i = 1; i <= 7; i++){
+                if(!field.contains(Toolbox.praseWeek(String.valueOf(i)))){
+                    stringBuilder.append(Toolbox.praseWeek(String.valueOf(i))).append(" ");
+                    c++;
+                }
+            }
+            if(c == 0) stringBuilder.append("无");
+            stringBuilder.append(";");
+        }
+        return stringBuilder.toString();
+    }
+
     private static void readProfile() throws IOException {
         Logger.log("Try to read profile.");
         fileReader = new FileInputStream(profilePath);
@@ -123,7 +144,9 @@ public class ConfigModule{
                         else if("fakeMac".equals(split[0])) fakeMac = split[1];
                         else if("autoOnlineTime".equals(split[0])) autoOnlineTime = split[1];
                         else if("autoOfflineTime".equals(split[0])) autoOfflineTime = split[1];
-                        else if("hindOnClose".equals(split[0])) hideOnClose = Boolean.parseBoolean(split[1]);
+                        else if("hideOnClose".equals(split[0])) hideOnClose = Boolean.parseBoolean(split[1]);
+                        else if("autoOnline".equals(split[0])) autoOnline = Boolean.parseBoolean(split[1]);
+                        else if("specialDays".equals(split[0])) specialDays = split[1];
 
                         //保证配置的健壮性
                         if(!fakeIP.matches(ipFormat)) fakeIP = "null";
@@ -170,7 +193,9 @@ public class ConfigModule{
                                     "autoOnlineTime=%s\n" +
                                     "autoOfflineTime=%s\n" +
                                     "autoOnlineMode=%s\n" +
-                                    "hideOnClose=%s\n",
+                                    "hideOnClose=%s\n" +
+                                    "autoOnline=%s\n" +
+                                    "specialDays=%s",
                             "crypt3849",
                             useLog,
                             username,
@@ -188,7 +213,9 @@ public class ConfigModule{
                             autoOnlineTime,
                             autoOfflineTime,
                             autoOnlineMode,
-                            hideOnClose
+                            hideOnClose,
+                            autoOnline,
+                            specialDays
                     ).getBytes());
 
             fileWriter = new FileOutputStream(profilePath);

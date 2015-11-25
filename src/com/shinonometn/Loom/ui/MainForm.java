@@ -15,6 +15,7 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.NetworkInterface;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -30,6 +31,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     JLabel stat_icon;
 
     JButton btn_login;
+    JCheckBox cb_autoOnline;
 
     JCheckBoxMenuItem micb_remember;
     JCheckBoxMenuItem micb_hideOnIconfied;
@@ -59,6 +61,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     JMenuItem menuItemCleanLogs;
     JMenuItem menuItemSaveProfile;
     JMenuItem menuItemHideOnClose;
+    JMenuItem menuItemSpecialDays;
+    JMenuItem menuItemSpecialOnlineDays;
+    JMenuItem menuItemSpecialOfflineDays;
 
     //JMenu menuAbout;
     JMenuItem menuItemAbout;
@@ -109,8 +114,30 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         setLocationRelativeTo(null);
         setupUI();
         setupTray();
-        setVisible(!ConfigModule.notShownAtLaunch);
         setupEvent();
+
+        //检查一下有没有可用网卡，没有则不给操作
+        if(nf == null ||nf.size() <= 0){
+            setVisible(true);
+            lockInputUI();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "没有找到可用的网卡。\n如果是有线网卡，请接入网线并确保已经连接到网络\n如果是无线网卡，请检查系统是否能正常识别你的网卡",
+                    getTitle(),
+                    JOptionPane.WARNING_MESSAGE
+            );
+        }
+
+        if(ConfigModule.autoOnline){
+            if(!ConfigModule.username.equals("") && !ConfigModule.password.equals("")){
+                onClick_btn_login();
+            }
+        }
+
+        setVisible(!ConfigModule.notShownAtLaunch);
+        updateAutoModeState();
+        JOptionPane.setRootFrame(this);
+
     }
 
     //设置界面
@@ -151,9 +178,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         );
         menuItemStateAutoOnline = new JMenuItem();
         menuItemStateAutoOnline.setEnabled(false);
-        updateAutoModeState();
         menuItemHideOnClose = new JCheckBoxMenuItem("关闭窗口时隐藏");
         menuItemHideOnClose.setSelected(ConfigModule.hideOnClose);
+
+        menuItemSpecialDays = new JMenuItem("设置例外日");
+        String[] strings = ConfigModule.getSpecialDays().split(";");
+        menuItemSpecialOnlineDays = new JMenuItem("不上线:");
+        menuItemSpecialOnlineDays.setEnabled(false);
+        menuItemSpecialOfflineDays = new JMenuItem("不下线:");
+        menuItemSpecialOfflineDays.setEnabled(false);
 
         menuItemCleanLogs = new JMenuItem("清除日志目录");
         menuItemSaveProfile = new JMenuItem("立即保存设置");
@@ -177,7 +210,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             submenu1.add(rbmi_AutoModeOnline);
             submenu1.add(rbmi_AutoModeOffline);
         menu.add(submenu1);
-        menu.add(new JPopupMenu.Separator());
+        menu.add(menuItemSpecialDays);
+        menu.add(menuItemSpecialOnlineDays);
+        menu.add(menuItemSpecialOfflineDays);
+        //menu.add(new JPopupMenu.Separator());
         menu.add(new JPopupMenu.Separator());
         menu.add(micb_remember);
         menu.add(menuItemSaveProfile);
@@ -294,13 +330,19 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy++;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridwidth = 1;
         gridBagConstraints.insets = left_inset;
-        gridBagConstraints.weightx = 0.5;
         stat_icon = new JLabel(icon_offline,JLabel.CENTER);
         add(stat_icon,gridBagConstraints);
 
-        gridBagConstraints.gridx += 2;
+        gridBagConstraints.gridx ++;
+        gridBagConstraints.insets = normal_inset;
+        gridBagConstraints.weightx = 0.25;
+        cb_autoOnline = new JCheckBox("自动上线");
+        cb_autoOnline.setSelected(ConfigModule.autoOnline);
+        add(cb_autoOnline, gridBagConstraints);
+
+        gridBagConstraints.gridx ++;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.weightx = 0.5;
         gridBagConstraints.insets = right_inset;
@@ -321,17 +363,6 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         add(scrollPane, gridBagConstraints);
         scrollPane.setVisible(ConfigModule.showInfo);
 
-        //检查一下有没有可用网卡，没有则不给操作
-        if(nf == null ||nf.size() <= 0){
-            setVisible(true);
-            lockInputUI();
-            JOptionPane.showMessageDialog(
-                    this,
-                    "没有找到可用的网卡。\n如果是有线网卡，请接入网线并确保已经连接到网络\n如果是无线网卡，请检查系统是否能正常识别你的网卡",
-                    getTitle(),
-                    JOptionPane.WARNING_MESSAGE
-            );
-        }
     }
 
     //事件监听设置
@@ -411,32 +442,63 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
                     ConfigModule.hideOnClose = menuItemHideOnClose.isSelected();
                     setDefaultCloseOperation((ConfigModule.hideOnClose ? WindowConstants.HIDE_ON_CLOSE : WindowConstants.EXIT_ON_CLOSE));
+                }else if(e.getSource() == cb_autoOnline){
+
+                    ConfigModule.autoOnline = cb_autoOnline.isSelected();
                 }
 
                 if(ConfigModule.autoSaveSetting) applyProfile();
             }
         };
+        cb_autoOnline.addActionListener(actionListener);
         micb_showInfo.addActionListener(actionListener);
-        menuItemCleanInfo.addActionListener(actionListener);
         micb_Log.addActionListener(actionListener);
         micb_remember.addActionListener(actionListener);
         micb_notShownAtLaunch.addActionListener(actionListener);
         micb_printLog.addActionListener(actionListener);
+        micb_hideOnIconfied.addActionListener(actionListener);
+        menuItemCleanInfo.addActionListener(actionListener);
         menuItemCleanLogs.addActionListener(actionListener);
         menuItemSaveProfile.addActionListener(actionListener);
-        micb_hideOnIconfied.addActionListener(actionListener);
         menuItemAbout.addActionListener(actionListener);
         menuItemHelp.addActionListener(actionListener);
         menuItemHideOnClose.addActionListener(actionListener);
 
         actionListener = new ActionListener() {
-
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
-            String date = simpleDateFormat.format(new Date());
-
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(e.getSource() == rbmi_AutoModeBoth){
+                if(e.getSource() == menuItemSpecialDays){
+                    Object[] possibilities = {"没有特殊日", "周末不下线", "周五和周末不下线","周五上线周日下线","自己编辑表达式..."};
+                    String s = (String)JOptionPane.showInputDialog(
+                            null,
+                            "请选择一个符合心意的选项",
+                            "特殊上下线日",
+                            JOptionPane.PLAIN_MESSAGE,
+                            icon_app,
+                            possibilities,
+                            "ham"
+                    );
+
+                    if ((s != null) && (s.length() > 0)) {
+                        if(s.equals("没有特殊日")){
+                            ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri,Sat,Sun";
+                        }else if(s.equals("周末不下线")){
+                            ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri";
+                        }else if(s.equals("周五和周末不下线")){
+                            ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu";
+                        }else if(s.equals("周五上线周日下线")){
+                            ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri;offline:Mon,Tue,Wed,Thu,Sun";
+                        }else if(s.equals("自己编辑表达式...")){
+                            String input = JOptionPane.showInputDialog(getOwner(),"自定义表达式\n\n格式：\nonline:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri,Sat,Sun");
+                            if(input != null && input.matches("online:[^:;]*;offline:[^:;]*")){
+                                ConfigModule.specialDays = input;
+                            }else if (input != null){
+                                JOptionPane.showMessageDialog(getOwner(),"格式不正确");
+                            }
+                        }
+                        updateAutoModeState();
+                    }
+                }else if(e.getSource() == rbmi_AutoModeBoth){
                     ConfigModule.autoOnlineMode = "both";
                     updateAutoModeState();
                 }else if(e.getSource() == rbmi_AutoModeOnline){
@@ -445,74 +507,114 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 }else if(e.getSource() == rbmi_AutoModeOffline){
                     ConfigModule.autoOnlineMode = "offline";
                     updateAutoModeState();
-                }else if(e.getSource() == menuItemSetAutoOnline){
-                    if(ConfigModule.allowAutoMode()){
-                        int sele = JOptionPane.showConfirmDialog(getOwner(),"关闭自动上下线功能？",getTitle(),JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
-                        if(sele == JOptionPane.YES_OPTION){
+                }else if(e.getSource() == menuItemSetAutoOnline) {
+                    if (ConfigModule.allowAutoMode()) {
+                        int sele = JOptionPane.showOptionDialog(
+                                getOwner(),
+                                "关闭上下线功能？",
+                                getTitle(),
+                                JOptionPane.YES_NO_CANCEL_OPTION,
+                                JOptionPane.QUESTION_MESSAGE,
+                                icon_app,
+                                new String[]{"是","否","修改时间"},
+                                "否"
+                        );
+                        if (sele == JOptionPane.YES_OPTION) {
                             menuItemSetAutoOnline.setText("设置定时上下线");
                             ConfigModule.autoOfflineTime = "";
                             ConfigModule.autoOnlineTime = "";
                             //menuItemStateAutoOnline.setText("定时上下线已关闭");
                             Logger.log("Auto-online mode off.");
+                        }else if(sele == JOptionPane.CANCEL_OPTION){
+                            setAutoOnlineTime();
                         }
-                    }else{
-                        String filed = JOptionPane.showInputDialog(getOwner(),"请输入一个时间范围（例如01:00-03:00）");
-                        if(!filed.equals("")){
-                            String[] fieldSplit = filed.split("\\-");
-                            if(fieldSplit.length == 2){
-                                ConfigModule.autoOnlineTime = fieldSplit[0];
-                                ConfigModule.autoOfflineTime = fieldSplit[1];
-                            }
-                            if(ConfigModule.allowAutoMode()) {
-                                JOptionPane.showMessageDialog(getOwner(), "已设置！", getTitle(), JOptionPane.INFORMATION_MESSAGE);
-                                menuItemSetAutoOnline.setText("关闭定时上下线");
-                                timer.setDelay(10000);
-                                Logger.log("Auto-Online mode on.");
-                            }else{
-                                JOptionPane.showMessageDialog(getOwner(), "启动自动上下线功能失败，请检查输入",getTitle(),JOptionPane.WARNING_MESSAGE);
-                            }
-                        }
+                    } else {
+                        setAutoOnlineTime();
                     }
                     updateAutoModeState();
-                }else if(e.getSource() == timer){
-                    if(ConfigModule.allowAutoMode()){
-                        String timeNow = simpleDateFormat.format(new Date());
-                        if(Program.isDeveloperMode()) Logger.log("Timer tick. Check Time: " + timeNow + "");
-                        if(shuttle == null){
-                            if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("online")){
-                                if(timeNow.equals(ConfigModule.autoOnlineTime)){
-                                    if(!timerAlertedFlag){
-                                        onClick_btn_login();
-                                        timerAlertedFlag = true;
-                                        Logger.log("Timer auto click login button because reach the online time point.");
-                                    }
-                                }else timerAlertedFlag = false;
-                            }
-                        }else{
-                            if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("offline")){
-                                if(timeNow.equals(ConfigModule.autoOfflineTime)){
-                                    if(!timerAlertedFlag){
-                                        onClick_btn_login();
-                                        timerAlertedFlag = true;
-                                        Logger.log("Timer auto click login button because reach the offline time point.");
-                                    }
-                                }else timerAlertedFlag = false;
-                            }
-                        }
-                    }else{
-                        if(Program.isDeveloperMode()) Logger.log("AutoMode is false.");
-                        //timer.setDelay(30000);
-                    }
                 }
             }
         };
         menuItemSetAutoOnline.addActionListener(actionListener);
+        menuItemSpecialDays.addActionListener(actionListener);
         rbmi_AutoModeBoth.addActionListener(actionListener);
         rbmi_AutoModeOnline.addActionListener(actionListener);
         rbmi_AutoModeOffline.addActionListener(actionListener);
-        timer = new Timer(10000,actionListener);
+
+        timer = new Timer(10000, new ActionListener() {
+            SimpleDateFormat simpleTimeFormat = new SimpleDateFormat("HH:mm");
+            SimpleDateFormat simpleWeekFormat = new SimpleDateFormat("W");
+            String timeNow;
+            String weekNow;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(e.getSource() == timer){
+                    if(ConfigModule.allowAutoMode()){
+                        if(!ConfigModule.specialDays.equals("")){
+                            String[] fields = ConfigModule.specialDays.split(";");
+                            if(fields.length == 2){
+                                //获取日期
+                                Date dateNow = new Date();
+                                //格式化日期
+                                timeNow = simpleTimeFormat.format(dateNow);
+                                weekNow = Toolbox.praseWeek(simpleWeekFormat.format(dateNow));
+                                if(Program.isDeveloperMode()) Logger.log("Timer tick. Check Time: " + timeNow + "; Check WeekDay: " + weekNow);
+                                if(shuttle == null){//上线动作
+                                    if(fields[0].contains(weekNow)){//获得online字段
+                                        if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("online")){
+                                            if(timeNow.equals(ConfigModule.autoOnlineTime)){
+                                                if(!timerAlertedFlag){
+                                                    onClick_btn_login();
+                                                    timerAlertedFlag = true;
+                                                    Logger.log("Timer auto click login button because reach the online time point.");
+                                                }
+                                            }else timerAlertedFlag = false;
+                                        }
+                                    }
+                                }else{//下线动作
+                                    if(fields[1].contains(weekNow)){//获得offline字段
+                                        if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("offline")){
+                                            if(timeNow.equals(ConfigModule.autoOfflineTime)){
+                                                if(!timerAlertedFlag){
+                                                    onClick_btn_login();
+                                                    timerAlertedFlag = true;
+                                                    Logger.log("Timer auto click login button because reach the offline time point.");
+                                                }
+                                            }else timerAlertedFlag = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }else{
+                        if(Program.isDeveloperMode()) Logger.log("Auto online mode was closed.");
+                        //timer.setDelay(30000);
+                    }
+                }
+            }
+        });
         timer.start();
 
+    }
+
+    private void setAutoOnlineTime(){
+        String filed = JOptionPane.showInputDialog(this, "请输入一个时间范围（例如01:00-03:00）");
+        if (!filed.equals("")) {
+            String[] fieldSplit = filed.split("\\-");
+            if (fieldSplit.length == 2) {
+                ConfigModule.autoOnlineTime = fieldSplit[0];
+                ConfigModule.autoOfflineTime = fieldSplit[1];
+            }
+            if (ConfigModule.allowAutoMode()) {
+                JOptionPane.showMessageDialog(getOwner(), "已设置！", getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                menuItemSetAutoOnline.setText("关闭定时上下线");
+                timer.setDelay(10000);
+                Logger.log("Auto online mode on.");
+            } else {
+                JOptionPane.showMessageDialog(getOwner(), "启动自动上下线功能失败，请检查输入", getTitle(), JOptionPane.WARNING_MESSAGE);
+            }
+        }
     }
 
     //-----系统托盘图标------------------------------------------
@@ -614,6 +716,10 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     break;
             }
         }else menuItemStateAutoOnline.setText("定时上下线已关闭");
+
+        String[] strings = ConfigModule.getSpecialDays().split(";");
+        menuItemSpecialOnlineDays.setText("不上线:" + strings[0]);
+        menuItemSpecialOfflineDays.setText("不下线:" + strings[1]);
     }
 
     //锁定输入UI
@@ -787,7 +893,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     logAtList("无法建立链接");
                     JOptionPane.showMessageDialog(
                             this,
-                            "无法建立链接，可以稍后再试或者重启程序再试试",
+                            "无法建立链接，可以稍后再试或者重启程序再试试。",
                             this.getTitle(),
                             JOptionPane.WARNING_MESSAGE
                     );
@@ -862,12 +968,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             case SHUTTLE_BREATHE_FAILED:{
                 logAtList("服务器否认在线状态");
                 setOfflineIcon();
+                shuttleOffline();
+                uiOffline();
                 stat_icon.setText("被下线");
             }break;
 
             //续命错误（超级雾
             case SHUTTLE_BREATHE_EXCEPTION:{
-                stat_icon.setText("");
+                //stat_icon.setText("");
                 if("breathe_timeout".equals(message)){
                     logAtList("续期超时，重试");
                     setLinkingIcon();
