@@ -8,6 +8,7 @@ import com.shinonometn.Loom.common.Toolbox;
 import com.shinonometn.Loom.core.Messenger.ShuttleEvent;
 import com.shinonometn.Loom.core.Shuttle;
 import com.shinonometn.Loom.resource.Resource;
+import sun.awt.ConstrainableGraphics;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -843,7 +844,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             case SHUTTLE_SERVER_NO_RESPONSE:{
                 if("knock_server_no_response".equals(message)){
                     uiOffline();
-                    logAtList("获取认证服务器失败:服务器无响应");
+                    logAtList(ConfigModule.isFakeMode() ? "续命失败:找不到长者":"获取认证服务器失败:服务器无响应");
                     JOptionPane.showMessageDialog(
                             this,
                             "敲门无响应\n请检查您所选择的网卡是否已就绪并稍后重试",
@@ -853,7 +854,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     shuttleOffline();
                 }else if("certificate_timeout".equals(message)){
                     uiOffline();
-                    logAtList("认证超时，服务器无响应");
+                    logAtList(ConfigModule.isFakeMode() ? "准备续命超时，有人不让你续命":"认证超时，服务器无响应");
                     JOptionPane.showMessageDialog(
                             this,
                             "认证超时，服务器无响应",
@@ -867,8 +868,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //认证成功
             case SHUTTLE_CERTIFICATE_SUCCESS: {
-                logAtList("认证成功");
-                logAtList("已上线");
+                logAtList(ConfigModule.isFakeMode() ? "开始续命了" : "认证成功,已上线");
+                //logAtList(ConfigModule.isFakeMode() ? "开始续命" : "已上线");
                 setOnlineIcon();
                 lockInputUI();
                 btn_login.setEnabled(true);
@@ -877,7 +878,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //认证失败
             case SHUTTLE_CERTIFICATE_FAILED: {
-                logAtList("认证失败:" + message);
+                logAtList((ConfigModule.isFakeMode() ? "续命失败:" : "认证失败:") + message);
                 uiOffline();
                 shuttleOffline();
                 JOptionPane.showMessageDialog(this,"认证失败\n"+message,this.getTitle(),JOptionPane.WARNING_MESSAGE);
@@ -885,14 +886,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //获取Socket成功
             case SHUTTLE_GET_SOCKET_SUCCESS:{
-                logAtList("准备工作完成");
+                logAtList(ConfigModule.isFakeMode() ? "续命准备完成" : "准备工作完成");
             }
             break;
 
             //端口被占用
             case SHUTTLE_PORT_IN_USE:{
                 if("get_connect_socket_failed".equals(message)){
-                    logAtList("无法建立链接");
+                    logAtList(ConfigModule.isFakeMode() ? "无法续命" : "无法建立链接");
                     JOptionPane.showMessageDialog(
                             this,
                             "无法建立链接，可以稍后再试或者重启程序再试试。",
@@ -903,7 +904,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     shuttleOffline();
                     trayPopMessage(getTitle(),"由于链接问题，上线失败");
                 }else if("get_message_socket_failed".equals(message)){
-                    logAtList("消息监听端口被占用，获取Socket失败");
+                    logAtList(ConfigModule.isFakeMode() ? "有人不许你听长者谈笑风生" : "消息监听端口被占用，获取Socket失败");
                     JOptionPane.showMessageDialog(
                             this,
                             "尝试监听服务器消息失败，可能端口正在被占用。\n不监听服务器消息就无法得知什么时候断网，不过不影响上线。",
@@ -917,17 +918,17 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //服务器回应
             case SHUTTLE_SERVER_RESPONSE:{
-                logAtList("服务器IP是 "+message);
+                logAtList((ConfigModule.isFakeMode() ? "找到长者了 " : "服务器IP是 ")+message);
             }
             break;
 
             //找不到服务器
             case SHUTTLE_SERVER_NOT_FOUNT:{
                 if("no_route_to_host".equals(message)){
-                    logAtList("无路由到服务器");
+                    logAtList(ConfigModule.isFakeMode() ? "续命不能" : "无路由到服务器");
                     JOptionPane.showMessageDialog(this,"数据包不能路由到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
                 }else if("server_ip_unavailable".equals(message) || "knock_server_not_found".equals(message)){
-                    logAtList("找不到服务器");
+                    logAtList(ConfigModule.isFakeMode() ? "找不到长者":"找不到服务器");
                     JOptionPane.showMessageDialog(this,"找不到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
                 }
                 shuttleOffline();
@@ -950,7 +951,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //下线
             case SHUTTLE_OFFLINE:{
-                logAtList("下线了");
+                logAtList(ConfigModule.isFakeMode() ? "不续命了" : "下线了");
                 trayPopMessage(getTitle(),"下线了");
                 uiOffline();
             }break;
@@ -968,7 +969,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //续命失败（大雾
             case SHUTTLE_BREATHE_FAILED:{
-                logAtList(ConfigModule.isFakeMode() ? "续命失败":"服务器否认在线状态");
+                logAtList(ConfigModule.isFakeMode() ? "图样图森破":"服务器否认在线状态");
                 setOfflineIcon();
                 shuttleOffline();
                 uiOffline();
@@ -979,13 +980,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             case SHUTTLE_BREATHE_EXCEPTION:{
                 //stat_icon.setText("");
                 if("breathe_timeout".equals(message)){
-                    logAtList(ConfigModule.isFakeMode() ? "续命超时，重试":"续期超时，重试");
+                    logAtList(ConfigModule.isFakeMode() ? "续命超时，再试":"续期超时，重试");
                     setLinkingIcon();
                     if(trayIcon != null){
                         trayIcon.setImage(tray_linking);
                     }
                 }else if("breathe_time_clear".equals(message)){
-                    logAtList(ConfigModule.isFakeMode() ? "服务器要求清空续命次数":"服务器要求在线时常复位");
+                    logAtList(ConfigModule.isFakeMode() ? "重新给长者续命":"服务器要求在线时常复位");
                 } else {
                     logAtList((ConfigModule.isFakeMode() ? "续命时遇到错误：":"呼吸进程遇到错误：") + message);
                     if(Toolbox.isMacOSX()){
@@ -1001,11 +1002,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             //消息线程接收到消息
             case SHUTTLE_SERVER_MESSAGE:{
                 if("offline".equals(message)){
-                    logAtList("服务器要求下线");
+                    logAtList(ConfigModule.isFakeMode() ? "西方记者不干了":"服务器要求下线");
                     trayPopMessage(getTitle(), "服务器要求下线");
                     //stat_icon.setText("被下线");
                 }else{
-                    logAtList("接收到了一条服务器消息:"+message);
+                    logAtList((ConfigModule.isFakeMode() ? "长者说:":"接收到了一条服务器消息:")+message);
                     trayPopMessage("接收到了一条服务器消息",message);
                 }
             }break;
