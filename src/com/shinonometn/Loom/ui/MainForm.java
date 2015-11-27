@@ -465,6 +465,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuItemHideOnClose.addActionListener(actionListener);
 
         actionListener = new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(e.getSource() == menuItemSpecialDays){
@@ -770,7 +771,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         if (shuttle != null && shuttle.isOnline()) {
             lockInputUI();
             btn_login.setText("下线中");
-            shuttle.Offline();
+            //shuttle.Offline();
+            shuttleOffline();
         }else{
             lockInputUI();
             btn_login.setText("上线中...");
@@ -956,9 +958,9 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             //续命成功（雾
             case SHUTTLE_BREATHE_SUCCESS:{
                 try {
-                    logAtList("[" + (new Date().toString()).split(" ")[3] + "]在线状态续期成功");
+                    logAtList("[" + (new Date().toString()).split(" ")[3] + (ConfigModule.isFakeMode() ? "]续命成功":"]在线状态续期成功"));
                 }catch (Exception e){
-                    logAtList("在线状态续期成功");
+                    logAtList(ConfigModule.isFakeMode() ? "续命成功":"在线状态续期成功");
                 }
                 setOnlineIcon();
                 stat_icon.setText("");
@@ -966,7 +968,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             //续命失败（大雾
             case SHUTTLE_BREATHE_FAILED:{
-                logAtList("服务器否认在线状态");
+                logAtList(ConfigModule.isFakeMode() ? "续命失败":"服务器否认在线状态");
                 setOfflineIcon();
                 shuttleOffline();
                 uiOffline();
@@ -977,15 +979,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             case SHUTTLE_BREATHE_EXCEPTION:{
                 //stat_icon.setText("");
                 if("breathe_timeout".equals(message)){
-                    logAtList("续期超时，重试");
+                    logAtList(ConfigModule.isFakeMode() ? "续命超时，重试":"续期超时，重试");
                     setLinkingIcon();
                     if(trayIcon != null){
                         trayIcon.setImage(tray_linking);
                     }
                 }else if("breathe_time_clear".equals(message)){
-                    logAtList("服务器要求在线时常复位");
+                    logAtList(ConfigModule.isFakeMode() ? "服务器要求清空续命次数":"服务器要求在线时常复位");
                 } else {
-                    logAtList("呼吸进程遇到错误：" + message);
+                    logAtList((ConfigModule.isFakeMode() ? "续命时遇到错误：":"呼吸进程遇到错误：") + message);
                     if(Toolbox.isMacOSX()){
                         JOptionPane.showMessageDialog(this,"呼吸进程遇到错误: " + message,getTitle(),JOptionPane.WARNING_MESSAGE);
                     }else{

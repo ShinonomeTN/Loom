@@ -29,7 +29,7 @@ public class Program{
         return developerMode;
     }
 
-    public final static String appName = "Loom v2.0";
+    public final static String appName = "Loom v2.1";
 
     public static void main(String[] args){
 

@@ -399,6 +399,7 @@ public class Shuttle extends Thread{
     public void dispose(){
         if(messengerThread != null && messengerThread.isRun){
             messengerThread.interrupt();
+            messengerThread = null;
         }
         if(datagramSocket != null && !datagramSocket.isClosed()) datagramSocket.close();
         Logger.log("Disposing Shuttle.");
