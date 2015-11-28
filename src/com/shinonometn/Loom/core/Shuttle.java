@@ -391,7 +391,7 @@ public class Shuttle extends Thread{
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, e.toString());
         }finally {
             if(!datagramSocket.isClosed()) {
-                datagramSocket.disconnect();
+                //datagramSocket.disconnect();
                 datagramSocket.close();
             }
         }
@@ -405,12 +405,13 @@ public class Shuttle extends Thread{
 
     //敲门
 
-    @Deprecated
-    public void Offline(){
+    public void offline(){
         logoutFlag = true;
+        messengerThread.dispose();
         interrupt();
     }
 
+    @Deprecated
     public void dispose(){
         logoutFlag = true;
         interrupt();
@@ -421,8 +422,8 @@ public class Shuttle extends Thread{
         }
 
         if(datagramSocket != null) {
-            datagramSocket.disconnect();
-            datagramSocket.close();
+            //datagramSocket.disconnect();
+            if(!datagramSocket.isClosed()) datagramSocket.close();
             state[2] = false;
         }
         Logger.log("Disposing Shuttle.");

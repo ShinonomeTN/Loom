@@ -225,7 +225,7 @@ public class Program{
                             aboutMe();
                         }else System.out.println("If you want to get offline or exit program, Please input \"exit\"");
                     }else{
-                        shuttle.dispose();
+                        shuttle.offline();
                         while(shuttle.isBreathing() || shuttle.isMessageListening());
                         return;
                     }
@@ -239,7 +239,7 @@ public class Program{
                     );
                 }
             }else{
-                shuttle.dispose();
+                shuttle.offline();
                 Thread thread = new Thread(){
                     boolean alertFlag = false;
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
@@ -269,7 +269,7 @@ public class Program{
                                 if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOfflineTime.equals("offline")){
                                     if(date.equals(ConfigModule.autoOfflineTime)){
                                         if(!alertFlag){
-                                            if(shuttle1 != null) shuttle1.dispose();
+                                            if(shuttle1 != null) shuttle1.offline();
                                             shuttle1 = null;
                                             alertFlag = true;
                                             Logger.log("Auto offline because reach the offline time point.");
@@ -283,7 +283,7 @@ public class Program{
                                 runflag = false;
                             }
                         }
-                        shuttle1.dispose();
+                        shuttle1.offline();
                     }
                 };
                 thread.setDaemon(true);

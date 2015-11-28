@@ -766,7 +766,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     private void shuttleOffline(){
         if(shuttle != null){
-            shuttle.dispose();
+            shuttle.offline();
             shuttle = null;
         }
     }
@@ -862,7 +862,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             //认证成功
             case CERTIFICATE_SUCCESS: {
                 logAtList(ConfigModule.isFakeMode() ? "开始续命了" : "认证成功,已上线");
-                if(Program.isDeveloperMode()) logAtList("绘画号" + shuttle.getSessionNo());
+                if(Program.isDeveloperMode()) logAtList("会话号 " + shuttle.getSessionNo());
                 setOnlineIcon();
                 lockInputUI();
                 btn_login.setEnabled(true);
