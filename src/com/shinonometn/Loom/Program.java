@@ -65,7 +65,7 @@ public class Program{
                 developerMode = true;
             }
         }
-        //Logger.outPrint = developerMode;
+
         Logger.log(developerMode ? "DeveloperMode on" +
                 "\n\t\t!!! Warning !!!" +
                 "\nDeveloper mode will record all user data(included account and password)" +
@@ -225,8 +225,8 @@ public class Program{
                             aboutMe();
                         }else System.out.println("If you want to get offline or exit program, Please input \"exit\"");
                     }else{
-                        shuttle.Offline();
-                        while(shuttle.isOnline() || shuttle.isMessageListening());
+                        shuttle.dispose();
+                        while(shuttle.isBreathing() || shuttle.isMessageListening());
                         return;
                     }
                 }while(shuttle.isAlive());

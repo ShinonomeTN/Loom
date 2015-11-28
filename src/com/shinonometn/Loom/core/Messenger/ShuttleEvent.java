@@ -4,25 +4,32 @@ package com.shinonometn.Loom.core.Messenger;
  * Created by catten on 15/11/3.
  */
 public interface ShuttleEvent {
-    int SHUTTLE_SERVER_RESPONSE = 0;
-    int SHUTTLE_SERVER_NOT_FOUNT = 1;
-    int SHUTTLE_SERVER_NO_RESPONSE = 2;
-    int SHUTTLE_PORT_IN_USE = 3;
-    int SHUTTLE_GET_SOCKET_SUCCESS = 4;
-    int SHUTTLE_OTHER_EXCEPTION = 5;
 
-    int SHUTTLE_CERTIFICATE_SUCCESS = 6;
-    int SHUTTLE_CERTIFICATE_FAILED = 7;
+    int SERVER_RESPONSE = 0;
+    int SERVER_NOT_FOUNT = 1;
+    int SERVER_NO_RESPONSE = 10;
+    int SERVER_MESSAGE = 11;
+    int SERVER_RESPONSE_IPADDRESS = 12;
 
-    int SHUTTLE_SERVER_MESSAGE = 8;
+    int SOCKET_PORT_IN_USE = 2;
+    int SOCKET_GET_SUCCESS = 20;
+    int SOCKET_OTHER_EXCEPTION = 21;
+    int SOCKET_NO_ROUTE_TO_HOST = 22;
+    int SOCKET_UNKNOWN_HOST_EXCEPTION = 23;
 
-    int SHUTTLE_BREATHE_SUCCESS = 9;
-    int SHUTTLE_BREATHE_FAILED = 10;
-    int SHUTTLE_BREATHE_EXCEPTION = 11;
+    int CERTIFICATE_SUCCESS = 3;
+    int CERTIFICATE_FAILED = 30;
+    int CERTIFICATE_EXCEPTION = 31;
 
-    int SHUTTLE_MSGTHREAD_CLOSE = 12;
+    int BREATHE_SUCCESS = 4;
+    int BREATHE_FAILED = 40;
+    int BREATHE_EXCEPTION = 41;
 
-    int SHUTTLE_OFFLINE = 13;
+    int MESSAGE_CLOSE = 5;
+    int MESSAGE_START = 50;
+    int MESSAGE_EXCEPTION = 51;
+
+    int OFFLINE = 13;
 
     void onMessage(int messageType, String message);
 }

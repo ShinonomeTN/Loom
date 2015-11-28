@@ -8,7 +8,6 @@ import com.shinonometn.Loom.common.Toolbox;
 import com.shinonometn.Loom.core.Messenger.ShuttleEvent;
 import com.shinonometn.Loom.core.Shuttle;
 import com.shinonometn.Loom.resource.Resource;
-import sun.awt.ConstrainableGraphics;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -16,7 +15,6 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.NetworkInterface;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -174,7 +172,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuItemSetAutoOnline = new JMenuItem((ConfigModule.allowAutoMode()?"关闭自动上下线":"设置自动上下线"));
         Logger.log(String.format(
                         "Auto online/offline mode was %s Mode: %s",
-                        ConfigModule.allowAutoMode() ? "opend." : "closed.",
+                        ConfigModule.allowAutoMode() ? "open." : "closed.",
                         ConfigModule.autoOnlineMode)
         );
         menuItemStateAutoOnline = new JMenuItem();
@@ -183,7 +181,6 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         menuItemHideOnClose.setSelected(ConfigModule.hideOnClose);
 
         menuItemSpecialDays = new JMenuItem("设置例外日");
-        String[] strings = ConfigModule.getSpecialDays().split(";");
         menuItemSpecialOnlineDays = new JMenuItem("不上线:");
         menuItemSpecialOnlineDays.setEnabled(false);
         menuItemSpecialOfflineDays = new JMenuItem("不下线:");
@@ -357,7 +354,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1;
         gridBagConstraints.weighty = 1;
-        listModel = new DefaultListModel<String>();
+        listModel = new DefaultListModel<>();
         list1 = new JList<>(listModel);
         scrollPane = new JScrollPane(list1);
         scrollPane.setBorder(new TitledBorder("信息"));
@@ -482,21 +479,27 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                     );
 
                     if ((s != null) && (s.length() > 0)) {
-                        if(s.equals("没有特殊日")){
-                            ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri,Sat,Sun";
-                        }else if(s.equals("周末不下线")){
-                            ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri";
-                        }else if(s.equals("周五和周末不下线")){
-                            ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu";
-                        }else if(s.equals("周五上线周日下线")){
-                            ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri;offline:Mon,Tue,Wed,Thu,Sun";
-                        }else if(s.equals("自己编辑表达式...")){
-                            String input = JOptionPane.showInputDialog(getOwner(),"自定义表达式\n\n格式：\nonline:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri,Sat,Sun");
-                            if(input != null && input.matches("online:[^:;]*;offline:[^:;]*")){
-                                ConfigModule.specialDays = input;
-                            }else if (input != null){
-                                JOptionPane.showMessageDialog(getOwner(),"格式不正确");
-                            }
+                        switch (s) {
+                            case "没有特殊日":
+                                ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri,Sat,Sun";
+                                break;
+                            case "周末不下线":
+                                ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri";
+                                break;
+                            case "周五和周末不下线":
+                                ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu";
+                                break;
+                            case "周五上线周日下线":
+                                ConfigModule.specialDays = "online:Mon,Tue,Wed,Thu,Fri;offline:Mon,Tue,Wed,Thu,Sun";
+                                break;
+                            case "自己编辑表达式...":
+                                String input = JOptionPane.showInputDialog(getOwner(), "自定义表达式\n\n格式：\nonline:Mon,Tue,Wed,Thu,Fri,Sat,Sun;offline:Mon,Tue,Wed,Thu,Fri,Sat,Sun");
+                                if (input != null && input.matches("online:[^:;]*;offline:[^:;]*")) {
+                                    ConfigModule.specialDays = input;
+                                } else if (input != null) {
+                                    JOptionPane.showMessageDialog(getOwner(), "格式不正确");
+                                }
+                                break;
                         }
                         updateAutoModeState();
                     }
@@ -769,7 +772,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     }
 
     private void onClick_btn_login(){
-        if (shuttle != null && shuttle.isOnline()) {
+        if (shuttle != null && shuttle.isBreathing()) {
             lockInputUI();
             btn_login.setText("下线中");
             //shuttle.Offline();
@@ -841,8 +844,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     public void onMessage(int messageType, String message) {
         switch (messageType){
             //服务器无响应
-            case SHUTTLE_SERVER_NO_RESPONSE:{
-                if("knock_server_no_response".equals(message)){
+            case SERVER_NO_RESPONSE:{
+                if("knock_server".equals(message)){
                     uiOffline();
                     logAtList(ConfigModule.isFakeMode() ? "续命失败:找不到长者":"获取认证服务器失败:服务器无响应");
                     JOptionPane.showMessageDialog(
@@ -852,24 +855,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             JOptionPane.WARNING_MESSAGE
                     );
                     shuttleOffline();
-                }else if("certificate_timeout".equals(message)){
-                    uiOffline();
-                    logAtList(ConfigModule.isFakeMode() ? "准备续命超时，有人不让你续命":"认证超时，服务器无响应");
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "认证超时，服务器无响应",
-                            this.getTitle(),
-                            JOptionPane.WARNING_MESSAGE
-                    );
-                    shuttleOffline();
                 }
             }
             break;
 
             //认证成功
-            case SHUTTLE_CERTIFICATE_SUCCESS: {
+            case CERTIFICATE_SUCCESS: {
                 logAtList(ConfigModule.isFakeMode() ? "开始续命了" : "认证成功,已上线");
-                //logAtList(ConfigModule.isFakeMode() ? "开始续命" : "已上线");
+                if(Program.isDeveloperMode()) logAtList("绘画号" + shuttle.getSessionNo());
                 setOnlineIcon();
                 lockInputUI();
                 btn_login.setEnabled(true);
@@ -877,22 +870,48 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             }break;
 
             //认证失败
-            case SHUTTLE_CERTIFICATE_FAILED: {
-                logAtList((ConfigModule.isFakeMode() ? "续命失败:" : "认证失败:") + message);
-                uiOffline();
-                shuttleOffline();
-                JOptionPane.showMessageDialog(this,"认证失败\n"+message,this.getTitle(),JOptionPane.WARNING_MESSAGE);
+            case CERTIFICATE_FAILED: {
+                if("info_not_filled".equals(message)){
+                    uiOffline();
+                    shuttleOffline();
+                    JOptionPane.showMessageDialog(this,"密码或帐号为空",getTitle(),JOptionPane.ERROR_MESSAGE);
+                }else{
+                    logAtList((ConfigModule.isFakeMode() ? "续命失败:" : "认证失败:") + message);
+                    uiOffline();
+                    shuttleOffline();
+                    JOptionPane.showMessageDialog(this,"认证失败\n"+message,this.getTitle(),JOptionPane.WARNING_MESSAGE);
+                }
+            }break;
+
+            case CERTIFICATE_EXCEPTION:{
+                if("timeout".equals(message)){
+                    if("certificate_timeout".equals(message)){
+                        uiOffline();
+                        logAtList(ConfigModule.isFakeMode() ? "申请续命超时，有人不让你续命":"认证超时，服务器无响应");
+                        JOptionPane.showMessageDialog(
+                                this,
+                                "认证超时，服务器无响应",
+                                this.getTitle(),
+                                JOptionPane.WARNING_MESSAGE
+                        );
+                        shuttleOffline();
+                    }
+                }else{
+                    logAtList("认证状态不明");
+                    JOptionPane.showMessageDialog(this,"认证状态不明\n如果还不能访问网路,请退出程序再试",getTitle(),JOptionPane.WARNING_MESSAGE);
+                    unlockInputUI();
+                }
             }break;
 
             //获取Socket成功
-            case SHUTTLE_GET_SOCKET_SUCCESS:{
+            case SOCKET_GET_SUCCESS:{
                 logAtList(ConfigModule.isFakeMode() ? "续命准备完成" : "准备工作完成");
             }
             break;
 
             //端口被占用
-            case SHUTTLE_PORT_IN_USE:{
-                if("get_connect_socket_failed".equals(message)){
+            case SOCKET_PORT_IN_USE:{
+                if("get_connection_socket_failed".equals(message)){
                     logAtList(ConfigModule.isFakeMode() ? "无法续命" : "无法建立链接");
                     JOptionPane.showMessageDialog(
                             this,
@@ -917,17 +936,14 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             break;
 
             //服务器回应
-            case SHUTTLE_SERVER_RESPONSE:{
+            case SERVER_RESPONSE_IPADDRESS:{
                 logAtList((ConfigModule.isFakeMode() ? "找到长者了 " : "服务器IP是 ")+message);
             }
             break;
 
             //找不到服务器
-            case SHUTTLE_SERVER_NOT_FOUNT:{
-                if("no_route_to_host".equals(message)){
-                    logAtList(ConfigModule.isFakeMode() ? "续命不能" : "无路由到服务器");
-                    JOptionPane.showMessageDialog(this,"数据包不能路由到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
-                }else if("server_ip_unavailable".equals(message) || "knock_server_not_found".equals(message)){
+            case SERVER_NOT_FOUNT:{
+                if("knock_server".equals(message)){
                     logAtList(ConfigModule.isFakeMode() ? "找不到长者":"找不到服务器");
                     JOptionPane.showMessageDialog(this,"找不到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
                 }
@@ -935,40 +951,63 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 uiOffline();
             }break;
 
+            case SOCKET_NO_ROUTE_TO_HOST:{
+                logAtList(ConfigModule.isFakeMode() ? "续命不能" : "无路由到服务器");
+                JOptionPane.showMessageDialog(this,"数据包不能路由到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
+            }
+
+            case SOCKET_UNKNOWN_HOST_EXCEPTION:{
+                logAtList(ConfigModule.isFakeMode() ? "找不到长者":"找不到服务器");
+                JOptionPane.showMessageDialog(this,"找不到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
+            }break;
+
+            case MESSAGE_EXCEPTION:{
+                logAtList("消息线程遇到错误: " + message);
+            }break;
+
+            case MESSAGE_CLOSE:{
+                logAtList("消息线程关闭");
+            }break;
+
             //其他错误
-            case SHUTTLE_OTHER_EXCEPTION:{
-                if("unknown_exception_knocking".equals(message)){
+            case SOCKET_OTHER_EXCEPTION:{
+                if("knocking".equals(message)){
                     uiOffline();
                     shuttleOffline();
                     trayPopMessage(getTitle(),"敲门不成功，上线失败");
-                }else if("certificate_info_not_filled".equals(message)){
-                    uiOffline();
-                    shuttleOffline();
-                    JOptionPane.showMessageDialog(this,"密码或帐号为空",getTitle(),JOptionPane.ERROR_MESSAGE);
                 }
                 logAtList("错误:" + message);
             }break;
 
             //下线
-            case SHUTTLE_OFFLINE:{
-                logAtList(ConfigModule.isFakeMode() ? "不续命了" : "下线了");
-                trayPopMessage(getTitle(),"下线了");
+            case OFFLINE:{
+                if("generally".equals(message)){
+                    logAtList(ConfigModule.isFakeMode() ? "不续命了" : "下线了");
+                    trayPopMessage(getTitle(),"下线了");
+                }else if("timeout".equals(message)){
+                    logAtList(ConfigModule.isFakeMode() ? "不续命了,不过好像长者没听到" : "下线超时,但已经下线了");
+                    trayPopMessage(getTitle(),"下线了");
+                }else{
+                    logAtList(ConfigModule.isFakeMode() ? "不续命了!" : "暴力下线");
+                    trayPopMessage(getTitle(),"粗暴地下线了");
+                }
                 uiOffline();
             }break;
 
             //续命成功（雾
-            case SHUTTLE_BREATHE_SUCCESS:{
+            case BREATHE_SUCCESS:{
                 try {
                     logAtList("[" + (new Date().toString()).split(" ")[3] + (ConfigModule.isFakeMode() ? "]续命成功":"]在线状态续期成功"));
                 }catch (Exception e){
-                    logAtList(ConfigModule.isFakeMode() ? "续命成功":"在线状态续期成功");
+                    logAtList(ConfigModule.isFakeMode() ? "续命成功x20":"在线状态续期成功");
+                    if(Program.isDeveloperMode()) logAtList("流水号" + String.format("0x%x",shuttle.getSerialNo()));
                 }
                 setOnlineIcon();
                 stat_icon.setText("");
             }break;
 
             //续命失败（大雾
-            case SHUTTLE_BREATHE_FAILED:{
+            case BREATHE_FAILED:{
                 logAtList(ConfigModule.isFakeMode() ? "图样图森破":"服务器否认在线状态");
                 setOfflineIcon();
                 shuttleOffline();
@@ -977,15 +1016,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             }break;
 
             //续命错误（超级雾
-            case SHUTTLE_BREATHE_EXCEPTION:{
+            case BREATHE_EXCEPTION:{
                 //stat_icon.setText("");
-                if("breathe_timeout".equals(message)){
+                if("timeout".equals(message)){
                     logAtList(ConfigModule.isFakeMode() ? "续命超时，再试":"续期超时，重试");
                     setLinkingIcon();
                     if(trayIcon != null){
                         trayIcon.setImage(tray_linking);
                     }
-                }else if("breathe_time_clear".equals(message)){
+                }else if("time_clear".equals(message)){
                     logAtList(ConfigModule.isFakeMode() ? "重新给长者续命":"服务器要求在线时常复位");
                 } else {
                     logAtList((ConfigModule.isFakeMode() ? "续命时遇到错误：":"呼吸进程遇到错误：") + message);
@@ -1000,7 +1039,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             }break;
 
             //消息线程接收到消息
-            case SHUTTLE_SERVER_MESSAGE:{
+            case SERVER_MESSAGE:{
                 if("offline".equals(message)){
                     logAtList(ConfigModule.isFakeMode() ? "西方记者不干了":"服务器要求下线");
                     trayPopMessage(getTitle(), "服务器要求下线");

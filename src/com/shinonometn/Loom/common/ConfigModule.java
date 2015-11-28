@@ -120,8 +120,8 @@ public class ConfigModule{
         System.arraycopy(buffer,0,profileBuffer,0,length);
         profileBuffer = Pronunciation.decrypt3849(profileBuffer);
 
-        Logger.log(Program.isDeveloperMode()?HexTools.byte2HexStr(profileBuffer):"----Ignored----");
-        Logger.log(Program.isDeveloperMode()?new String(profileBuffer):"----Ignored----");
+        Logger.log(Program.isDeveloperMode()?HexTools.byte2HexStr(profileBuffer):"----Banned----");
+        Logger.log(Program.isDeveloperMode()?new String(profileBuffer):"----Banned----");
         if(profileBuffer != null){
             String fields[] = new String(profileBuffer).split("\n");
             if ("crypt3849".equals(fields[0])) {
@@ -156,7 +156,7 @@ public class ConfigModule{
                         if(!(autoOnlineMode.equals("online") || autoOnlineMode.equals("offline"))) autoOnlineMode = "both";
 
 
-                        Logger.log(Program.isDeveloperMode()?field + " copied.":"----Ignored----");
+                        Logger.log(Program.isDeveloperMode()?field + " copied.":"----Banned----");
                     }catch (NullPointerException | ArrayIndexOutOfBoundsException e){
                         Logger.error("An empty field found.");
                     }
