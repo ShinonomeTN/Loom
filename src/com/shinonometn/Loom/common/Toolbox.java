@@ -19,21 +19,21 @@ public class Toolbox {
         return macOSX;
     }
 
-    public static String praseWeek(String weekNum){
+    public static String praseWeek(int weekNum){
         switch (weekNum){
-            case "0":
+            case 1:
                 return "Mon";
-            case "1":
+            case 2:
                 return "Tue";
-            case "2":
+            case 3:
                 return "Wed";
-            case "3":
+            case 4:
                 return "Thu";
-            case "4":
+            case 5:
                 return "Fri";
-            case "5":
+            case 6:
                 return "Sat";
-            case "6":
+            case 7:
                 return "Sun";
             default:
                 return "Out Of Range";

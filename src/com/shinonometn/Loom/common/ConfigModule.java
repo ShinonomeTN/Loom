@@ -96,8 +96,8 @@ public class ConfigModule{
         for(String field : fields){
             c = 0;
             for(int i = 1; i <= 7; i++){
-                if(!field.contains(Toolbox.praseWeek(String.valueOf(i)))){
-                    stringBuilder.append(Toolbox.praseWeek(String.valueOf(i))).append(" ");
+                if(!field.contains(Toolbox.praseWeek(i))){
+                    stringBuilder.append(Toolbox.praseWeek(i)).append(" ");
                     c++;
                 }
             }
