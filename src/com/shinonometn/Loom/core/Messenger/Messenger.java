@@ -39,6 +39,17 @@ public class Messenger extends Thread{
         }
     }
 
+    public void close(){
+        if(isRun){
+            isRun = false;
+            Logger.log("Messenger is closing...");
+            if(!messageSocket.isClosed()){
+                messageSocket.close();
+                Logger.log("Messenger closed.");
+            }else Logger.log("Messenger already closed.");
+        }
+    }
+/*
     public void dispose(){
         isRun = false;
         Logger.log("Messenger is closing...");
@@ -47,7 +58,7 @@ public class Messenger extends Thread{
             Logger.log("Messenger closed.");
         }else Logger.log("Messenger already closed.");
     }
-
+//*/
     public void run(){
         shuttleEvent.onMessage(ShuttleEvent.MESSAGE_START,"start");
         messagePacket = new DatagramPacket(buffer,buffer.length);
@@ -79,10 +90,12 @@ public class Messenger extends Thread{
                 isRun = false;
                 if(!messageSocket.isClosed()){
                     //e.printStackTrace();
-                    dispose();
+                    //dispose();
+                    close();
                     shuttleEvent.onMessage(ShuttleEvent.MESSAGE_EXCEPTION,"message_thread_exception");
                 }else{
-                    dispose();
+                    //dispose();
+                    close();
                     shuttleEvent.onMessage(ShuttleEvent.MESSAGE_CLOSE,"message_thread_closed");
                 }
                 //break;

@@ -1,5 +1,6 @@
 package com.shinonometn.Loom.core;
 
+import com.shinonometn.Loom.Program;
 import com.shinonometn.Loom.common.ConfigModule;
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Loom.core.Messenger.Messenger;
@@ -157,9 +158,11 @@ public class Shuttle extends Thread{
         } catch (SocketTimeoutException e) {
             Logger.error("Server no response.");
             shuttleEvent.onMessage(ShuttleEvent.SERVER_NO_RESPONSE, "knock_server");
+            datagramSocket.close();
             return;
         } catch (UnknownHostException e) {
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_UNKNOWN_HOST_EXCEPTION, "knock_server");
+            datagramSocket.close();
             return;
         } catch (IOException e) {
             if(e.getMessage().equals("No route to host")){
@@ -169,6 +172,7 @@ public class Shuttle extends Thread{
                 Logger.error("Unknown Exception. cause:" + e.getMessage());
                 shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, "knocking");
             }
+            datagramSocket.close();
             return;
         }
 
@@ -179,6 +183,7 @@ public class Shuttle extends Thread{
             if(username == null || password == null) {
                 shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_FAILED,"info_not_filled");
                 Logger.error("No certification information.");
+                datagramSocket.close();
                 return;
             }
 
@@ -223,25 +228,37 @@ public class Shuttle extends Thread{
                     //认证成功
                     state[1] = true;
                     Logger.error("Certify success!");
+                    if(developerMode){
+                        //提取会话号
+                        fieldBuffer = Pupa.findField(pupa, "session");
+                        if(fieldBuffer != null){
+                            session = HexTools.toGB2312Str(Pupa.fieldData(fieldBuffer));
+                            Logger.log("Get session number: " + session);
+                        }else Logger.log("No server session number found.");
+                    }
                     shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_SUCCESS, "success");
                 } else {
                     String message = HexTools.toGB2312Str(Pupa.fieldData(Pupa.findField(pupa, "message")));
                     shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_FAILED,message);
                     Logger.error("Certify failed, Infomation: " + message);
+                    datagramSocket.close();
                     return;
                 }
             } else {
                 Logger.error("Unknow certificate statue");
                 shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_EXCEPTION, "status_unsure");
+                datagramSocket.close();
                 return;
             }
 
             //提取会话号
-            fieldBuffer = Pupa.findField(pupa, "session");
-            if(fieldBuffer != null){
-                session = HexTools.toGB2312Str(Pupa.fieldData(fieldBuffer));
-                Logger.log("Get session number: " + session);
-            }else Logger.log("No server session number found.");
+            if(!developerMode){
+                fieldBuffer = Pupa.findField(pupa, "session");
+                if(fieldBuffer != null){
+                    session = HexTools.toGB2312Str(Pupa.fieldData(fieldBuffer));
+                    Logger.log("Get session number: " + session);
+                }else Logger.log("No server session number found.");
+            }
 
             //提取服务器信息
             fieldBuffer = Pupa.findField(pupa, "message");
@@ -254,10 +271,12 @@ public class Shuttle extends Thread{
         } catch (SocketTimeoutException e){//等待服务器回应的时候超时
             shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_EXCEPTION, "timeout");
             Logger.error("Server no response");
+            datagramSocket.close();
             return;
         } catch (IOException e) {//IO 错误
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, e.getMessage());
             Logger.error(e.getMessage());
+            datagramSocket.close();
             return;
         }
 
@@ -329,6 +348,7 @@ public class Shuttle extends Thread{
                     shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION,"exception");
                 }
             } catch (InterruptedException e) {
+                logoutFlag = true;
                 break;
             } catch (SocketTimeoutException e) {
                 Logger.log("Breathe timeout.");
@@ -337,7 +357,7 @@ public class Shuttle extends Thread{
             } catch (IOException e){
                 Logger.error(e.toString());
                 shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION, "exception");
-                dispose();
+                offline();
                 return;
             }
         }
@@ -345,7 +365,7 @@ public class Shuttle extends Thread{
         state[2] = false;
 
         //通知消息线程
-        messengerThread.dispose();
+        messengerThread.close();
         //Messenger closed
         state[3] = false;
 
@@ -407,14 +427,13 @@ public class Shuttle extends Thread{
 
     public void offline(){
         logoutFlag = true;
-        messengerThread.dispose();
         interrupt();
     }
-
+/*
     @Deprecated
     public void dispose(){
         logoutFlag = true;
-        interrupt();
+        //interrupt();
         if(messengerThread != null){
             messengerThread.dispose();
             messengerThread = null;
@@ -427,10 +446,10 @@ public class Shuttle extends Thread{
             state[2] = false;
         }
         Logger.log("Disposing Shuttle.");
-        shuttleEvent.onMessage(ShuttleEvent.OFFLINE, "shuttle_closed");
+        shuttleEvent.onMessage(ShuttleEvent.OFFLINE, "closed");
         System.gc();
     }
-
+//*/
     public String getUsername() {
         return username;
     }

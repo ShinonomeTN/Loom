@@ -44,19 +44,20 @@ public class Program{
 
         File lockfile = new File("./profile/.lock");
         FileLock wlock;
-        if(!lockfile.exists()){
-            try {
+        try {
+            if(!lockfile.exists()){
                 lockfile.createNewFile();
-                wlock = new FileOutputStream(lockfile).getChannel().tryLock();
                 lockfile.deleteOnExit();
-                if(wlock == null){
-                    System.out.println("Not Allow more than one Loom use same profile. Program exits.");
-                    return;
-                }
-            } catch (IOException e) {
-                Logger.log("Lock failed.");
+            }
+            wlock = new FileOutputStream(lockfile).getChannel().tryLock();
+            if(wlock == null){
+                System.out.println("Not Allow more than one Loom use same profile. Program exits.");
+                return;
             }
             Logger.log("Get lock success.");
+
+        } catch (IOException e) {
+            Logger.log("Lock failed.");
         }
 
         Logger.log("System: " + Toolbox.getSystemName());

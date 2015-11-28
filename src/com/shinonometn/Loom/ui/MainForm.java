@@ -128,7 +128,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         }
 
         if(ConfigModule.autoOnline){
-            if(!ConfigModule.username.equals("") && !ConfigModule.password.equals("")){
+            if(!"".equals(ConfigModule.username) && !"".equals(ConfigModule.password)){
                 onClick_btn_login();
             }
         }
@@ -548,7 +548,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
         timer = new Timer(10000, new ActionListener() {
             SimpleDateFormat simpleTimeFormat = new SimpleDateFormat("HH:mm");
-            SimpleDateFormat simpleWeekFormat = new SimpleDateFormat("W");
+            SimpleDateFormat simpleWeekFormat = new SimpleDateFormat("EEE",Locale.US);
             String timeNow;
             String weekNow;
 
@@ -556,16 +556,17 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             public void actionPerformed(ActionEvent e) {
                 if(e.getSource() == timer){
                     if(ConfigModule.allowAutoMode()){
-                        if(!ConfigModule.specialDays.equals("")){
+                        if(!"".equals(ConfigModule.specialDays)){
                             String[] fields = ConfigModule.specialDays.split(";");
                             if(fields.length == 2){
                                 //获取日期
                                 Date dateNow = new Date();
                                 //格式化日期
                                 timeNow = simpleTimeFormat.format(dateNow);
-                                weekNow = Toolbox.praseWeek(simpleWeekFormat.format(dateNow));
-                                if(Program.isDeveloperMode()) Logger.log("Timer tick. Check Time: " + timeNow + "; Check WeekDay: " + weekNow);
-                                if(shuttle == null){//上线动作
+                                weekNow = simpleWeekFormat.format(dateNow);
+                                Logger.log("Timer tick. Check Time: " + timeNow + "; Check WeekDay: " + weekNow);
+                                if(Program.isDeveloperMode()) Logger.log(String.format("Raw DateTime: %s %s", timeNow, simpleWeekFormat.format(dateNow)));
+                                    if(shuttle == null){//上线动作
                                     if(fields[0].contains(weekNow)){//获得online字段
                                         if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("online")){
                                             if(timeNow.equals(ConfigModule.autoOnlineTime)){
@@ -605,7 +606,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     private void setAutoOnlineTime(){
         String filed = JOptionPane.showInputDialog(this, "请输入一个时间范围（例如01:00-03:00）");
-        if (!filed.equals("")) {
+        if (!"".equals(filed)) {
             String[] fieldSplit = filed.split("\\-");
             if (fieldSplit.length == 2) {
                 ConfigModule.autoOnlineTime = fieldSplit[0];
@@ -767,8 +768,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     private void shuttleOffline(){
         if(shuttle != null){
             shuttle.offline();
-            shuttle = null;
         }
+        shuttle = null;
     }
 
     private void onClick_btn_login(){
@@ -803,7 +804,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 int result = JOptionPane.showConfirmDialog(null,"是否先下线再退出？",getTitle(),JOptionPane.YES_NO_CANCEL_OPTION);
                 switch (result){
                     case JOptionPane.YES_OPTION:
-                        onClick_btn_login();
+                        if(shuttle != null && shuttle.isBreathing()) shuttleOffline();
                         System.exit(0);
                     case JOptionPane.NO_OPTION:
                         dispose();
@@ -885,17 +886,15 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
             case CERTIFICATE_EXCEPTION:{
                 if("timeout".equals(message)){
-                    if("certificate_timeout".equals(message)){
-                        uiOffline();
-                        logAtList(ConfigModule.isFakeMode() ? "申请续命超时，有人不让你续命":"认证超时，服务器无响应");
-                        JOptionPane.showMessageDialog(
-                                this,
-                                "认证超时，服务器无响应",
-                                this.getTitle(),
-                                JOptionPane.WARNING_MESSAGE
-                        );
-                        shuttleOffline();
-                    }
+                    uiOffline();
+                    logAtList(ConfigModule.isFakeMode() ? "申请续命超时，有人不让你续命":"认证超时，服务器无响应");
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "认证超时，服务器无响应",
+                            this.getTitle(),
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    shuttleOffline();
                 }else{
                     logAtList("认证状态不明");
                     JOptionPane.showMessageDialog(this,"认证状态不明\n如果还不能访问网路,请退出程序再试",getTitle(),JOptionPane.WARNING_MESSAGE);
