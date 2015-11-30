@@ -428,6 +428,9 @@ public class Shuttle extends Thread{
     public void offline(){
         logoutFlag = true;
         interrupt();
+        if(!this.isBreathing()){
+            if(!datagramSocket.isClosed()) datagramSocket.close();
+        }
     }
 /*
     @Deprecated
