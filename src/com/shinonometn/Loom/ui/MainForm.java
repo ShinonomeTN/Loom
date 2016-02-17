@@ -5,9 +5,10 @@ import com.shinonometn.Loom.common.ConfigModule;
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Loom.common.Networks;
 import com.shinonometn.Loom.common.Toolbox;
-import com.shinonometn.Loom.core.Messenger.ShuttleEvent;
+import com.shinonometn.Loom.core.Message.ShuttleEvent;
 import com.shinonometn.Loom.core.Shuttle;
 import com.shinonometn.Loom.resource.Resource;
+import com.shinonometn.Pupa.Pupa;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -237,7 +238,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         m1 = new JMenuItem(Program.appName);
         m1.setEnabled(false);
         menu.add(m1);
-        m1 = new JMenuItem("Pupa version:3.6");
+        m1 = new JMenuItem("Pupa version:" + Pupa.getVersion());
         m1.setEnabled(false);
         menu.add(m1);
         m1 = new JMenuItem("Amnoon Auth. v3.6.9");
@@ -314,7 +315,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         gridBagConstraints.gridx++;
         gridBagConstraints.gridwidth = 3;
         gridBagConstraints.insets = right_inset;
-        cb_netcard = new JComboBox<>();
+        cb_netcard = new JComboBox<String>();
         nf = Networks.getNetworkInterfaces(false);//获取网卡列表
         if(nf != null && nf.size() > 0){
             for(NetworkInterface n:nf){
@@ -564,7 +565,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                                 //格式化日期
                                 timeNow = simpleTimeFormat.format(dateNow);
                                 weekNow = simpleWeekFormat.format(dateNow);
-                                Logger.log("Timer tick. Check Time: " + timeNow + "; Check WeekDay: " + weekNow);
+                                if(Program.isDeveloperMode()) Logger.log("Timer tick. Check Time: " + timeNow + "; Check WeekDay: " + weekNow);
                                 if(Program.isDeveloperMode()) Logger.log(String.format("Raw DateTime: %s %s", timeNow, simpleWeekFormat.format(dateNow)));
                                     if(shuttle == null){//上线动作
                                     if(fields[0].contains(weekNow)){//获得online字段
@@ -573,7 +574,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                                                 if(!timerAlertedFlag){
                                                     onClick_btn_login();
                                                     timerAlertedFlag = true;
-                                                    Logger.log("Timer auto click login button because reach the online time point.");
+                                                    if(Program.isDeveloperMode()) Logger.log("Timer auto click login button because reach the online time point.");
                                                 }
                                             }else timerAlertedFlag = false;
                                         }
@@ -585,7 +586,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                                                 if(!timerAlertedFlag){
                                                     onClick_btn_login();
                                                     timerAlertedFlag = true;
-                                                    Logger.log("Timer auto click login button because reach the offline time point.");
+                                                    if(Program.isDeveloperMode()) Logger.log("Timer auto click login button because reach the offline time point.");
                                                 }
                                             }else timerAlertedFlag = false;
                                         }
@@ -691,7 +692,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             if(!Toolbox.isMacOSX()){
                 trayIcon.displayMessage(title, content, TrayIcon.MessageType.INFO);
             }else{
-                com.apple.eawt.Application.getApplication().requestUserAttention(true);
+                //com.apple.eawt.Application.getApplication().requestUserAttention(true);
             }
         }
     }
@@ -783,7 +784,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             btn_login.setText("上线中...");
             setLinkingIcon();
             shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
-            shuttle.developerMode = Program.isDeveloperMode();
+            //shuttle.developerMode = Program.isDeveloperMode();
             shuttle.setUsername(t_username.getText());
             shuttle.setPassword(new String(t_password.getPassword()));
             shuttle.start();
@@ -953,11 +954,13 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             case SOCKET_NO_ROUTE_TO_HOST:{
                 logAtList(ConfigModule.isFakeMode() ? "续命不能" : "无路由到服务器");
                 JOptionPane.showMessageDialog(this,"数据包不能路由到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
+                shuttleOffline();
             }
 
             case SOCKET_UNKNOWN_HOST_EXCEPTION:{
                 logAtList(ConfigModule.isFakeMode() ? "找不到长者":"找不到服务器");
                 JOptionPane.showMessageDialog(this,"找不到服务器，请检查网络设置",getTitle(),JOptionPane.WARNING_MESSAGE);
+                shuttleOffline();
             }break;
 
             case MESSAGE_EXCEPTION:{
@@ -1052,6 +1055,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     }
 
     @Override
+    public void onNetworkError(int errorType, String message) {
+
+    }
+
+    @Override
     public void windowOpened(WindowEvent e) {
         Logger.log("Window Opened");
         if(Program.isDeveloperMode()){
@@ -1081,19 +1089,19 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     @Override
     public void windowIconified(WindowEvent e) {
-        Logger.log("Window Iconified");
+        if(Program.isDeveloperMode()) Logger.log("Window Iconified");
         if(ConfigModule.hideOnIconified && !Toolbox.isMacOSX()) setVisible(false);
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
-        Logger.log("Window Deiconified");
+        if(Program.isDeveloperMode()) Logger.log("Window Deiconified");
         setVisible(true);
     }
 
     @Override
     public void windowActivated(WindowEvent e) {
-        Logger.log("Window Activated");
+        if(Program.isDeveloperMode()) Logger.log("Window Activated");
         if(Toolbox.isMacOSX()) com.apple.eawt.Application.getApplication().requestUserAttention(false);
     }
 

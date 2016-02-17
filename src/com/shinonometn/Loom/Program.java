@@ -195,7 +195,7 @@ public class Program{
             shuttle = new Shuttle(networkInterface, null);
             if(ConfigModule.isFakeMode()) Logger.log("Please note that fake mode on.");
             if(ConfigModule.allowAutoMode()) Logger.log("Please note that auto-mode on.");
-            shuttle.developerMode = Program.isDeveloperMode();
+            //shuttle.developerMode = Program.isDeveloperMode();
             System.out.println("Prepared to login.");
 
             if(args.length == 0){

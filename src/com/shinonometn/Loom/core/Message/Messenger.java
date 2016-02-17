@@ -1,11 +1,10 @@
-package com.shinonometn.Loom.core.Messenger;
+package com.shinonometn.Loom.core.Message;
 
 import com.shinonometn.Loom.common.Logger;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.Dictionary;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;
-import com.sun.javafx.tools.packager.Log;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -79,7 +78,7 @@ public class Messenger extends Thread{
                         if(messagePupa.getAction() == 0x9){
                             shuttleEvent.onMessage(ShuttleEvent.SERVER_MESSAGE, "offline");
                         }else{
-                            shuttleEvent.onMessage(ShuttleEvent.SERVER_MESSAGE,Pupa.toPrintabelString(messagePupa));
+                            shuttleEvent.onMessage(ShuttleEvent.SERVER_MESSAGE,messagePupa.toString(Pupa.INFO_ALL));
                         }
                     }
                 }else

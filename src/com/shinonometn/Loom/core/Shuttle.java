@@ -3,8 +3,8 @@ package com.shinonometn.Loom.core;
 import com.shinonometn.Loom.Program;
 import com.shinonometn.Loom.common.ConfigModule;
 import com.shinonometn.Loom.common.Logger;
-import com.shinonometn.Loom.core.Messenger.Messenger;
-import com.shinonometn.Loom.core.Messenger.ShuttleEvent;
+import com.shinonometn.Loom.core.Message.Messenger;
+import com.shinonometn.Loom.core.Message.ShuttleEvent;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;
@@ -17,19 +17,20 @@ import java.util.List;
  * Created by catten on 15/11/2.
  */
 public class Shuttle extends Thread{
-    public boolean developerMode;
+
+    //public boolean developerMode;
+
     //一些参数设置
-    private final int defaultPacketSize = 1024;
-    private final int defaultSocketTimeout = 10000;//默认超时时间10s，因为考虑到是内网环境所以时间设置得比较段
+    private static int defaultPacketSize = 1024;
+    private static int defaultSocketTimeout = 10000;//默认超时时间10s，因为考虑到是内网环境所以时间设置得比较短
 
     private NetworkInterface networkInterface;
+
     //通信信息
     private String username;
     private String password;
-    //初始session
-    private byte[] init_session = new byte[]{0x00,0x00,0x00,0x01};
-    //登陆后拿到的会话号保存在这里
-    private String session;
+    private byte[] init_session = new byte[]{0x00,0x00,0x00,0x01};//初始session
+    private String session;//登陆后拿到的会话号保存在这里
 
     //一些经常用到的信息暂存在这里
     private String ipAddress;
@@ -37,20 +38,38 @@ public class Shuttle extends Thread{
     private byte[] macAddress;
     private InetAddress serverInetAddress;
     private InetAddress localInetAddress;
-    private boolean[] state = new boolean[4];//存放状态用，0是敲门，1是认证成功，2是呼吸线程启动，3是信息线程启动
+
+    public final static int STATE_INITIALIZED = 0x00;
+    public final static int STATE_KNOCKING = 0x01;
+    public final static int STATE_SUPPLICATING = 0x02;
+    public final static int STATE_BREATHING = 0x04;
+    public final static int STATE_MESSAGEON = 0x08;
+
+    public int state = -1;
+
+    //private boolean[] state = new boolean[4];//存放状态用，0是敲门，1是认证成功，2是呼吸线程启动，3是信息线程启动
     private boolean logoutFlag = false;//提示程序下线
     private long sleepTime = 0;//呼吸等待时间
     private int serialNo = 0x01000003;//会话流水号，每次呼吸增加3
 
     Messenger messengerThread;//信息监听线程
 
-    //用于发送通知的对象，一般是调用Shuttle的类，如果不设置的话就会使用默认的匿名类
-    private ShuttleEvent shuttleEvent = new ShuttleEvent() {
+    //备胎
+    private ShuttleEvent spareEventObject = new ShuttleEvent() {
         @Override
         public void onMessage(int messageType, String message) {
             Logger.log(String.format("[Message code %d]:%s",messageType,message));
         }
+
+        @Override
+        public void onNetworkError(int errorType, String message) {
+            Logger.error(String.format("[Error code %d]:%s",errorType,message));
+        }
+
+
     };
+    //用于发送通知的对象，一般是调用Shuttle的类，如果不设置的话就会使用默认的
+    private ShuttleEvent shuttleEvent = spareEventObject;
 
     //为了资源重用，敲门、认证、呼吸这三个互斥的动作都用这个Socket
     private DatagramSocket datagramSocket;
@@ -90,6 +109,7 @@ public class Shuttle extends Thread{
             datagramSocket.setSoTimeout(defaultSocketTimeout);
             Logger.log("Get socket success.");
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_GET_SUCCESS, "get_connection_socket_success");
+            state = STATE_INITIALIZED;
         } catch (SocketException e) {
             Logger.error("Get socket Failed." + e.getMessage());
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_PORT_IN_USE, "get_connection_socket_failed");
@@ -114,7 +134,7 @@ public class Shuttle extends Thread{
 
             //利用Pupa和Pronunciation生成加密好的数据
             data = Pronunciation.encrypt3848(new Pupa("get server", fields).getData());
-            Logger.log("[Fields]"+(developerMode?fields:"----Banned----"));
+            Logger.log("[Fields]"+(Program.isDeveloperMode() ? fields : "----Banned----"));
 
             //准备数据包
             datagramPacket = new DatagramPacket(data,data.length, InetAddress.getByName("1.1.1.8"),3850);
@@ -143,7 +163,7 @@ public class Shuttle extends Thread{
                 try {
                     serverInetAddress = InetAddress.getByName(serverIPAddress);
                     //敲门成功
-                    state[0] = true;
+                    //state[0] = true;
                 } catch (UnknownHostException e) {
                     Logger.error("Server IP unavailable.");
                     shuttleEvent.onMessage(ShuttleEvent.SOCKET_UNKNOWN_HOST_EXCEPTION, "server_ip_unavailable");
@@ -188,7 +208,7 @@ public class Shuttle extends Thread{
             }
 
             //准备认证用字段，这个认证版本是安朗的3.6.9版协议
-            Logger.log("Try to use account " + (developerMode?username:"-not-shown-") + " to login...");
+            Logger.log("Try to use account " + (Program.isDeveloperMode()?username:"-not-shown-") + " to login...");
             fields = String.format(
                     "session:%s|username:%s|password:%s|ip address:%s|mac address:%s|access point:%s|version:%s|is dhcp enabled:%s",
                     HexTools.byte2HexStr(init_session),
@@ -202,7 +222,7 @@ public class Shuttle extends Thread{
             );
 
             //准备数据包
-            Logger.log("[Fields]"+(developerMode?fields:"----Banned----"));
+            Logger.log("[Fields]"+(Program.isDeveloperMode()?fields:"----Banned----"));
             data = Pronunciation.encrypt3848(new Pupa("login",fields).getData());
             datagramPacket = new DatagramPacket(data,data.length,serverInetAddress,3848);
 
@@ -226,9 +246,9 @@ public class Shuttle extends Thread{
             if (fieldBuffer != null) {
                 if (HexTools.toBool(fieldBuffer)) {
                     //认证成功
-                    state[1] = true;
+                    //state[1] = true;
                     Logger.error("Certify success!");
-                    if(developerMode){
+                    if(Program.isDeveloperMode()){
                         //提取会话号
                         fieldBuffer = Pupa.findField(pupa, "session");
                         if(fieldBuffer != null){
@@ -252,7 +272,7 @@ public class Shuttle extends Thread{
             }
 
             //提取会话号
-            if(!developerMode){
+            if(!Program.isDeveloperMode()){
                 fieldBuffer = Pupa.findField(pupa, "session");
                 if(fieldBuffer != null){
                     session = HexTools.toGB2312Str(Pupa.fieldData(fieldBuffer));
@@ -292,7 +312,7 @@ public class Shuttle extends Thread{
         boolean noSleep = false;
         while(!logoutFlag){
             //Breathing flag
-            state[2] = true;
+            //state[2] = true;
             try {
                 //如果被要求跳过等待, 直接发送呼吸包
                 if(!noSleep){
@@ -309,7 +329,7 @@ public class Shuttle extends Thread{
                         serialNo,
                         HexTools.byte2HexStr(macAddress)
                 );
-                Logger.log("[Field]"+(developerMode?fields:"----Banned----"));
+                Logger.log("[Field]"+(Program.isDeveloperMode()?fields:"----Banned----"));
                 data = Pronunciation.encrypt3848(new Pupa("breathe", fields).getData());
                 datagramPacket = new DatagramPacket(data, data.length, serverInetAddress, 3848);
                 Logger.log("Breathe...");
@@ -335,7 +355,7 @@ public class Shuttle extends Thread{
                 if(fieldBuffer != null) {
                     if(HexTools.toBool(fieldBuffer)){
                         serialNo += 0x03;
-                        Logger.log("Breathed." + (developerMode ? String.format("Serial No. : 0x%x",serialNo):"----Banned----"));
+                        Logger.log("Breathed." + (Program.isDeveloperMode() ? String.format("Serial No. : 0x%x",serialNo):"----Banned----"));
                         shuttleEvent.onMessage(ShuttleEvent.BREATHE_SUCCESS,"success");
                     }else{
                         Logger.log("Server Rejected this Breathe.");
@@ -356,18 +376,18 @@ public class Shuttle extends Thread{
                 shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION, "timeout");
             } catch (IOException e){
                 Logger.error(e.toString());
-                shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION, "exception");
+                shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION, e.getMessage());
                 offline();
                 return;
             }
         }
         Logger.log("Breathe thread Closeing....");
-        state[2] = false;
+        //state[2] = false;
 
         //通知消息线程
         messengerThread.close();
         //Messenger closed
-        state[3] = false;
+        //state[3] = false;
 
         try {
             //准备下线数据包
@@ -377,7 +397,7 @@ public class Shuttle extends Thread{
                     HexTools.byte2HexStr(ipAddress.getBytes()),
                     HexTools.byte2HexStr(macAddress)
             );
-            Logger.log("[Field]" + (developerMode ? fields : "----Banned----"));
+            Logger.log("[Field]" + (Program.isDeveloperMode() ? fields : "----Banned----"));
             //发送数据包
             Pupa pupa = new Pupa("logout", fields);
             datagramPacket.setData(Pronunciation.encrypt3848(pupa.getData()));
@@ -410,18 +430,17 @@ public class Shuttle extends Thread{
             Logger.error(e.toString());
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, e.toString());
         }finally {
-            if(!datagramSocket.isClosed()) {
-                //datagramSocket.disconnect();
-                datagramSocket.close();
-            }
+            datagramSocket.close();
         }
     }
 
     public boolean isBreathing(){
-        return state[2];
+        return currentThread().isAlive();
     }
 
-    public boolean isMessageListening() { return state[3]; }
+    public boolean isMessageListening(){
+        return messengerThread.isAlive();
+    }
 
     //敲门
 
@@ -429,30 +448,11 @@ public class Shuttle extends Thread{
         logoutFlag = true;
         interrupt();
         if(!this.isBreathing()){
-            if(!datagramSocket.isClosed()) datagramSocket.close();
+            datagramSocket.close();
         }
+        //if(!datagramSocket.isClosed()) datagramSocket.close();
     }
-/*
-    @Deprecated
-    public void dispose(){
-        logoutFlag = true;
-        //interrupt();
-        if(messengerThread != null){
-            messengerThread.dispose();
-            messengerThread = null;
-            state[3] = false;
-        }
 
-        if(datagramSocket != null) {
-            //datagramSocket.disconnect();
-            if(!datagramSocket.isClosed()) datagramSocket.close();
-            state[2] = false;
-        }
-        Logger.log("Disposing Shuttle.");
-        shuttleEvent.onMessage(ShuttleEvent.OFFLINE, "closed");
-        System.gc();
-    }
-//*/
     public String getUsername() {
         return username;
     }
