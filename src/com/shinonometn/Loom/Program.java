@@ -22,18 +22,18 @@ import java.util.Vector;
 /**
  * Created by catten on 15/10/20.
  */
-public class Program{
+public class Program {
     private static boolean developerMode = false;
 
-    public static boolean isDeveloperMode(){
+    public static boolean isDeveloperMode() {
         return developerMode;
     }
 
     public final static String appName = "Loom v2.2";
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
 
-        if(args.length == 1 && args[0].toLowerCase().equals("-help")){
+        if (args.length == 1 && args[0].toLowerCase().equals("-help")) {
             Logger.closeLog();
             Logger.deleteLog();
             Logger.outPrint = false;
@@ -45,12 +45,12 @@ public class Program{
         File lockfile = new File("./profile/.lock");
         FileLock wlock;
         try {
-            if(!lockfile.exists()){
+            if (!lockfile.exists()) {
                 lockfile.createNewFile();
                 lockfile.deleteOnExit();
             }
             wlock = new FileOutputStream(lockfile).getChannel().tryLock();
-            if(wlock == null){
+            if (wlock == null) {
                 System.out.println("Not Allow more than one Loom use same profile. Program exits.");
                 return;
             }
@@ -61,8 +61,8 @@ public class Program{
         }
 
         Logger.log("System: " + Toolbox.getSystemName());
-        if(args.length >= 2){
-            if("-developerMode".toLowerCase().equals(args[1].toLowerCase())){
+        if (args.length >= 2) {
+            if ("-developerMode".toLowerCase().equals(args[1].toLowerCase())) {
                 developerMode = true;
             }
         }
@@ -72,21 +72,21 @@ public class Program{
                 "\nDeveloper mode will record all user data(included account and password)" +
                 "\nPlease remember to clear logs for protect your personal Data" : "DeveloperMode off");
 
-        if(args.length > 0 && "-consoleMode".toLowerCase().equals(args[0].toLowerCase())){
+        if (args.length > 0 && "-consoleMode".toLowerCase().equals(args[0].toLowerCase())) {
             Logger.log("Loom Console Mode");
             LoomConsole(null);
-            if(Logger.isWriteToFile()){
+            if (Logger.isWriteToFile()) {
                 Logger.closeLog();
             }
         }
 
-        if(args.length == 1 && args[0].toLowerCase().equals("-clearfakeinfo")){
+        if (args.length == 1 && args[0].toLowerCase().equals("-clearfakeinfo")) {
             ConfigModule.fakeIP = "null";
             ConfigModule.fakeMac = "null";
             ConfigModule.writeProfile();
             Logger.log("Fake IP and Mac Cleared");
             System.out.println("Fake IP and Mac Cleared");
-        }else if(args.length == 1 && "-closeautomode".equals(args[0].toLowerCase())){
+        } else if (args.length == 1 && "-closeautomode".equals(args[0].toLowerCase())) {
             Logger.closeLog();
             Logger.deleteLog();
             Logger.outPrint = false;
@@ -96,17 +96,17 @@ public class Program{
             System.out.println("Auto-mode closed.");
         }
 
-        if(args.length >= 2 && "-setautomode".equals(args[0].toLowerCase())){
+        if (args.length >= 2 && "-setautomode".equals(args[0].toLowerCase())) {
             Logger.closeLog();
             Logger.deleteLog();
             Logger.outPrint = false;
             //System.out.println("Please note that auto-online mode not support command line mode.");
-            if(args[1].matches(ConfigModule.timeFormat + "\\-" + ConfigModule.timeFormat)){
+            if (args[1].matches(ConfigModule.timeFormat + "\\-" + ConfigModule.timeFormat)) {
                 String[] matchBuffer = args[1].split("\\-");
                 ConfigModule.autoOnlineTime = matchBuffer[0];
                 ConfigModule.autoOfflineTime = matchBuffer[1];
-                if(args.length == 3){
-                    if(args[2].matches("(both|online|offline)")) ConfigModule.autoOnlineMode = args[2];
+                if (args.length == 3) {
+                    if (args[2].matches("(both|online|offline)")) ConfigModule.autoOnlineMode = args[2];
                 }
                 ConfigModule.writeProfile();
                 System.out.println("Auto-mode set.");
@@ -114,24 +114,24 @@ public class Program{
             }
         }
 
-        if(args.length == 4){
-            if(args[0].toLowerCase().equals("-fakeip")){
-                if(args[2].toLowerCase().equals("-fakemac")){
+        if (args.length == 4) {
+            if (args[0].toLowerCase().equals("-fakeip")) {
+                if (args[2].toLowerCase().equals("-fakemac")) {
                     Logger.log("Writing fake IP and Mac to profile.");
                     System.out.println("Writing fake IP and Mac to profile.");
                     ConfigModule.fakeIP = args[1];
-                    ConfigModule.fakeMac = args[3].replace(":","");
+                    ConfigModule.fakeMac = args[3].replace(":", "");
                     ConfigModule.writeProfile();
                     return;
                 }
             }
         }
 
-        if(args.length == 0 || "-graphicMode".toLowerCase().equals(args[0].toLowerCase())){
+        if (args.length == 0 || "-graphicMode".toLowerCase().equals(args[0].toLowerCase())) {
             Logger.log("Loom Graphic Mode");
-            try{
+            try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            }catch (Exception e){
+            } catch (Exception e) {
                 Logger.log(e.toString());
             }
 
@@ -139,7 +139,7 @@ public class Program{
 
             Vector<NetworkInterface> nf = Networks.getNetworkInterfaces(false);
             StringBuilder stringBuilder = new StringBuilder("\n\n");
-            if(nf != null) {
+            if (nf != null) {
                 stringBuilder.append("Network Interfaces found:\n");
                 for (NetworkInterface n : nf) {
                     try {
@@ -164,7 +164,7 @@ public class Program{
         }
     }
 
-    public static void LoomConsole(String args[]){
+    public static void LoomConsole(String args[]) {
         try {
             System.out.println("Welcome to use " + appName + " Console!\n");
 
@@ -176,10 +176,10 @@ public class Program{
 
             Scanner scanner = new Scanner(System.in);
 
-            if(args.length == 1){
+            if (args.length == 1) {
                 System.out.print("Loom now running under pre-fix mode.");
                 ip = args[0];
-            }else{
+            } else {
                 System.out.println("Input your IP address:");
                 ip = scanner.next();
             }
@@ -193,89 +193,90 @@ public class Program{
             }
 
             shuttle = new Shuttle(networkInterface, null);
-            if(ConfigModule.isFakeMode()) Logger.log("Please note that fake mode on.");
-            if(ConfigModule.allowAutoMode()) Logger.log("Please note that auto-mode on.");
+            if (ConfigModule.isFakeMode()) Logger.log("Please note that fake mode on.");
+            if (ConfigModule.allowAutoMode()) Logger.log("Please note that auto-mode on.");
             //shuttle.developerMode = Program.isDeveloperMode();
             System.out.println("Prepared to login.");
 
-            if(args.length == 0){
+            if (args.length == 0) {
                 System.out.println("Please input your account");
                 username = scanner.next();
                 System.out.println("PIN Code?(Password)");
                 password = scanner.next();
-            }else{
+            } else {
                 username = null;
                 password = null;
             }
 
-            if(!ConfigModule.allowAutoMode()){
-                if(args.length == 0){
+            if (!ConfigModule.allowAutoMode()) {
+                if (args.length == 0) {
                     shuttle.setUsername(username);
                     shuttle.setPassword(password);
-                }else{
+                } else {
                     shuttle.setUsername(ConfigModule.username);
                     shuttle.setPassword(ConfigModule.password);
                 }
                 System.out.println("Loom Start.");
                 shuttle.start();
 
-                do{
+                do {
                     System.out.println("If you want to get offline or exit program, Please input \"exit\"");
-                    if (!scanner.next().toLowerCase().equals("exit")){
-                        if(scanner.next().equals("about")){
+                    if (!scanner.next().toLowerCase().equals("exit")) {
+                        if (scanner.next().equals("about")) {
                             aboutMe();
-                        }else System.out.println("If you want to get offline or exit program, Please input \"exit\"");
-                    }else{
+                        } else System.out.println("If you want to get offline or exit program, Please input \"exit\"");
+                    } else {
                         shuttle.offline();
-                        while(shuttle.isBreathing() || shuttle.isMessageListening());
+                        while (shuttle.isBreathing() || shuttle.isMessageListening()) ;
                         return;
                     }
-                }while(shuttle.isAlive());
+                } while (shuttle.isAlive());
 
-                if(!developerMode){
+                if (!developerMode) {
                     System.out.println(
                             "Some error accorded. Restart program or run " +
                                     "\n\"java -jar Loom.jar -consoleMode -developerMode\"" +
                                     "\n to know more."
                     );
                 }
-            }else{
+            } else {
                 shuttle.offline();
-                Thread thread = new Thread(){
+                Thread thread = new Thread() {
                     boolean alertFlag = false;
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
                     boolean runflag = true;
                     Shuttle shuttle1;
-                    public void run(){
-                        System.out.println("Loom running under auto-mode. Online: " + (shuttle1 == null?"Ture":"False"));
+
+                    public void run() {
+                        System.out.println("Loom running under auto-mode. Online: " + (shuttle1 == null ? "Ture" : "False"));
                         Logger.log("Loom running under auto-mode.");
-                        while(runflag){
+                        while (runflag) {
                             String date = simpleDateFormat.format(new Date());
                             System.out.println("Time check. " + date);
-                            if(shuttle1 == null){
-                                if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("online")){
-                                    if(date.equals(ConfigModule.autoOnlineTime)){
-                                        if(!alertFlag){
+                            if (shuttle1 == null) {
+                                if (ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("online")) {
+                                    if (date.equals(ConfigModule.autoOnlineTime)) {
+                                        if (!alertFlag) {
 
-                                            shuttle1 = new Shuttle(networkInterface,null);
+                                            shuttle1 = new Shuttle(networkInterface, null);
                                             shuttle1.setUsername(username);
                                             shuttle1.setPassword(password);
                                             shuttle1.start();
                                             alertFlag = true;
                                             Logger.log("Auto online because reach the online time point.");
                                         }
-                                    }else alertFlag = false;
+                                    } else alertFlag = false;
                                 }
-                            }else{
-                                if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOfflineTime.equals("offline")){
-                                    if(date.equals(ConfigModule.autoOfflineTime)){
-                                        if(!alertFlag){
-                                            if(shuttle1 != null) shuttle1.offline();
+                            } else {
+                                if (ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOfflineTime.equals("offline")) {
+                                    if (date.equals(ConfigModule.autoOfflineTime)) {
+                                        if (!alertFlag) {
+                                            if (shuttle1 != null) shuttle1.offline();
                                             shuttle1 = null;
                                             alertFlag = true;
                                             Logger.log("Auto offline because reach the offline time point.");
                                         }
-                                    }else alertFlag = false;
+                                    } else alertFlag = false;
                                 }
                             }
                             try {
@@ -289,18 +290,18 @@ public class Program{
                 };
                 thread.setDaemon(true);
                 thread.start();
-                do{
+                do {
                     System.out.println("If you want to exit. please input \"exit\"");
                 }
-                while(!scanner.next().equals("exit"));
+                while (!scanner.next().equals("exit"));
                 thread.interrupt();
             }
-        }catch (SocketException | UnknownHostException e){
+        } catch (SocketException | UnknownHostException e) {
             Logger.log(e.toString());
         }
     }
 
-    public static void aboutMe(){
+    public static void aboutMe() {
         System.out.println(Resource.getResource().getResourceText("/com/shinonometn/Loom/resource/aboutMe.txt"));
     }
 }
