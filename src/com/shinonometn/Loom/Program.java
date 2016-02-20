@@ -258,7 +258,11 @@ public class Program {
                                     if (date.equals(ConfigModule.autoOnlineTime)) {
                                         if (!alertFlag) {
 
-                                            shuttle1 = new Shuttle(networkInterface, null);
+                                            try {
+                                                shuttle1 = new Shuttle(networkInterface, null);
+                                            } catch (SocketException e) {
+                                                e.printStackTrace();
+                                            }
                                             shuttle1.setUsername(username);
                                             shuttle1.setPassword(password);
                                             shuttle1.start();

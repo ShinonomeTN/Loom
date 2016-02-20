@@ -1,6 +1,7 @@
 package com.shinonometn.Loom.core.Message;
 
 import com.shinonometn.Loom.common.Logger;
+import com.shinonometn.Loom.core.data.DataFactory;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.Dictionary;
 import com.shinonometn.Pupa.ToolBox.HexTools;
@@ -20,7 +21,7 @@ public class Messenger extends Thread{
     DatagramPacket messagePacket;
     Pupa messagePupa;
     public boolean isRun = true;
-    byte[] buffer = new byte[1024];
+    //byte[] buffer = new byte[1024];
     byte[] bufferTemp;
     ShuttleEvent shuttleEvent;
 
@@ -60,7 +61,7 @@ public class Messenger extends Thread{
 //*/
     public void run(){
         shuttleEvent.onMessage(ShuttleEvent.MESSAGE_START,"start");
-        messagePacket = new DatagramPacket(buffer,buffer.length);
+        messagePacket = new DatagramPacket(new byte[1024],1024);
         while (isRun){
             try {
 
@@ -71,8 +72,8 @@ public class Messenger extends Thread{
                     if(messagePacket.getData() != null){
                         bufferTemp = new byte[messagePacket.getLength()];
                         System.arraycopy(messagePacket.getData(), 0, bufferTemp, 0, bufferTemp.length);
-                        Logger.log(HexTools.byte2HexStr(bufferTemp));
-                        messagePupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
+                        //Logger.log(HexTools.byte2HexStr(bufferTemp));
+                        messagePupa = DataFactory.decrypt(bufferTemp);
                         Logger.log("Server send you a |" + Dictionary.actionNames(messagePupa.getAction()) + "| packet.");
                         //如果是下线包的话，通知为下线。如果是其他的包的话，直接把内容发送出去
                         if(messagePupa.getAction() == 0x9){

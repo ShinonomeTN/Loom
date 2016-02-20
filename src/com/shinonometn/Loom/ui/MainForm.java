@@ -16,6 +16,7 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -783,7 +784,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             lockInputUI();
             btn_login.setText("上线中...");
             setLinkingIcon();
-            shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
+            try {
+                shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
             //shuttle.developerMode = Program.isDeveloperMode();
             shuttle.setUsername(t_username.getText());
             shuttle.setPassword(new String(t_password.getPassword()));

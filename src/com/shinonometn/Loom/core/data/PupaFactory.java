@@ -3,6 +3,9 @@ package com.shinonometn.Loom.core.data;
 import com.shinonometn.Loom.core.Shuttle;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.HexTools;
+import com.shinonometn.Pupa.ToolBox.Pronunciation;
+
+import java.net.DatagramPacket;
 
 /**
  * Created by catten on 16/2/18.
@@ -62,5 +65,11 @@ public class PupaFactory {
                 HexTools.byte2HexStr(client.getIPAddress().getBytes()),
                 HexTools.byte2HexStr(client.getMacAddress())
         ));
+    }
+
+    public Pupa serverPupa(DatagramPacket datagramPacket){
+        byte[] data = new byte[datagramPacket.getLength()];
+        System.arraycopy(Pronunciation.decrypt3848(datagramPacket.getData()), 0, data, 0, data.length);
+        return new Pupa(data);
     }
 }
