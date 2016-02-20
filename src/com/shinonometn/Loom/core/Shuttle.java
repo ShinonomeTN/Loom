@@ -24,8 +24,6 @@ public class Shuttle extends Thread implements ShuttleClient {
     private static int defaultPacketSize = 1024;
     private static int defaultSocketTimeout = 10000;//默认超时时间10s，因为考虑到是内网环境所以时间设置得比较短
 
-    private NetworkInterface networkInterface;
-
     //通信信息
     private String session = new String(new byte[]{0x00, 0x00, 0x00, 0x01});//登陆后拿到的会话号保存在这里
     private String username;
@@ -33,14 +31,21 @@ public class Shuttle extends Thread implements ShuttleClient {
     private String ipAddress;
     private byte[] macAddress;
 
-    //一些经常用到的信息暂存在这里
-    private String serverIPAddress;
     private InetAddress serverInetAddress;
     private InetAddress localInetAddress;
 
     PupaFactory factory = new PupaFactory(this);
 
     private boolean logoutFlag = false;//提示程序下线
+
+    public long getSleepTime() {
+        return sleepTime;
+    }
+
+    public void setSleepTime(long sleepTime) {
+        this.sleepTime = sleepTime;
+    }
+
     private long sleepTime = 0;//呼吸等待时间
     private int serialNo = 0x01000003;//会话流水号，每次呼吸增加3
 
@@ -57,7 +62,6 @@ public class Shuttle extends Thread implements ShuttleClient {
     }
 
     public Shuttle(NetworkInterface networkInterface, ShuttleEvent feedBackObject) throws SocketException {
-        this.networkInterface = networkInterface;
         this.shuttleEvent = feedBackObject;
         setDaemon(true);
 
@@ -76,7 +80,7 @@ public class Shuttle extends Thread implements ShuttleClient {
     }
 
     private boolean knock() throws IOException {
-        DatagramPacket datagramPacket = new DatagramPacket(new byte[1024],1024,InetAddress.getByName("1.1.1.8"), 3850);
+        DatagramPacket datagramPacket = new DatagramPacket(new byte[1024], 1024, InetAddress.getByName("1.1.1.8"), 3850);
 
         //准备数据包
         datagramPacket.setData(DataFactory.encrypt(factory.knockPupa()));
@@ -89,7 +93,7 @@ public class Shuttle extends Thread implements ShuttleClient {
 
 
         //取出数据包并利用Pupa取出认证服务器ip
-        serverIPAddress = HexTools.toIPAddress(factory
+        String serverIPAddress = HexTools.toIPAddress(PupaFactory
                 .serverPupa(datagramPacket)
                 .findFiled("server ip address")
                 .getValue()
@@ -97,6 +101,7 @@ public class Shuttle extends Thread implements ShuttleClient {
 
         if (!"".equals(serverIPAddress)) {
             shuttleEvent.onMessage(ShuttleEvent.SERVER_RESPONSE_IPADDRESS, serverIPAddress);
+            serverInetAddress = InetAddress.getByName(serverIPAddress);
         } else {
             shuttleEvent.onMessage(ShuttleEvent.SERVER_NOT_FOUNT, "knock_server_not_found");
             return false;
@@ -123,7 +128,7 @@ public class Shuttle extends Thread implements ShuttleClient {
 
         //等待服务器回应
         datagramSocket.receive(datagramPacket);
-        Pupa receivedPupa = factory.serverPupa(datagramPacket);
+        Pupa receivedPupa = PupaFactory.serverPupa(datagramPacket);
 
         //判断是否登陆成功
         if (HexTools.toBool(receivedPupa.findFiled("is success").getData())) {
@@ -147,7 +152,6 @@ public class Shuttle extends Thread implements ShuttleClient {
     }
 
     private boolean breathe() throws IOException {
-        byte[] data;
         DatagramPacket datagramPacket = new DatagramPacket(new byte[1024], 1024, serverInetAddress, 3848);
 
         //发送呼吸包
@@ -159,7 +163,7 @@ public class Shuttle extends Thread implements ShuttleClient {
         datagramSocket.receive(datagramPacket);
 
         //解释数据包并提取有用的信息
-        Pupa receivedPupa = factory.serverPupa(datagramPacket);
+        Pupa receivedPupa = PupaFactory.serverPupa(datagramPacket);
 
         //分析
         byte[] _field = receivedPupa.findFiled("is success").getValue();
@@ -193,7 +197,7 @@ public class Shuttle extends Thread implements ShuttleClient {
         datagramSocket.setSoTimeout(defaultSocketTimeout);
         datagramSocket.receive(datagramPacket);
 
-        Pupa receivedPupa = factory.serverPupa(datagramPacket);
+        Pupa receivedPupa = PupaFactory.serverPupa(datagramPacket);
         if (HexTools.toBool(receivedPupa.findFiled("is success").getValue())) {
             shuttleEvent.onMessage(ShuttleEvent.OFFLINE, "generally");
             return true;
@@ -203,37 +207,34 @@ public class Shuttle extends Thread implements ShuttleClient {
     }
 
     public void run() {
-
         try {
-            //敲门
-            knock();
-            //登录
-            certificate();
-            //启动消息监听线程
-            messengerThread = new Messenger(this.shuttleEvent, localInetAddress);
-            messengerThread.start();
-            //呼吸
-            sleepTime = 20000; //20s
-            boolean noSleep = false;
-            while (!logoutFlag) {
-                try {
-                    //如果被要求跳过等待, 直接发送呼吸包
-                    if (!noSleep) {
-                        sleep(sleepTime);
-                    } else {
-                        noSleep = false;
+            if (knock()) { //敲门
+                if (certificate()) { //登录
+                    //启动消息监听线程
+                    messengerThread = new Messenger(this.shuttleEvent, localInetAddress);
+                    messengerThread.start();
+                    //呼吸
+                    sleepTime = 20000; //20s
+                    boolean noSleep = false;
+                    while (!logoutFlag) {
+                        try {
+                            //如果被要求跳过等待, 直接发送呼吸包
+                            if (noSleep) {
+                                sleep(sleepTime);
+                            }
+
+                            noSleep = !breathe();
+
+                        } catch (InterruptedException e) {
+                            logoutFlag = true;
+                            break;
+                        }
                     }
-
-                    noSleep = !breathe();
-
-                } catch (InterruptedException e) {
-                    logoutFlag = true;
-                    break;
+                    //通知消息线程
+                    messengerThread.close();
+                    logout();
                 }
             }
-            //通知消息线程
-            messengerThread.close();
-            logout();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -299,56 +300,5 @@ public class Shuttle extends Thread implements ShuttleClient {
     @Override
     public int getSerialNo() {
         return serialNo;
-    }
-
-    public static void main(String[] args) {
-        Thread thread1 = new Thread() {
-            @Override
-            public void run() {
-                DatagramSocket datagramSocket = null;
-                try {
-                    System.out.println("Thread A started");
-                    datagramSocket = new DatagramSocket(3848,InetAddress.getByName("localhost"));
-                    DatagramPacket datagramPacket = new DatagramPacket(new byte[1024], 1024, InetAddress.getByName("localhost"), 3849);
-                    datagramPacket.setData("Hello World!".getBytes());
-                    System.out.println("[Thread A]Sent \"Hello World!\" to localhost:3849.");
-                    datagramSocket.send(datagramPacket);
-                    System.out.println("[Thread A]Waiting for Thread B response.");
-                    datagramSocket.receive(datagramPacket);
-                    System.out.println("[Thread A]Thread B reposed: " + new String(datagramPacket.getData(), 0, datagramPacket.getLength()));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (datagramSocket != null) datagramSocket.close();
-                }
-            }
-        };
-
-        Thread thread2 = new Thread(){
-            @Override
-            public void run(){
-                DatagramSocket datagramSocket = null;
-                try {
-                    System.out.println("Thread B started");
-                    datagramSocket = new DatagramSocket(3849,InetAddress.getByName("localhost"));
-                    DatagramPacket datagramPacket = new DatagramPacket(new byte[1024],1024,InetAddress.getByName("localhost"), 3848);
-                    System.out.println("[Thread B]Waiting for Thread A announce at localhost:3849.");
-                    datagramSocket.receive(datagramPacket);
-                    System.out.println("[Thread B]Thread A said: "+ new String(datagramPacket.getData(), 0, datagramPacket.getLength()));
-                    datagramPacket.setData("Me, too!".getBytes());
-                    datagramSocket.send(datagramPacket);
-                    System.out.println("[Thread B]Response \"Me, too!\" to Thread A.");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if(datagramSocket != null) datagramSocket.close();
-                }
-            }
-        };
-
-        thread2.start();
-        thread1.start();
-
-        //while (thread2.isAlive() || thread1.isAlive());
     }
 }

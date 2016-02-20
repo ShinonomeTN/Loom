@@ -67,7 +67,7 @@ public class PupaFactory {
         ));
     }
 
-    public Pupa serverPupa(DatagramPacket datagramPacket){
+    public static Pupa serverPupa(DatagramPacket datagramPacket){
         byte[] data = new byte[datagramPacket.getLength()];
         System.arraycopy(Pronunciation.decrypt3848(datagramPacket.getData()), 0, data, 0, data.length);
         return new Pupa(data);
