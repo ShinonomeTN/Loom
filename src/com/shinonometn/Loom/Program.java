@@ -38,7 +38,7 @@ public class Program {
             Logger.deleteLog();
             Logger.outPrint = false;
             System.out.println(appName);
-            System.out.println(Resource.getResource().getResourceText("/com/shinonometn/Loom/resource/help.txt"));
+            System.out.println(Resource.getResource().getResourceText("/com/shinonometn/Loom/resource/txt/help.txt"));
             return;
         }
 
@@ -165,6 +165,7 @@ public class Program {
     }
 
     public static void LoomConsole(String args[]) {
+        /*
         try {
             System.out.println("Welcome to use " + appName + " Console!\n");
 
@@ -303,9 +304,10 @@ public class Program {
         } catch (SocketException | UnknownHostException e) {
             Logger.log(e.toString());
         }
+        */
     }
 
     public static void aboutMe() {
-        System.out.println(Resource.getResource().getResourceText("/com/shinonometn/Loom/resource/aboutMe.txt"));
+        System.out.println(Resource.getResource().getResourceText("/com/shinonometn/Loom/resource/txt/aboutMe.txt"));
     }
 }

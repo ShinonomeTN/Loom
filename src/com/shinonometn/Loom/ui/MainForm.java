@@ -416,7 +416,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 }else if(e.getSource() == menuItemAbout){
                     JOptionPane.showMessageDialog(
                             null,
-                            resource.getResourceText("/com/shinonometn/Loom/resource/about.txt"),
+                            resource.getResourceText("/com/shinonometn/Loom/resource/txt/about.txt"),
                             "关于 Loom",
                             JOptionPane.INFORMATION_MESSAGE,
                             icon_app
@@ -424,7 +424,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 }else if(e.getSource() == menuItemHelp){
                     String helpInfo = (ConfigModule.isFakeMode() ?
                             "Hey guy.\nYou maybe already read the help doc. under console mode.\nThe help info only for green hands. :P"
-                            :resource.getResourceText("/com/shinonometn/Loom/resource/helpInfo.txt"));
+                            :resource.getResourceText("/com/shinonometn/Loom/resource/txt/helpInfo.txt"));
                     JOptionPane.showMessageDialog(null, helpInfo, "帮助", JOptionPane.INFORMATION_MESSAGE, icon_app);
                 }else if(e.getSource() == micb_showInfo){
 
@@ -784,11 +784,11 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
             lockInputUI();
             btn_login.setText("上线中...");
             setLinkingIcon();
-            try {
-                shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
-            } catch (SocketException e) {
-                e.printStackTrace();
-            }
+            //try {
+                //shuttle = new Shuttle(nf.get(cb_netcard.getSelectedIndex()),this);
+            //} catch (SocketException e) {
+            //    e.printStackTrace();
+            //}
             //shuttle.developerMode = Program.isDeveloperMode();
             shuttle.setUsername(t_username.getText());
             shuttle.setPassword(new String(t_password.getPassword()));
@@ -1094,25 +1094,24 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     @Override
     public void windowIconified(WindowEvent e) {
-        if(Program.isDeveloperMode()) Logger.log("Window Iconified");
+        //if(Program.isDeveloperMode()) Logger.log("Window Iconified");
         if(ConfigModule.hideOnIconified && !Toolbox.isMacOSX()) setVisible(false);
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
-        if(Program.isDeveloperMode()) Logger.log("Window Deiconified");
+        //if(Program.isDeveloperMode()) Logger.log("Window Deiconified");
         setVisible(true);
     }
 
     @Override
     public void windowActivated(WindowEvent e) {
-        if(Program.isDeveloperMode()) Logger.log("Window Activated");
         if(Toolbox.isMacOSX()) com.apple.eawt.Application.getApplication().requestUserAttention(false);
     }
 
     @Override
     public void windowDeactivated(WindowEvent e) {
-        Logger.log("Window Deactivated");
+
     }
 
     @Override

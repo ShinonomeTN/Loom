@@ -57,26 +57,27 @@ public class Shuttle extends Thread implements ShuttleClient {
     //为了资源重用，敲门、认证、呼吸这三个互斥的动作都用这个Socket
     private DatagramSocket datagramSocket;
 
-    public Shuttle(NetworkInterface networkInterface) throws SocketException {
-        this(networkInterface, new DefaultShuttleEvent());
+    public Shuttle(DatagramSocket socket) throws SocketException {
+        this(socket, new DefaultShuttleEvent());
     }
 
-    public Shuttle(NetworkInterface networkInterface, ShuttleEvent feedBackObject) throws SocketException {
+    public Shuttle(DatagramSocket socket, ShuttleEvent feedBackObject) throws SocketException {
         this.shuttleEvent = feedBackObject;
         setDaemon(true);
 
         //获得IP地址
-        localInetAddress = Networks.getInetAddress(networkInterface);
+        localInetAddress = socket.getInetAddress();
+        //TODO 判断是否使用作弊资料应该交还给视图层做
+        /*
         if (!ConfigModule.isFakeMode()) {
             ipAddress = localInetAddress.toString().replace("/", "");
-            macAddress = networkInterface.getHardwareAddress();
+            //macAddress = networkInterface.getHardwareAddress();
         } else {
             ipAddress = ConfigModule.fakeIP;
             macAddress = HexTools.hexStr2Bytes(ConfigModule.fakeMac);
         }
-
-        datagramSocket = new DatagramSocket(3848, localInetAddress);
-        datagramSocket.setSoTimeout(defaultSocketTimeout);
+        */
+        this.datagramSocket = socket;
     }
 
     private boolean knock() throws IOException {
@@ -95,7 +96,7 @@ public class Shuttle extends Thread implements ShuttleClient {
         //取出数据包并利用Pupa取出认证服务器ip
         String serverIPAddress = HexTools.toIPAddress(PupaFactory
                 .serverPupa(datagramPacket)
-                .findFiled("server ip address")
+                .findField("server ip address")
                 .getValue()
         );
 
@@ -131,19 +132,19 @@ public class Shuttle extends Thread implements ShuttleClient {
         Pupa receivedPupa = PupaFactory.serverPupa(datagramPacket);
 
         //判断是否登陆成功
-        if (HexTools.toBool(receivedPupa.findFiled("is success").getData())) {
+        if (HexTools.toBool(receivedPupa.findField("is success").getData())) {
             shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_SUCCESS, "success");
         } else {
-            String message = HexTools.toGB2312Str(receivedPupa.findFiled("message").getValue());
+            String message = HexTools.toGB2312Str(receivedPupa.findField("message").getValue());
             shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_FAILED, message);
             return false;
         }
 
         //提取会话号
-        session = HexTools.toGB2312Str(receivedPupa.findFiled("session").getValue());
+        session = HexTools.toGB2312Str(receivedPupa.findField("session").getValue());
 
         //提取服务器信息
-        byte[] _field = receivedPupa.findFiled("message").getValue();
+        byte[] _field = receivedPupa.findField("message").getValue();
         if (_field != null) {
             shuttleEvent.onMessage(ShuttleEvent.SERVER_MESSAGE, HexTools.toGB2312Str(_field));
         }
@@ -166,7 +167,7 @@ public class Shuttle extends Thread implements ShuttleClient {
         Pupa receivedPupa = PupaFactory.serverPupa(datagramPacket);
 
         //分析
-        byte[] _field = receivedPupa.findFiled("is success").getValue();
+        byte[] _field = receivedPupa.findField("is success").getValue();
         if (_field != null) {
             if (HexTools.toBool(_field)) {
                 serialNo += 0x03;
@@ -174,7 +175,7 @@ public class Shuttle extends Thread implements ShuttleClient {
             } else {
                 shuttleEvent.onMessage(ShuttleEvent.BREATHE_FAILED, "rejected");
             }
-        } else if (receivedPupa.findFiled("serial no") != null) {
+        } else if (receivedPupa.findField("serial no") != null) {
             serialNo = 0x01000003;
             shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION, "time_clear");
         } else {
@@ -198,7 +199,7 @@ public class Shuttle extends Thread implements ShuttleClient {
         datagramSocket.receive(datagramPacket);
 
         Pupa receivedPupa = PupaFactory.serverPupa(datagramPacket);
-        if (HexTools.toBool(receivedPupa.findFiled("is success").getValue())) {
+        if (HexTools.toBool(receivedPupa.findField("is success").getValue())) {
             shuttleEvent.onMessage(ShuttleEvent.OFFLINE, "generally");
             return true;
         }
@@ -237,6 +238,7 @@ public class Shuttle extends Thread implements ShuttleClient {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            shuttleEvent.onMessage(ShuttleEvent.SERVER_NOT_FOUNT,"knock_server");
         } finally {
             datagramSocket.close();
         }
@@ -261,6 +263,7 @@ public class Shuttle extends Thread implements ShuttleClient {
 
     }
 
+    //Shuttle Client 实现
     @Override
     public String getSession() {
         return session;
@@ -271,9 +274,17 @@ public class Shuttle extends Thread implements ShuttleClient {
         return ipAddress;
     }
 
+    public void setIpAddress(String ipAddress){
+        this.ipAddress = ipAddress;
+    }
+
     @Override
     public byte[] getMacAddress() {
         return macAddress;
+    }
+
+    public void setMacAddress(byte[] macAddress){
+        this.macAddress = macAddress;
     }
 
     public String getUsername() {
@@ -288,17 +299,34 @@ public class Shuttle extends Thread implements ShuttleClient {
         return password;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Override
     public String getVersion() {
         return "3.6.9";
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     @Override
     public int getSerialNo() {
         return serialNo;
     }
+
+    public static void main(String[] args) {
+        try {
+            NetworkInterface networkInterface = NetworkInterface.getByName("en0");
+            InetAddress inetAddress = Networks.getInetAddress(networkInterface);
+            Shuttle shuttle = new Shuttle(new DatagramSocket(3848,inetAddress));
+            shuttle.setIpAddress("192.168.0.100");
+            shuttle.setMacAddress(networkInterface.getHardwareAddress());
+            shuttle.setPassword("25803748");
+            shuttle.setUsername("14601120234");
+            shuttle.setDaemon(false);
+            shuttle.start();
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
