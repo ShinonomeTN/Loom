@@ -316,6 +316,7 @@ public class Shuttle extends Thread implements ShuttleClient {
     public static void main(String[] args) {
         try {
             NetworkInterface networkInterface = NetworkInterface.getByName("en0");
+            System.out.println("network interface:" + networkInterface.getName());
             InetAddress inetAddress = Networks.getInetAddress(networkInterface);
             Shuttle shuttle = new Shuttle(new DatagramSocket(3848,inetAddress));
             shuttle.setIpAddress("192.168.0.100");
