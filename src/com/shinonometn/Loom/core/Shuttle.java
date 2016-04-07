@@ -154,7 +154,8 @@ public class Shuttle extends Thread{
             //取出数据包并利用Pupa取出认证服务器ip
             data = new byte[datagramPacket.getLength()];
             System.arraycopy(Pronunciation.decrypt3848(datagramPacket.getData()), 0, data, 0, data.length);
-            byte[] fieldBuffer = Pupa.fieldData(Pupa.findField(new Pupa(data), "server ip address"));
+            //byte[] fieldBuffer = Pupa.(Pupa.findField(new Pupa(data), "server ip address"));
+            byte[] fieldBuffer = new Pupa(data).findField("server ip address").getValue();
             serverIPAddress = HexTools.toIPAddress(fieldBuffer);
 
             if(!serverIPAddress.equals("")){
@@ -242,7 +243,8 @@ public class Shuttle extends Thread{
             Pupa pupa = new Pupa(Pronunciation.decrypt3848(data));
 
             //判断是否登陆成功
-            byte[] fieldBuffer = Pupa.fieldData(Pupa.findField(pupa, "is success"));
+            //byte[] fieldBuffer = Pupa.fieldData(Pupa.findField(pupa, "is success"));
+            byte[] fieldBuffer = pupa.findField("is success").getValue();
             if (fieldBuffer != null) {
                 if (HexTools.toBool(fieldBuffer)) {
                     //认证成功
@@ -250,15 +252,15 @@ public class Shuttle extends Thread{
                     Logger.error("Certify success!");
                     if(Program.isDeveloperMode()){
                         //提取会话号
-                        fieldBuffer = Pupa.findField(pupa, "session");
+                        fieldBuffer = pupa.findField("session").getValue();
                         if(fieldBuffer != null){
-                            session = HexTools.toGB2312Str(Pupa.fieldData(fieldBuffer));
+                            session = HexTools.toGB2312Str(fieldBuffer);
                             Logger.log("Get session number: " + session);
                         }else Logger.log("No server session number found.");
                     }
                     shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_SUCCESS, "success");
                 } else {
-                    String message = HexTools.toGB2312Str(Pupa.fieldData(Pupa.findField(pupa, "message")));
+                    String message = HexTools.toGB2312Str(pupa.findField("message").getValue());
                     shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_FAILED,message);
                     Logger.error("Certify failed, Infomation: " + message);
                     datagramSocket.close();
@@ -273,15 +275,16 @@ public class Shuttle extends Thread{
 
             //提取会话号
             if(!Program.isDeveloperMode()){
-                fieldBuffer = Pupa.findField(pupa, "session");
+                //fieldBuffer = Pupa.findField(pupa, "session");
+                fieldBuffer = pupa.findField("session").getValue();
                 if(fieldBuffer != null){
-                    session = HexTools.toGB2312Str(Pupa.fieldData(fieldBuffer));
+                    session = HexTools.toGB2312Str(fieldBuffer);
                     Logger.log("Get session number: " + session);
                 }else Logger.log("No server session number found.");
             }
 
             //提取服务器信息
-            fieldBuffer = Pupa.findField(pupa, "message");
+            fieldBuffer = pupa.findField("message").getValue();
             if(fieldBuffer != null){
                 String message = HexTools.toGB2312Str(fieldBuffer);
                 shuttleEvent.onMessage(ShuttleEvent.SERVER_MESSAGE, message);
@@ -351,7 +354,7 @@ public class Shuttle extends Thread{
                 breathePupa = new Pupa(Pronunciation.decrypt3848(data));
 
                 //分析
-                byte[] fieldBuffer = Pupa.findField(breathePupa,"is success");
+                byte[] fieldBuffer = breathePupa.findField("is success").getValue();
                 if(fieldBuffer != null) {
                     if(HexTools.toBool(fieldBuffer)){
                         serialNo += 0x03;
@@ -361,7 +364,7 @@ public class Shuttle extends Thread{
                         Logger.log("Server Rejected this Breathe.");
                         shuttleEvent.onMessage(ShuttleEvent.BREATHE_FAILED, "rejected");
                     }
-                }else if(Pupa.findField(breathePupa,"serial no") != null){
+                }else if(breathePupa.findField("serial no") != null){
                     serialNo = 0x01000003;
                     shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION,"time_clear");
                 }else{
@@ -418,7 +421,7 @@ public class Shuttle extends Thread{
             bufferTemp = new byte[datagramPacket.getLength()];
             System.arraycopy(datagramPacket.getData(), 0, bufferTemp, 0, bufferTemp.length);
             pupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
-            if (HexTools.toBool(Pupa.findField(pupa, "is success"))) {
+            if (HexTools.toBool(pupa.findField("is success").getValue())) {
                 Logger.log("Server response.Now you are offline.");
                 shuttleEvent.onMessage(ShuttleEvent.OFFLINE, "generally");
             }

@@ -74,7 +74,7 @@ public class Program{
 
         if(args.length > 0 && "-consoleMode".toLowerCase().equals(args[0].toLowerCase())){
             Logger.log("Loom Console Mode");
-            LoomConsole(null);
+            LoomConsole(args);
             if(Logger.isWriteToFile()){
                 Logger.closeLog();
             }
@@ -176,9 +176,9 @@ public class Program{
 
             Scanner scanner = new Scanner(System.in);
 
-            if(args.length == 1){
+            if(args.length == 2){
                 System.out.print("Loom now running under pre-fix mode.");
-                ip = args[0];
+                ip = args[1];
             }else{
                 System.out.println("Input your IP address:");
                 ip = scanner.next();
@@ -198,7 +198,7 @@ public class Program{
             //shuttle.developerMode = Program.isDeveloperMode();
             System.out.println("Prepared to login.");
 
-            if(args.length == 0){
+            if(args.length == 1){
                 System.out.println("Please input your account");
                 username = scanner.next();
                 System.out.println("PIN Code?(Password)");
