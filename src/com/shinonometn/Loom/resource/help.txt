@@ -1,8 +1,9 @@
 
 Usage
 
-java -jar Loom.jar -consoleMode
+java -jar Loom.jar -consoleMode [ip address]
     Run Loom at console mode.
+    ip address : Use a excepted ip to run Loom and use exist profile.
 
 java -jar Loom.jar -graphicMode|-consoleMode -developerMode
     Run Loom at developerMode under GUI/console mode.
