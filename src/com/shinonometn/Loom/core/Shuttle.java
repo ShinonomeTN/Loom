@@ -62,6 +62,7 @@ public class Shuttle extends Thread implements ShuttleClient {
     }
 
     public Shuttle(DatagramSocket socket, ShuttleEvent feedBackObject) throws SocketException {
+        java.nio.channels.DatagramChannel
         this.shuttleEvent = feedBackObject;
         setDaemon(true);
 
@@ -87,6 +88,10 @@ public class Shuttle extends Thread implements ShuttleClient {
         datagramPacket.setData(DataFactory.encrypt(factory.knockPupa()));
 
         //开始敲门
+        System.out.println("Remote IP: "+datagramPacket.getAddress().getHostAddress());
+        System.out.println("Remote Port:"+datagramPacket.getPort());
+        System.out.println("Data Length:"+datagramPacket.getLength());
+        System.out.println(factory.knockPupa());
         datagramSocket.send(datagramPacket);
 
         //等待服务器回应
