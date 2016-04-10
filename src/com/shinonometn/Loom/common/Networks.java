@@ -1,4 +1,4 @@
-package com.shinonometn.Loom.common;
+package com.shinonometn.loom.common;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;

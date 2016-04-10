@@ -1,13 +1,13 @@
-package com.shinonometn.Loom.ui;
+package com.shinonometn.loom.ui;
 
-import com.shinonometn.Loom.Program;
-import com.shinonometn.Loom.common.ConfigModule;
-import com.shinonometn.Loom.common.Logger;
-import com.shinonometn.Loom.common.Networks;
-import com.shinonometn.Loom.common.Toolbox;
-import com.shinonometn.Loom.core.Message.ShuttleEvent;
-import com.shinonometn.Loom.core.Shuttle;
-import com.shinonometn.Loom.resource.Resource;
+import com.shinonometn.loom.Program;
+import com.shinonometn.loom.common.ConfigModule;
+import com.shinonometn.loom.common.Logger;
+import com.shinonometn.loom.common.Networks;
+import com.shinonometn.loom.common.Toolbox;
+import com.shinonometn.loom.core.message.ShuttleEvent;
+import com.shinonometn.loom.core.Shuttle;
+import com.shinonometn.loom.resource.Resource;
 import com.shinonometn.Pupa.Pupa;
 
 import javax.swing.*;
@@ -82,27 +82,27 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
     private boolean timerAlertedFlag = false;
 
     //图标资源
-    ImageIcon icon_online = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/link.png"));
-    ImageIcon icon_offline = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/link_break.png"));
-    ImageIcon icon_linking = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/link_go.png"));
-    ImageIcon icon_app = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/package_link.png"));
-    ImageIcon icon_dev = new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/bomb.png"));
+    ImageIcon icon_online = new ImageIcon(getClass().getResource("/com/shinonometn/loom/resource/img/link.png"));
+    ImageIcon icon_offline = new ImageIcon(getClass().getResource("/com/shinonometn/loom/resource/img/link_break.png"));
+    ImageIcon icon_linking = new ImageIcon(getClass().getResource("/com/shinonometn/loom/resource/img/link_go.png"));
+    ImageIcon icon_app = new ImageIcon(getClass().getResource("/com/shinonometn/loom/resource/img/package_link.png"));
+    ImageIcon icon_dev = new ImageIcon(getClass().getResource("/com/shinonometn/loom/resource/img/bomb.png"));
 
     Image tray_online;
     Image tray_linking;
     Image tray_offline;
-    Image image_app = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/Loom/resource/img/package_link.png"));
+    Image image_app = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/shinonometn/loom/resource/img/package_link.png"));
 //--------
 
     public MainForm(){
         super("Loom");
 
         tray_online = Toolkit.getDefaultToolkit().getImage(
-                getClass().getResource("/com/shinonometn/Loom/resource/img/" + (Toolbox.isMacOSX() ? "icon_link.png" : "package_link 2.png")));
+                getClass().getResource("/com/shinonometn/loom/resource/img/" + (Toolbox.isMacOSX() ? "icon_link.png" : "package_link 2.png")));
         tray_linking = Toolkit.getDefaultToolkit().getImage(
-                getClass().getResource("/com/shinonometn/Loom/resource/img/" + (Toolbox.isMacOSX() ? "icon_loading.png" : "package_go.png")));
+                getClass().getResource("/com/shinonometn/loom/resource/img/" + (Toolbox.isMacOSX() ? "icon_loading.png" : "package_go.png")));
         tray_offline = Toolkit.getDefaultToolkit().getImage(
-                getClass().getResource("/com/shinonometn/Loom/resource/img/" + (Toolbox.isMacOSX() ? "icon_link_alt.png" : "package.png")));
+                getClass().getResource("/com/shinonometn/loom/resource/img/" + (Toolbox.isMacOSX() ? "icon_link_alt.png" : "package.png")));
 
         if(Toolbox.isMacOSX()) {
             com.apple.eawt.Application.getApplication().setDockIconImage(image_app);
@@ -270,7 +270,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         if(ConfigModule.isFakeMode()){
             add(new JLabel(
                             Program.appName + " (Fake Mode)",
-                            new ImageIcon(getClass().getResource("/com/shinonometn/Loom/resource/img/key.png")),
+                            new ImageIcon(getClass().getResource("/com/shinonometn/loom/resource/img/key.png")),
                             JLabel.CENTER
                     ), gridBagConstraints
             );
@@ -415,7 +415,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 }else if(e.getSource() == menuItemAbout){
                     JOptionPane.showMessageDialog(
                             null,
-                            resource.getResourceText("/com/shinonometn/Loom/resource/about.txt"),
+                            resource.getResourceText("/com/shinonometn/loom/resource/text/about.txt"),
                             "关于 Loom",
                             JOptionPane.INFORMATION_MESSAGE,
                             icon_app
@@ -423,7 +423,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 }else if(e.getSource() == menuItemHelp){
                     String helpInfo = (ConfigModule.isFakeMode() ?
                             "Hey guy.\nYou maybe already read the help doc. under console mode.\nThe help info only for green hands. :P"
-                            :resource.getResourceText("/com/shinonometn/Loom/resource/helpInfo.txt"));
+                            :resource.getResourceText("/com/shinonometn/loom/resource/text/helpInfo.txt"));
                     JOptionPane.showMessageDialog(null, helpInfo, "帮助", JOptionPane.INFORMATION_MESSAGE, icon_app);
                 }else if(e.getSource() == micb_showInfo){
 

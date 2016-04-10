@@ -1,10 +1,8 @@
-package com.shinonometn.Loom.resource;
+package com.shinonometn.loom.resource;
 
-import com.shinonometn.Loom.common.Logger;
+import com.shinonometn.loom.common.Logger;
 
-import javax.swing.*;
 import java.io.*;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 

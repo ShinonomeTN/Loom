@@ -1,6 +1,6 @@
-package com.shinonometn.Loom.common;
+package com.shinonometn.loom.common;
 
-import com.shinonometn.Loom.Program;
+import com.shinonometn.loom.Program;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;
 

@@ -1,4 +1,4 @@
-package com.shinonometn.Loom.common;
+package com.shinonometn.loom.common;
 
 /**
  * Created by catten on 15/11/18.

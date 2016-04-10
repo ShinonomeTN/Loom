@@ -1,6 +1,6 @@
-package com.shinonometn.Loom.core.Message;
+package com.shinonometn.loom.core.message;
 
-import com.shinonometn.Loom.common.Logger;
+import com.shinonometn.loom.common.Logger;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.Dictionary;
 import com.shinonometn.Pupa.ToolBox.HexTools;
@@ -27,7 +27,7 @@ public class Messenger extends Thread{
     public Messenger(ShuttleEvent feedBackObject,InetAddress address){
         shuttleEvent = feedBackObject;
         setDaemon(true);
-        Logger.log("Initiating Message Thread.");
+        Logger.log("Initiating message Thread.");
         try {
             //创建监听Socket
             messageSocket = new DatagramSocket(4999,address);

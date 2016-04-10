@@ -1,4 +1,4 @@
-package com.shinonometn.Loom.core.Message;
+package com.shinonometn.loom.core.message;
 
 /**
  * Created by catten on 15/11/3.
