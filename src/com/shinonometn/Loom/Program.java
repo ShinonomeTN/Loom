@@ -36,6 +36,7 @@ public class Program{
         System.setProperty("loom.mode","graphical");
         System.setProperty("loom.appName","Loom");
         System.setProperty("loom.version","v2.2");
+        System.setProperty("loom.developerMode","f");
 
         String ip = null;
 
