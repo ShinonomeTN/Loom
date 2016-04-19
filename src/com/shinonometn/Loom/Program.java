@@ -1,13 +1,13 @@
 package com.shinonometn.loom;
 
 import com.shinonometn.loom.common.ConfigModule;
-import com.shinonometn.loom.common.Logger;
 import com.shinonometn.loom.common.Networks;
 import com.shinonometn.loom.common.Toolbox;
 import com.shinonometn.loom.core.Shuttle;
 import com.shinonometn.loom.resource.Resource;
 import com.shinonometn.loom.ui.MainForm;
 import com.shinonometn.Pupa.ToolBox.HexTools;
+import org.apache.log4j.PropertyConfigurator;
 
 import javax.swing.*;
 import java.io.*;
@@ -15,6 +15,7 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.nio.channels.FileLock;
 import java.util.List;
+import java.util.Properties;
 import java.util.Vector;
 
 /**
@@ -29,6 +30,9 @@ public class Program{
     public final static String appName = "Loom v2.2";
 
     public static void main(String[] args){
+        try { initLogger(); }catch (Throwable t){ System.out.println("Logger Initialization failed!"); }
+        org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger("main");
+
         System.setProperty("loom.mode","graphical");
         System.setProperty("loom.appName","Loom");
         System.setProperty("loom.version","v2.2");
@@ -40,9 +44,6 @@ public class Program{
                 switch (args[i].toLowerCase()){
                     case "-h":
                     case "--help":
-                        Logger.closeLog();
-                        Logger.deleteLog();
-                        Logger.outPrint = false;
                         System.out.println(System.getProperty("loom.appName") + " " + System.getProperty("loom.version"));
                         System.out.println(Resource.getResource().getResourceText("/com/shinonometn/loom/resource/text/help.txt"));
                         System.exit(0);
@@ -74,27 +75,19 @@ public class Program{
                         ConfigModule.fakeIP = "null";
                         ConfigModule.fakeMac = "null";
                         ConfigModule.writeProfile();
-                        Logger.log("Fake IP and Mac Cleared");
-                        System.out.println("Fake IP and Mac Cleared");
+                        logger.info("Fake IP and MAC Cleared.");
                         System.exit(0);
                         break;
 
                     case "--disable-auto-mode":
-                        Logger.closeLog();
-                        Logger.deleteLog();
-                        Logger.outPrint = false;
                         ConfigModule.autoOnlineTime = "";
                         ConfigModule.autoOfflineTime = "";
                         ConfigModule.writeProfile();
-                        System.out.println("Auto-mode closed.");
+                        logger.info("Auto-mode closed.");
                         System.exit(0);
                         break;
 
                     case "--set-auto-mode":
-                        Logger.closeLog();
-                        Logger.deleteLog();
-                        Logger.outPrint = false;
-                        //System.out.println("Please note that auto-online mode not support command line mode.");
                         if(args[i + 1].matches(ConfigModule.timeFormat + "\\-" + ConfigModule.timeFormat)){
                             String[] matchBuffer = args[i + 1].split("\\-");
                             ConfigModule.autoOnlineTime = matchBuffer[0];
@@ -103,14 +96,13 @@ public class Program{
                                 if(args[i + 2].matches("(both|online|offline)")) ConfigModule.autoOnlineMode = args[i + 2];
                             }
                             ConfigModule.writeProfile();
-                            System.out.println("Auto-mode set.");
+                            logger.info("Auto-mode set.");
                         }
                         System.exit(0);
                         break;
 
                     case "--fake-ip":
-                        Logger.log("Writing fake IP and Mac to profile.");
-                        System.out.println("Writing fake IP and Mac to profile.");
+                        logger.info("Writing fake IP and Mac to profile.");
                         ConfigModule.fakeIP = args[++i];
                         if(args[++i].toLowerCase().equals("--fake-mac")){
                             ConfigModule.fakeMac = args[++i].replace(":","");
@@ -127,9 +119,9 @@ public class Program{
             bootGraphicMode();
         }
 
-        Logger.log("System: " + Toolbox.getSystemName());
+        logger.info("System: " + Toolbox.getSystemName());
 
-        Logger.log(isDeveloperMode() ? "DeveloperMode on" +
+        logger.warn(isDeveloperMode() ? "DeveloperMode on" +
                 "\n\t\t!!! Warning !!!" +
                 "\nDeveloper mode will record all user data(included account and password)" +
                 "\nPlease remember to clear logs for protect your personal Data" : "DeveloperMode off");
@@ -144,21 +136,29 @@ public class Program{
     }
 
     private static void bootConsoleMode(String ip){
+        org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger("booting");
         if(isDuplicateInstance()) System.exit(0);
-        Logger.log("Loom Console Mode");
+        logger.info("Loom Console Mode");
         Shuttle.LoomConsole(ip);
-        if(Logger.isWriteToFile()){
-            Logger.closeLog();
-        }
+    }
+
+    private static void initLogger() throws IOException {
+        Properties properties = new Properties();
+        String configPath = "/com/shinonometn/loom/resource/configure/";
+        if("t".equals(System.getProperty("loom.developerMode"))) configPath += "log4j.dev.properties";
+        else configPath += "log4j.default.properties";
+        properties.load(new InputStreamReader(Program.class.getResourceAsStream(configPath)));
+        PropertyConfigurator.configure(properties);
     }
 
     private static void bootGraphicMode(){
+        org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger("booting");
         if(isDuplicateInstance()) System.exit(0);
-        Logger.log("Loom Graphic Mode");
+        logger.info("Loom Graphic Mode");
         try{
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }catch (Exception e){
-            Logger.log(e.toString());
+            logger.error(e);
         }
         new MainForm();
     }
@@ -168,6 +168,7 @@ public class Program{
     }
 
     private static boolean isDuplicateInstance(){
+        org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger("booting");
         File _lockFile = new File("./profile/.lock");
         FileLock _wLock;
 
@@ -181,15 +182,16 @@ public class Program{
                 System.out.println("Not Allow more than one Loom use same profile. Program exits.");
                 return true;
             }
-            Logger.log("Get lock success.");
+            logger.info("Get lock success.");
 
         } catch (IOException e) {
-            Logger.log("Lock failed.");
+            logger.error("Lock failed.");
         }
         return false;
     }
 
     private static void printNetworkInterface(){
+        org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger("booting");
         Vector<NetworkInterface> nf = Networks.getNetworkInterfaces(false);
         StringBuilder stringBuilder = new StringBuilder("\n\n");
         if(nf != null) {
@@ -213,6 +215,6 @@ public class Program{
                 stringBuilder.append("\n\n");
             }
         }
-        Logger.log(stringBuilder.toString());
+        logger.info(stringBuilder.toString());
     }
 }

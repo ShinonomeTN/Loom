@@ -2,13 +2,13 @@ package com.shinonometn.loom.ui;
 
 import com.shinonometn.loom.Program;
 import com.shinonometn.loom.common.ConfigModule;
-import com.shinonometn.loom.common.Logger;
 import com.shinonometn.loom.common.Networks;
 import com.shinonometn.loom.common.Toolbox;
 import com.shinonometn.loom.core.message.ShuttleEvent;
 import com.shinonometn.loom.core.Shuttle;
 import com.shinonometn.loom.resource.Resource;
 import com.shinonometn.Pupa.Pupa;
+import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -24,6 +24,8 @@ import java.util.*;
  * Created by catten on 15/10/20.
  */
 public class MainForm extends JFrame implements ActionListener,ShuttleEvent,WindowListener, MouseListener{
+
+    private static Logger logger = Logger.getLogger("window");
 
     JTextField t_username;
     JPasswordField t_password;
@@ -171,7 +173,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
         buttonGroup.add(rbmi_AutoModeOffline);
 
         menuItemSetAutoOnline = new JMenuItem((ConfigModule.allowAutoMode()?"关闭自动上下线":"设置自动上下线"));
-        Logger.log(String.format(
+        logger.info(String.format(
                         "Auto online/offline mode was %s Mode: %s",
                         ConfigModule.allowAutoMode() ? "open." : "closed.",
                         ConfigModule.autoOnlineMode)
@@ -392,12 +394,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
                     ConfigModule.hideOnIconified = micb_hideOnIconfied.isSelected();
                 }else if(e.getSource() == menuItemCleanLogs){
-                    int count;
-                    if((count = Logger.clearLog()) >= 0){
-                        JOptionPane.showMessageDialog(null, count + " 个日志已清理.", getTitle(), JOptionPane.INFORMATION_MESSAGE);
-                    }else{
-                        JOptionPane.showMessageDialog(null, "清理日志失败", getTitle(), JOptionPane.WARNING_MESSAGE);
-                    }
+                    JOptionPane.showMessageDialog(null, "此功能暂时不可用", getTitle(), JOptionPane.WARNING_MESSAGE);
                 }else if(e.getSource() == micb_remember){ //保存用户设置
 
                     ConfigModule.autoSaveSetting = micb_remember.isSelected();
@@ -530,7 +527,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             ConfigModule.autoOfflineTime = "";
                             ConfigModule.autoOnlineTime = "";
                             //menuItemStateAutoOnline.setText("定时上下线已关闭");
-                            Logger.log("Auto-online mode off.");
+                            logger.info("Auto-online mode off.");
                         }else if(sele == JOptionPane.CANCEL_OPTION){
                             setAutoOnlineTime();
                         }
@@ -565,8 +562,8 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                                 //格式化日期
                                 timeNow = simpleTimeFormat.format(dateNow);
                                 weekNow = simpleWeekFormat.format(dateNow);
-                                if(Program.isDeveloperMode()) Logger.log("Timer tick. Check Time: " + timeNow + "; Check WeekDay: " + weekNow);
-                                if(Program.isDeveloperMode()) Logger.log(String.format("Raw DateTime: %s %s", timeNow, simpleWeekFormat.format(dateNow)));
+                                if(Program.isDeveloperMode()) logger.info("Timer tick. Check Time: " + timeNow + "; Check WeekDay: " + weekNow);
+                                if(Program.isDeveloperMode()) logger.info(String.format("Raw DateTime: %s %s", timeNow, simpleWeekFormat.format(dateNow)));
                                     if(shuttle == null){//上线动作
                                     if(fields[0].contains(weekNow)){//获得online字段
                                         if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("online")){
@@ -574,7 +571,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                                                 if(!timerAlertedFlag){
                                                     onClick_btn_login();
                                                     timerAlertedFlag = true;
-                                                    if(Program.isDeveloperMode()) Logger.log("Timer auto click login button because reach the online time point.");
+                                                    if(Program.isDeveloperMode()) logger.info("Timer auto click login button because reach the online time point.");
                                                 }
                                             }else timerAlertedFlag = false;
                                         }
@@ -586,7 +583,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                                                 if(!timerAlertedFlag){
                                                     onClick_btn_login();
                                                     timerAlertedFlag = true;
-                                                    if(Program.isDeveloperMode()) Logger.log("Timer auto click login button because reach the offline time point.");
+                                                    if(Program.isDeveloperMode()) logger.info("Timer auto click login button because reach the offline time point.");
                                                 }
                                             }else timerAlertedFlag = false;
                                         }
@@ -595,7 +592,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                             }
                         }
                     }else{
-                        if(Program.isDeveloperMode()) Logger.log("Auto online mode was closed.");
+                        if(Program.isDeveloperMode()) logger.info("Auto online mode was closed.");
                         //timer.setDelay(30000);
                     }
                 }
@@ -617,7 +614,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                 JOptionPane.showMessageDialog(getOwner(), "已设置！", getTitle(), JOptionPane.INFORMATION_MESSAGE);
                 menuItemSetAutoOnline.setText("关闭定时上下线");
                 timer.setDelay(10000);
-                Logger.log("Auto online mode on.");
+                logger.info("Auto online mode on.");
             } else {
                 JOptionPane.showMessageDialog(getOwner(), "启动自动上下线功能失败，请检查输入", getTitle(), JOptionPane.WARNING_MESSAGE);
             }
@@ -626,7 +623,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     //-----系统托盘图标------------------------------------------
     private void setupTray(){
-        Logger.log("Try to setup tray.");
+        logger.info("Try to setup tray.");
         if(trayIcon == null){
             if(SystemTray.isSupported()){
                 SystemTray systemTray = SystemTray.getSystemTray();
@@ -642,12 +639,12 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
                 try {
                     systemTray.add(trayIcon);
-                    Logger.log("Add TrayIcon success.");
+                    logger.info("Add TrayIcon success.");
                 } catch (AWTException e) {
-                    Logger.error("Add TrayIcon to System Tray failed.");
+                    logger.error("Add TrayIcon to System Tray failed.");
                 }
             }else{
-                Logger.log("Tray not supported.");
+                logger.warn("Tray not supported.");
                 ConfigModule.hideOnIconified = false;
             }
         }
@@ -701,25 +698,25 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     public void updateAutoModeState(){
         if(ConfigModule.allowAutoMode()){
-            Logger.log(String.format("Online : %s; Offline: %s",ConfigModule.autoOnlineTime,ConfigModule.autoOfflineTime));
+            logger.info(String.format("Online : %s; Offline: %s",ConfigModule.autoOnlineTime,ConfigModule.autoOfflineTime));
             switch (ConfigModule.autoOnlineMode) {
                 case "both":
                     menuItemStateAutoOnline.setText(
                             String.format("将于%s上线，%s下线", ConfigModule.autoOnlineTime, ConfigModule.autoOfflineTime)
                     );
-                    Logger.log("Auto-online mode switch to both.");
+                    logger.info("Auto-online mode switch to both.");
                     break;
                 case "online":
                     menuItemStateAutoOnline.setText(
                             String.format("将于%s上线", ConfigModule.autoOnlineTime)
                     );
-                    Logger.log("Auto-online mode switch to online only.");
+                    logger.info("Auto-online mode switch to online only.");
                     break;
                 case "offline":
                     menuItemStateAutoOnline.setText(
                             String.format("将于%s下线", ConfigModule.autoOfflineTime)
                     );
-                    Logger.log("Auto-online mode switch to offline only.");
+                    logger.info("Auto-online mode switch to offline only.");
                     break;
             }
         }else menuItemStateAutoOnline.setText("定时上下线已关闭");
@@ -809,7 +806,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
                         System.exit(0);
                     case JOptionPane.NO_OPTION:
                         dispose();
-                        Logger.log("Exit without offline.");
+                        logger.info("Exit without offline.");
                         System.exit(0);
                         break;
                     case JOptionPane.CANCEL_OPTION:
@@ -1061,7 +1058,7 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     @Override
     public void windowOpened(WindowEvent e) {
-        Logger.log("Window Opened");
+        logger.trace("Window Opened");
         if(Program.isDeveloperMode()){
             JOptionPane.showMessageDialog(null, "你开启了开发者模式\n" +
                     "请注意，开发者模式将记录你所有的用户使用信息（包括账号密码）\n" +
@@ -1071,43 +1068,35 @@ public class MainForm extends JFrame implements ActionListener,ShuttleEvent,Wind
 
     @Override
     public void windowClosing(WindowEvent e) {
-        Logger.log("Window Closing");
         if (!ConfigModule.hideOnClose && ConfigModule.autoSaveSetting) {
             ConfigModule.windowWidth = getWidth();
             ConfigModule.windowHeight = getHeight();
             ConfigModule.writeProfile();
-            if (Logger.isWriteToFile()) {
-                Logger.closeLog();
-            }
         }
     }
 
     @Override
     public void windowClosed(WindowEvent e) {
-        Logger.log("Window Closed");
     }
 
     @Override
     public void windowIconified(WindowEvent e) {
-        if(Program.isDeveloperMode()) Logger.log("Window Iconified");
         if(ConfigModule.hideOnIconified && !Toolbox.isMacOSX()) setVisible(false);
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
-        if(Program.isDeveloperMode()) Logger.log("Window Deiconified");
         setVisible(true);
     }
 
     @Override
     public void windowActivated(WindowEvent e) {
-        if(Program.isDeveloperMode()) Logger.log("Window Activated");
         if(Toolbox.isMacOSX()) com.apple.eawt.Application.getApplication().requestUserAttention(false);
     }
 
     @Override
     public void windowDeactivated(WindowEvent e) {
-        Logger.log("Window Deactivated");
+
     }
 
     @Override

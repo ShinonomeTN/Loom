@@ -2,12 +2,12 @@ package com.shinonometn.loom.core;
 
 import com.shinonometn.loom.Program;
 import com.shinonometn.loom.common.ConfigModule;
-import com.shinonometn.loom.common.Logger;
 import com.shinonometn.loom.core.message.Messenger;
 import com.shinonometn.loom.core.message.ShuttleEvent;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.*;
@@ -21,7 +21,7 @@ import java.util.Scanner;
  */
 public class Shuttle extends Thread{
 
-    //public boolean developerMode;
+    private static Logger logger = Logger.getLogger("shuttle");
 
     //一些参数设置
     private static int defaultPacketSize = 1024;
@@ -61,12 +61,12 @@ public class Shuttle extends Thread{
     private ShuttleEvent spareEventObject = new ShuttleEvent() {
         @Override
         public void onMessage(int messageType, String message) {
-            Logger.log(String.format("[Message code %d]:%s",messageType,message));
+            logger.info(String.format("[Message code %d]:%s",messageType,message));
         }
 
         @Override
         public void onNetworkError(int errorType, String message) {
-            Logger.error(String.format("[Error code %d]:%s",errorType,message));
+            logger.error(String.format("[Error code %d]:%s",errorType,message));
         }
 
 
@@ -89,17 +89,17 @@ public class Shuttle extends Thread{
                 localInetAddress = iA.getAddress();
                 if(!ConfigModule.isFakeMode()){
                     ipAddress = iA.getAddress().toString().replace("/", "");
-                    Logger.log("Shuttle change IP to " + ipAddress);
+                    logger.info("Shuttle change IP to " + ipAddress);
                     try {
                         macAddress = networkInterface.getHardwareAddress();
                     } catch (SocketException e) {
-                        Logger.error(e.getMessage());
+                        logger.error(e.getMessage());
                     }
                 }else{
                     ipAddress = ConfigModule.fakeIP;
-                    Logger.log("Shuttle changed fake IP to " + ipAddress);
+                    logger.info("Shuttle changed fake IP to " + ipAddress);
                     macAddress = HexTools.hexStr2Bytes(ConfigModule.fakeMac);
-                    Logger.log("Shuttle change fake mac to " + ConfigModule.fakeMac);
+                    logger.info("Shuttle change fake mac to " + ConfigModule.fakeMac);
                 }
             }
         }
@@ -107,14 +107,14 @@ public class Shuttle extends Thread{
         try {
 
             //获得Socket用于通信
-            Logger.log("Try to get socket.");
+            logger.info("Try to get socket.");
             datagramSocket = new DatagramSocket(3848,localInetAddress);
             datagramSocket.setSoTimeout(defaultSocketTimeout);
-            Logger.log("Get socket success.");
+            logger.info("Get socket success.");
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_GET_SUCCESS, "get_connection_socket_success");
             state = STATE_INITIALIZED;
         } catch (SocketException e) {
-            Logger.error("Get socket Failed." + e.getMessage());
+            logger.error("Get socket Failed." + e.getMessage());
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_PORT_IN_USE, "get_connection_socket_failed");
         }
     }
@@ -137,22 +137,22 @@ public class Shuttle extends Thread{
 
             //利用Pupa和Pronunciation生成加密好的数据
             data = Pronunciation.encrypt3848(new Pupa("get server", fields).getData());
-            Logger.log("[Fields]"+(Program.isDeveloperMode() ? fields : "----Banned----"));
+            logger.debug(fields);
 
             //准备数据包
             datagramPacket = new DatagramPacket(data,data.length, InetAddress.getByName("1.1.1.8"),3850);
 
             //开始敲门
-            Logger.log("Knocking server.");
+            logger.info("Knocking server.");
             datagramSocket.send(datagramPacket);
-            Logger.log("Knocking data package sent.");
+            logger.info("Knocking data package sent.");
             datagramPacket.setData(new byte[defaultPacketSize]);
             datagramPacket.setLength(defaultPacketSize);
 
             //等待服务器回应
-            Logger.log("Waiting server response.");
+            logger.info("Waiting server response.");
             datagramSocket.receive(datagramPacket);
-            Logger.log("Server response.");
+            logger.info("Server response.");
 
             //取出数据包并利用Pupa取出认证服务器ip
             data = new byte[datagramPacket.getLength()];
@@ -162,25 +162,25 @@ public class Shuttle extends Thread{
             serverIPAddress = HexTools.toIPAddress(fieldBuffer);
 
             if(!serverIPAddress.equals("")){
-                Logger.log("Server IP is : "+serverIPAddress);
+                logger.info("Server IP is : "+serverIPAddress);
                 shuttleEvent.onMessage(ShuttleEvent.SERVER_RESPONSE_IPADDRESS,serverIPAddress);
                 try {
                     serverInetAddress = InetAddress.getByName(serverIPAddress);
                     //敲门成功
                     //state[0] = true;
                 } catch (UnknownHostException e) {
-                    Logger.error("Server IP unavailable.");
+                    logger.error("Server IP unavailable.");
                     shuttleEvent.onMessage(ShuttleEvent.SOCKET_UNKNOWN_HOST_EXCEPTION, "server_ip_unavailable");
                     return;
                 }
             }else {
-                Logger.error("Get server IP failed: Field empty.");
+                logger.error("Get server IP failed: Field empty.");
                 shuttleEvent.onMessage(ShuttleEvent.SERVER_NOT_FOUNT,"knock_server_not_found");
                 return;
             }
 
         } catch (SocketTimeoutException e) {
-            Logger.error("Server no response.");
+            logger.error("Server no response.");
             shuttleEvent.onMessage(ShuttleEvent.SERVER_NO_RESPONSE, "knock_server");
             datagramSocket.close();
             return;
@@ -191,9 +191,9 @@ public class Shuttle extends Thread{
         } catch (IOException e) {
             if(e.getMessage().equals("No route to host")){
                 shuttleEvent.onMessage(ShuttleEvent.SOCKET_NO_ROUTE_TO_HOST, "no_route_to_host");
-                Logger.error(e.getMessage());
+                logger.error(e.getMessage());
             } else {
-                Logger.error("Unknown Exception. cause:" + e.getMessage());
+                logger.error("Unknown Exception. cause:" + e.getMessage());
                 shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, "knocking");
             }
             datagramSocket.close();
@@ -206,13 +206,13 @@ public class Shuttle extends Thread{
             //先检查登录信息是否为空
             if(username == null || password == null) {
                 shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_FAILED,"info_not_filled");
-                Logger.error("No certification information.");
+                logger.fatal("No certification information.");
                 datagramSocket.close();
                 return;
             }
 
             //准备认证用字段，这个认证版本是安朗的3.6.9版协议
-            Logger.log("Try to use account " + (Program.isDeveloperMode()?username:"-not-shown-") + " to login...");
+            logger.debug("Try to use account " + username + " to login...");
             fields = String.format(
                     "session:%s|username:%s|password:%s|ip address:%s|mac address:%s|access point:%s|version:%s|is dhcp enabled:%s",
                     HexTools.byte2HexStr(init_session),
@@ -226,21 +226,21 @@ public class Shuttle extends Thread{
             );
 
             //准备数据包
-            Logger.log("[Fields]"+(Program.isDeveloperMode()?fields:"----Banned----"));
+            logger.debug(fields);
             data = Pronunciation.encrypt3848(new Pupa("login",fields).getData());
             datagramPacket = new DatagramPacket(data,data.length,serverInetAddress,3848);
 
             //发送数据包
-            Logger.log("Sending certify package...");
+            logger.info("Sending certify package...");
             datagramSocket.send(datagramPacket);
-            Logger.log("Certification package sent.");
+            logger.info("Certification package sent.");
             datagramPacket.setData(new byte[defaultPacketSize]);
             datagramPacket.setLength(defaultPacketSize);
 
             //等待服务器回应
-            Logger.log("Waiting for server response.");
+            logger.info("Waiting for server response.");
             datagramSocket.receive(datagramPacket);
-            Logger.log("Server response.");
+            logger.info("Server response.");
             data = new byte[datagramPacket.getLength()];
             System.arraycopy(datagramPacket.getData(), 0, data, 0, data.length);
             Pupa pupa = new Pupa(Pronunciation.decrypt3848(data));
@@ -252,25 +252,25 @@ public class Shuttle extends Thread{
                 if (HexTools.toBool(fieldBuffer)) {
                     //认证成功
                     //state[1] = true;
-                    Logger.error("Certify success!");
+                    logger.info("Certify success!");
                     if(Program.isDeveloperMode()){
                         //提取会话号
                         fieldBuffer = pupa.findField("session").getValue();
                         if(fieldBuffer != null){
                             session = HexTools.toGB2312Str(fieldBuffer);
-                            Logger.log("Get session number: " + session);
-                        }else Logger.log("No server session number found.");
+                            logger.info("Get session number: " + session);
+                        }else logger.warn("No server session number found.");
                     }
                     shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_SUCCESS, "success");
                 } else {
                     String message = HexTools.toGB2312Str(pupa.findField("message").getValue());
                     shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_FAILED,message);
-                    Logger.error("Certify failed, Infomation: " + message);
+                    logger.error("Certify failed, Infomation: " + message);
                     datagramSocket.close();
                     return;
                 }
             } else {
-                Logger.error("Unknow certificate statue");
+                logger.error("Unknow certificate statue");
                 shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_EXCEPTION, "status_unsure");
                 datagramSocket.close();
                 return;
@@ -282,8 +282,8 @@ public class Shuttle extends Thread{
                 fieldBuffer = pupa.findField("session").getValue();
                 if(fieldBuffer != null){
                     session = HexTools.toGB2312Str(fieldBuffer);
-                    Logger.log("Get session number: " + session);
-                }else Logger.log("No server session number found.");
+                    logger.info("Get session number: " + session);
+                }else logger.info("No server session number found.");
             }
 
             //提取服务器信息
@@ -291,17 +291,17 @@ public class Shuttle extends Thread{
             if(fieldBuffer != null){
                 String message = HexTools.toGB2312Str(fieldBuffer);
                 shuttleEvent.onMessage(ShuttleEvent.SERVER_MESSAGE, message);
-                Logger.log("Server leave a message: " + message);
-            }else Logger.log("Server no message leave.");
+                logger.info("Server leave a message: " + message);
+            }else logger.info("Server no message leave.");
 
         } catch (SocketTimeoutException e){//等待服务器回应的时候超时
             shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_EXCEPTION, "timeout");
-            Logger.error("Server no response");
+            logger.error("Server no response");
             datagramSocket.close();
             return;
         } catch (IOException e) {//IO 错误
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, e.getMessage());
-            Logger.error(e.getMessage());
+            logger.error(e.getMessage());
             datagramSocket.close();
             return;
         }
@@ -311,9 +311,9 @@ public class Shuttle extends Thread{
         messengerThread.start();
 
         //呼吸
-        Logger.log("Breathe started.");
+        logger.info("Breathe started.");
         sleepTime = 20000; //20s
-        Logger.log("Set breathe time as " + sleepTime + "ms.");
+        logger.info("Set breathe time as " + sleepTime + "ms.");
         Pupa breathePupa;
         boolean noSleep = false;
         while(!logoutFlag){
@@ -322,7 +322,7 @@ public class Shuttle extends Thread{
             try {
                 //如果被要求跳过等待, 直接发送呼吸包
                 if(!noSleep){
-                    Logger.log("Sleep for " + sleepTime + "ms");
+                    logger.info("Sleep for " + sleepTime + "ms");
                     sleep(sleepTime);
                 }else
                     noSleep = false;
@@ -335,21 +335,21 @@ public class Shuttle extends Thread{
                         serialNo,
                         HexTools.byte2HexStr(macAddress)
                 );
-                Logger.log("[Field]"+(Program.isDeveloperMode()?fields:"----Banned----"));
+                logger.debug(fields);
                 data = Pronunciation.encrypt3848(new Pupa("breathe", fields).getData());
                 datagramPacket = new DatagramPacket(data, data.length, serverInetAddress, 3848);
-                Logger.log("Breathe...");
+                logger.info("Breathe...");
                 if(!logoutFlag) datagramSocket.send(datagramPacket); else break;
-                Logger.log("Breathe package sent");
+                logger.info("Breathe package sent");
 
                 //准备接收服务器的回应
                 data = new byte[1024];
                 datagramPacket.setData(data);
                 datagramPacket.setLength(data.length);
-                Logger.log("Waiting Server Response...");
+                logger.info("Waiting Server Response...");
                 datagramSocket.setSoTimeout(defaultSocketTimeout);
                 if(!logoutFlag) datagramSocket.receive(datagramPacket); else break;
-                Logger.log("Server response.");
+                logger.info("Server response.");
 
                 //解释数据包并提取有用的信息
                 data = new byte[datagramPacket.getLength()];
@@ -361,10 +361,10 @@ public class Shuttle extends Thread{
                 if(fieldBuffer != null) {
                     if(HexTools.toBool(fieldBuffer)){
                         serialNo += 0x03;
-                        Logger.log("Breathed." + (Program.isDeveloperMode() ? String.format("Serial No. : 0x%x",serialNo):"----Banned----"));
+                        logger.info("Breathed." + (Program.isDeveloperMode() ? String.format("Serial No. : 0x%x",serialNo):"----Banned----"));
                         shuttleEvent.onMessage(ShuttleEvent.BREATHE_SUCCESS,"success");
                     }else{
-                        Logger.log("Server Rejected this Breathe.");
+                        logger.info("Server Rejected this Breathe.");
                         shuttleEvent.onMessage(ShuttleEvent.BREATHE_FAILED, "rejected");
                     }
                 }else if(breathePupa.findField("serial no") != null){
@@ -377,17 +377,17 @@ public class Shuttle extends Thread{
                 logoutFlag = true;
                 break;
             } catch (SocketTimeoutException e) {
-                Logger.log("Breathe timeout.");
+                logger.warn("Breathe timeout.");
                 noSleep = true;
                 shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION, "timeout");
             } catch (IOException e){
-                Logger.error(e.toString());
+                logger.error(e.toString());
                 shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION, e.getMessage());
                 offline();
                 return;
             }
         }
-        Logger.log("Breathe thread Closeing....");
+        logger.warn("Breathe thread Closeing....");
         //state[2] = false;
 
         //通知消息线程
@@ -403,37 +403,37 @@ public class Shuttle extends Thread{
                     HexTools.byte2HexStr(ipAddress.getBytes()),
                     HexTools.byte2HexStr(macAddress)
             );
-            Logger.log("[Field]" + (Program.isDeveloperMode() ? fields : "----Banned----"));
+            logger.debug(fields);
             //发送数据包
             Pupa pupa = new Pupa("logout", fields);
             datagramPacket.setData(Pronunciation.encrypt3848(pupa.getData()));
             datagramPacket.setLength(pupa.getData().length);
-            Logger.log("Telling Server.....");
+            logger.info("Telling Server.....");
             datagramSocket.send(datagramPacket);
-            Logger.log("Logout package sent");
+            logger.info("Logout package sent");
 
             //接收服务器返回的数据包
             byte[] buffer = new byte[1024];
             datagramPacket.setData(buffer);
             datagramPacket.setLength(buffer.length);
             datagramSocket.setSoTimeout(defaultSocketTimeout);
-            Logger.log("Waiting server response.");
+            logger.info("Waiting server response.");
             datagramSocket.receive(datagramPacket);
-            Logger.log("Server response.");
+            logger.info("Server response.");
             byte[] bufferTemp;
             bufferTemp = new byte[datagramPacket.getLength()];
             System.arraycopy(datagramPacket.getData(), 0, bufferTemp, 0, bufferTemp.length);
             pupa = new Pupa(Pronunciation.decrypt3848(bufferTemp));
             if (HexTools.toBool(pupa.findField("is success").getValue())) {
-                Logger.log("Server response.Now you are offline.");
+                logger.info("Server response.Now you are offline.");
                 shuttleEvent.onMessage(ShuttleEvent.OFFLINE, "generally");
             }
-            Logger.log("Offline politely...");
+            logger.info("Offline politely...");
         }catch (SocketTimeoutException w){
-            Logger.error("Logout Timeout...");
+            logger.warn("Logout Timeout...");
             shuttleEvent.onMessage(ShuttleEvent.OFFLINE,"timeout");
         } catch (IOException e) {
-            Logger.error(e.toString());
+            logger.error(e.toString());
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, e.toString());
         }finally {
             datagramSocket.close();
@@ -519,8 +519,8 @@ public class Shuttle extends Thread{
             }
 
             shuttle = new Shuttle(networkInterface, null);
-            if(ConfigModule.isFakeMode()) Logger.log("Please remember that fake mode on.");
-            if(ConfigModule.allowAutoMode()) Logger.log("Please remember that auto-mode on.");
+            if(ConfigModule.isFakeMode()) logger.info("Please remember that fake mode on.");
+            if(ConfigModule.allowAutoMode()) logger.info("Please remember that auto-mode on.");
 
             System.out.println("Prepared to login.");
 
@@ -564,7 +564,7 @@ public class Shuttle extends Thread{
                     Shuttle shuttle1;
                     public void run(){
                         System.out.println("Loom running under auto-mode. Online: " + (shuttle1 == null? "True":"False"));
-                        Logger.log("Loom running under auto-mode.");
+                        logger.info("Loom running under auto-mode.");
                         while(runflag){
                             String date = simpleDateFormat.format(new Date());
                             System.out.println("Time check. " + date);
@@ -578,7 +578,7 @@ public class Shuttle extends Thread{
                                             shuttle1.setPassword(ConfigModule.password);
                                             shuttle1.start();
                                             alertFlag = true;
-                                            Logger.log("Auto online because reach the online time point.");
+                                            logger.info("Auto online because reach the online time point.");
                                         }
                                     }else alertFlag = false;
                                 }
@@ -589,7 +589,7 @@ public class Shuttle extends Thread{
                                             if(shuttle1 != null) shuttle1.offline();
                                             shuttle1 = null;
                                             alertFlag = true;
-                                            Logger.log("Auto offline because reach the offline time point.");
+                                            logger.info("Auto offline because reach the offline time point.");
                                         }
                                     }else alertFlag = false;
                                 }
@@ -612,7 +612,7 @@ public class Shuttle extends Thread{
                 thread.interrupt();
             }
         }catch (SocketException | UnknownHostException e){
-            Logger.log(e.toString());
+            logger.error(e.toString());
         }
     }
 }

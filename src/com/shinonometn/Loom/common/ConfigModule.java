@@ -3,6 +3,7 @@ package com.shinonometn.loom.common;
 import com.shinonometn.loom.Program;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 
@@ -47,23 +48,25 @@ public class ConfigModule{
     private static FileOutputStream fileWriter;
     private static FileInputStream fileReader;
 
+    private static Logger logger = Logger.getLogger("configure");
+
     static {
 
         try{
             profilePath = new File("./profile/encrypted_profile");
 
             if(!profilePath.getParentFile().exists()) {
-                Logger.log("Profile directory not exist. Create.");
+                logger.info("Profile directory not exist. Create.");
                 profilePath.getParentFile().mkdir();
             }
             if(!profilePath.exists()) {
-                Logger.log("Profile not exist. Create.");
+                logger.info("Profile not exist. Create.");
                 profilePath.createNewFile();
             }else{
                 readProfile();
             }
         }catch (IOException e){
-            Logger.error("Profile loading exception. No-profile mode on. cause :" + e.getMessage());
+            logger.error("Profile loading exception. No-profile mode on. cause :" + e.getMessage());
             noConfigMode = true;
         }
     }
@@ -72,7 +75,7 @@ public class ConfigModule{
         try{
             readProfile();
         }catch (IOException e){
-            Logger.error("Profile loading exception. No-profile mode on. cause :" + e.getMessage());
+            logger.error("Profile loading exception. No-profile mode on. cause :" + e.getMessage());
             noConfigMode = true;
         }
     }
@@ -108,7 +111,7 @@ public class ConfigModule{
     }
 
     private static void readProfile() throws IOException {
-        Logger.log("Try to read profile.");
+        logger.info("Try to read profile.");
         fileReader = new FileInputStream(profilePath);
         int aChar;
         int length = 0;
@@ -120,8 +123,8 @@ public class ConfigModule{
         System.arraycopy(buffer,0,profileBuffer,0,length);
         profileBuffer = Pronunciation.decrypt3849(profileBuffer);
 
-        Logger.log(Program.isDeveloperMode()?HexTools.byte2HexStr(profileBuffer):"----Banned----");
-        Logger.log(Program.isDeveloperMode()?new String(profileBuffer):"----Banned----");
+        logger.debug(HexTools.byte2HexStr(profileBuffer));
+        logger.debug(new String(profileBuffer));
         if(profileBuffer != null){
             String fields[] = new String(profileBuffer).split("\n");
             if ("crypt3849".equals(fields[0])) {
@@ -156,15 +159,15 @@ public class ConfigModule{
                         if(!(autoOnlineMode.equals("online") || autoOnlineMode.equals("offline"))) autoOnlineMode = "both";
 
 
-                        Logger.log(Program.isDeveloperMode()?field + " copied.":"----Banned----");
+                        logger.debug(field + " copied.");
                     }catch (NullPointerException | ArrayIndexOutOfBoundsException e){
-                        Logger.error("An empty field found.");
+                        logger.error("An empty field found.");
                     }
                 }
 
-                Logger.log("Fields copied to ConfigModule.");
+                logger.info("Fields copied to ConfigModule.");
 
-            }else Logger.log("Wrong profile format.");
+            }else logger.error("Wrong profile format.");
 
             fileReader.close();
         }
@@ -174,7 +177,7 @@ public class ConfigModule{
         if(noConfigMode) return;
 
         try {
-            Logger.log("Writing profile.");
+            logger.info("Writing profile.");
             profileBuffer = Pronunciation.encrypt3849(
                     String.format(  "%s\n" +
                                     "useLog=%s\n" +
@@ -222,9 +225,9 @@ public class ConfigModule{
             fileWriter.write(profileBuffer);
             fileWriter.flush();
             fileWriter.close();
-            Logger.log("Profile writing success.");
+            logger.info("Profile writing success.");
         } catch (IOException e) {
-            Logger.error("Profile write error. Switch to no-profile mode. cause:"+e.getMessage());
+            logger.error("Profile write error. Switch to no-profile mode. cause:"+e.getMessage());
             noConfigMode = true;
         }
     }

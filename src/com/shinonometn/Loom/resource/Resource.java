@@ -1,6 +1,6 @@
 package com.shinonometn.loom.resource;
 
-import com.shinonometn.loom.common.Logger;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -11,6 +11,7 @@ import java.util.HashMap;
  */
 public class Resource {
     private static Resource resource = null;
+    private static Logger logger = Logger.getLogger("resource");
 
     public static Resource getResource(){
         if (resource == null) resource = new Resource();
@@ -43,7 +44,7 @@ public class Resource {
             hashMap.put(path, sB.toString());
             return sB.toString();
         }catch (IOException e){
-            Logger.error(e.getMessage());
+            logger.error(e.getMessage());
         }
         return null;
     }
