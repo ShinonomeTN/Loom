@@ -34,7 +34,7 @@ public class Messenger extends Thread{
             messageSocket = new DatagramSocket(4999,address);
             logger.info("Get socket for Messenger success.");
         } catch (SocketException e) {
-            logger.error("Get socket for Messenger failed. " + e.getMessage());
+            logger.error("Get socket for Messenger failed. ",e);
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_PORT_IN_USE,"get_message_socket_failed");
         }
     }
@@ -76,7 +76,7 @@ public class Messenger extends Thread{
                     logger.warn("Messenger was closed. Can not recive messanges.");
 
             } catch (IOException e) {
-                logger.error("An error accorded at Messenger." + e.getMessage());
+                logger.error("An error accorded at Messenger.",e);
                 isRun = false;
                 if(!messageSocket.isClosed()){
                     //e.printStackTrace();

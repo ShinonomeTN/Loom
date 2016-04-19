@@ -66,7 +66,7 @@ public class ConfigModule{
                 readProfile();
             }
         }catch (IOException e){
-            logger.error("Profile loading exception. No-profile mode on. cause :" + e.getMessage());
+            logger.error("Profile loading exception. No-profile mode on.",e);
             noConfigMode = true;
         }
     }
@@ -75,7 +75,7 @@ public class ConfigModule{
         try{
             readProfile();
         }catch (IOException e){
-            logger.error("Profile loading exception. No-profile mode on. cause :" + e.getMessage());
+            logger.error("Profile loading exception. No-profile mode on. cause :",e);
             noConfigMode = true;
         }
     }
@@ -161,7 +161,7 @@ public class ConfigModule{
 
                         logger.debug(field + " copied.");
                     }catch (NullPointerException | ArrayIndexOutOfBoundsException e){
-                        logger.error("An empty field found.");
+                        logger.warn("An empty field found.",e);
                     }
                 }
 
@@ -227,7 +227,7 @@ public class ConfigModule{
             fileWriter.close();
             logger.info("Profile writing success.");
         } catch (IOException e) {
-            logger.error("Profile write error. Switch to no-profile mode. cause:"+e.getMessage());
+            logger.error("Profile write error. Switch to no-profile mode.",e);
             noConfigMode = true;
         }
     }

@@ -93,7 +93,7 @@ public class Shuttle extends Thread{
                     try {
                         macAddress = networkInterface.getHardwareAddress();
                     } catch (SocketException e) {
-                        logger.error(e.getMessage());
+                        logger.error(e);
                     }
                 }else{
                     ipAddress = ConfigModule.fakeIP;
@@ -114,7 +114,7 @@ public class Shuttle extends Thread{
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_GET_SUCCESS, "get_connection_socket_success");
             state = STATE_INITIALIZED;
         } catch (SocketException e) {
-            logger.error("Get socket Failed." + e.getMessage());
+            logger.error("Get socket Failed.",e);
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_PORT_IN_USE, "get_connection_socket_failed");
         }
     }
@@ -169,7 +169,7 @@ public class Shuttle extends Thread{
                     //敲门成功
                     //state[0] = true;
                 } catch (UnknownHostException e) {
-                    logger.error("Server IP unavailable.");
+                    logger.error("Server IP unavailable.",e);
                     shuttleEvent.onMessage(ShuttleEvent.SOCKET_UNKNOWN_HOST_EXCEPTION, "server_ip_unavailable");
                     return;
                 }
@@ -180,20 +180,21 @@ public class Shuttle extends Thread{
             }
 
         } catch (SocketTimeoutException e) {
-            logger.error("Server no response.");
+            logger.error("Server no response.",e);
             shuttleEvent.onMessage(ShuttleEvent.SERVER_NO_RESPONSE, "knock_server");
             datagramSocket.close();
             return;
         } catch (UnknownHostException e) {
+            logger.error("Host unknown",e);
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_UNKNOWN_HOST_EXCEPTION, "knock_server");
             datagramSocket.close();
             return;
         } catch (IOException e) {
             if(e.getMessage().equals("No route to host")){
                 shuttleEvent.onMessage(ShuttleEvent.SOCKET_NO_ROUTE_TO_HOST, "no_route_to_host");
-                logger.error(e.getMessage());
+                logger.error("No route to host", e);
             } else {
-                logger.error("Unknown Exception. cause:" + e.getMessage());
+                logger.error("Unknown Exception.",e);
                 shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, "knocking");
             }
             datagramSocket.close();
@@ -296,12 +297,12 @@ public class Shuttle extends Thread{
 
         } catch (SocketTimeoutException e){//等待服务器回应的时候超时
             shuttleEvent.onMessage(ShuttleEvent.CERTIFICATE_EXCEPTION, "timeout");
-            logger.error("Server no response");
+            logger.error("Server no response",e);
             datagramSocket.close();
             return;
         } catch (IOException e) {//IO 错误
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, e.getMessage());
-            logger.error(e.getMessage());
+            logger.error("Unknown Error",e);
             datagramSocket.close();
             return;
         }
@@ -377,11 +378,11 @@ public class Shuttle extends Thread{
                 logoutFlag = true;
                 break;
             } catch (SocketTimeoutException e) {
-                logger.warn("Breathe timeout.");
+                logger.warn("Breathe timeout.",e);
                 noSleep = true;
                 shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION, "timeout");
             } catch (IOException e){
-                logger.error(e.toString());
+                logger.error("Unknown Exception",e);
                 shuttleEvent.onMessage(ShuttleEvent.BREATHE_EXCEPTION, e.getMessage());
                 offline();
                 return;
@@ -433,7 +434,7 @@ public class Shuttle extends Thread{
             logger.warn("Logout Timeout...");
             shuttleEvent.onMessage(ShuttleEvent.OFFLINE,"timeout");
         } catch (IOException e) {
-            logger.error(e.toString());
+            logger.error("Unknown Exception",e);
             shuttleEvent.onMessage(ShuttleEvent.SOCKET_OTHER_EXCEPTION, e.toString());
         }finally {
             datagramSocket.close();
@@ -612,7 +613,7 @@ public class Shuttle extends Thread{
                 thread.interrupt();
             }
         }catch (SocketException | UnknownHostException e){
-            logger.error(e.toString());
+            logger.error("Unknown exception",e);
         }
     }
 }
