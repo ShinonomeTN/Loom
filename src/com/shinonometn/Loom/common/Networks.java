@@ -1,8 +1,10 @@
 package com.shinonometn.loom.common;
 
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -32,5 +34,15 @@ public class Networks {
             return null;
         }
         return networkInterfaceVector;
+    }
+
+    public static InetAddress getInetAddress(NetworkInterface networkInterface){
+        List<InterfaceAddress> interfaceAddressList = networkInterface.getInterfaceAddresses();
+        for(InterfaceAddress iA:interfaceAddressList){
+            if(iA.toString().matches(".*[\\d\\w].{3}[\\d\\w].*")) {
+                return iA.getAddress();
+            }
+        }
+        return null;
     }
 }
