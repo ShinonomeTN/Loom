@@ -7,6 +7,7 @@ import com.shinonometn.loom.core.message.ShuttleEvent;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;
+import com.sun.javafx.tools.packager.Log;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -557,6 +558,7 @@ public class Shuttle extends Thread{
                 }
 
             }else{
+                shuttle.datagramSocket.close();
                 shuttle.offline();
                 Thread thread = new Thread(){
                     boolean alertFlag = false;
@@ -564,16 +566,14 @@ public class Shuttle extends Thread{
                     boolean runflag = true;
                     Shuttle shuttle1;
                     public void run(){
-                        System.out.println("Loom running under auto-mode. Online: " + (shuttle1 == null? "True":"False"));
                         logger.info("Loom running under auto-mode.");
                         while(runflag){
                             String date = simpleDateFormat.format(new Date());
-                            System.out.println("Time check. " + date);
+                            logger.debug("Time check. " + date);
                             if(shuttle1 == null){
                                 if(ConfigModule.autoOnlineMode.equals("both") || ConfigModule.autoOnlineMode.equals("online")){
                                     if(date.equals(ConfigModule.autoOnlineTime)){
                                         if(!alertFlag){
-
                                             shuttle1 = new Shuttle(networkInterface,null);
                                             shuttle1.setUsername(ConfigModule.username);
                                             shuttle1.setPassword(ConfigModule.password);
