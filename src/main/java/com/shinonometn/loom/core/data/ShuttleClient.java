@@ -1,4 +1,4 @@
-package com.shinonometn.Loom.core.data;
+package com.shinonometn.loom.core.data;
 
 /**
  * Created by catten on 16/2/18.

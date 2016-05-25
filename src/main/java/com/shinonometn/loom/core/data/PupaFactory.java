@@ -1,6 +1,6 @@
-package com.shinonometn.Loom.core.data;
+package com.shinonometn.loom.core.data;
 
-import com.shinonometn.Loom.core.Shuttle;
+import com.shinonometn.loom.core.Shuttle;
 import com.shinonometn.Pupa.Pupa;
 import com.shinonometn.Pupa.ToolBox.HexTools;
 import com.shinonometn.Pupa.ToolBox.Pronunciation;
