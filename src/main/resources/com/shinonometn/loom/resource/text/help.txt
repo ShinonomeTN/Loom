@@ -1,0 +1,50 @@
+
+Usage
+
+Run:
+
+java -jar Loom.jar [-cm|-gm] [-dm] [-pc] [-ip ip address]
+
+	-cm | --console-mode    Run Loom under console mode.
+	-gm | --graphic-mode    Run Loom under graphical mode.
+	-dm | --developer-mode  Run Loom under developer mode.
+	-pc | --pre-configured  (For consoleMode) Run Loom using existed configure file.
+	-ip Use except ip address to login
+
+Configure:
+
+[1] java -jar Loom.jar --fake-ip IPAddress --fake-mac MACAddress
+    Enable Fake(Auth. Key)-Mode.
+
+    Fake mode(Also named Auth. Key-mode) can help you get online using router. Input
+    your router's IP(Under DHCP Mode) and MAC Address, Loom will get into Fake-Mode
+    automatic. Since you got online, your router will have internet connect.
+
+    **Only work under Full-conn NAT network!
+
+[2] java -jar Loom.jar -clearFakeInfo
+    Disable Fake(Auth. Key)-Mode.
+
+[3] java -jar Loom.jar -setAutoMode [onlineTime]-[offlineTime] [mode:both|online|offline]
+    Set Automatic online/offline time and mode and enable AutoMode.
+
+    such as
+        "java -jar Loom.jar -setAutoMode 07:00-23:45"
+    or
+        "java -jar Loom.jar -setAutoMode 07:00-23:45 both"
+    will set Loom online execute online action at 7:00 and execute offline action
+    at 23:45. If change mode to "online" will only execute online action or change to
+    "offline" mode will only execute offline action the time you set.
+
+[4] java -jar Loom.jar -closeAutoMode
+    Close Auto-online mode.
+
+[Help]
+
+java -jar Loom.jar -h | --help
+
+	Show this help
+
+Loom Help Document
+2015/11/22
+By John Kozak

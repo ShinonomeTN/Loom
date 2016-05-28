@@ -1,7 +1,7 @@
 package com.shinonometn.Loom.core.data;
 
-import com.shinonometn.Pupa.Pupa;
-import com.shinonometn.Pupa.ToolBox.Pronunciation;
+import com.shinonometn.pupa.Pupa;
+import com.shinonometn.pupa.tools.Pronunciation;
 
 /**
  * Created by catten on 16/2/18.

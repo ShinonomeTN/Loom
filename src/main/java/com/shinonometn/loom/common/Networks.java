@@ -1,48 +1,40 @@
 package com.shinonometn.loom.common;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * Created by catten on 15/10/25.
  */
 public class Networks {
     //Find out available net card
-    private static Vector<NetworkInterface> networkInterfaceVector;
-    public static Vector<NetworkInterface> getNetworkInterfaces(boolean refreshList){
-        if(refreshList || networkInterfaceVector == null) try {
-            networkInterfaceVector = new Vector<>();
-            Enumeration<NetworkInterface> networkInterfaceEnumeration = NetworkInterface.getNetworkInterfaces();
-            while (networkInterfaceEnumeration.hasMoreElements()) {
-                NetworkInterface temp = networkInterfaceEnumeration.nextElement();
-                if(temp.getHardwareAddress() != null){
-                    InetAddress address;
-                    Enumeration<InetAddress> inetAddressEnumeration = temp.getInetAddresses();
+    private static List<NetworkInterface> networkInterfaceList;
+    public static List<NetworkInterface> getNetworkInterfaces(boolean refreshList){
+        if(refreshList || networkInterfaceList == null) try {
+            networkInterfaceList = new ArrayList<>(3);
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+
+                if(networkInterface.getHardwareAddress() != null){
+                    Enumeration<InetAddress> inetAddressEnumeration = networkInterface.getInetAddresses();
+
                     while(inetAddressEnumeration.hasMoreElements()){
-                        address = inetAddressEnumeration.nextElement();
-                        if(address.toString().contains(".")){
-                            networkInterfaceVector.add(temp);
-                        }
+                        InetAddress address = inetAddressEnumeration.nextElement();
+
+                        if(address instanceof Inet4Address) networkInterfaceList.add(networkInterface);
                     }
                 }
             }
         } catch (Exception e) {
             return null;
         }
-        return networkInterfaceVector;
-    }
-
-    public static InetAddress getInetAddress(NetworkInterface networkInterface){
-        List<InterfaceAddress> interfaceAddressList = networkInterface.getInterfaceAddresses();
-        for(InterfaceAddress iA:interfaceAddressList){
-            if(iA.toString().matches(".*[\\d\\w].{3}[\\d\\w].*")) {
-                return iA.getAddress();
-            }
-        }
-        return null;
+        return networkInterfaceList;
     }
 }

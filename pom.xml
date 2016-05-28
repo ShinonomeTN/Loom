@@ -7,6 +7,35 @@
     <groupId>com.shinonometn</groupId>
     <artifactId>loom</artifactId>
     <version>3.0</version>
+
+    <repositories>
+        <repository>
+            <id>jiyan</id>
+            <name>Jiyan Nexus Repository</name>
+            <url>http://10.15.231.2:8081/content/repositories/central/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.12</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.shinonometn</groupId>
+            <artifactId>pupa</artifactId>
+            <version>4.2</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>

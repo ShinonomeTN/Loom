@@ -1,9 +1,8 @@
 package com.shinonometn.loom.core.data;
 
-import com.shinonometn.loom.core.Shuttle;
-import com.shinonometn.Pupa.Pupa;
-import com.shinonometn.Pupa.ToolBox.HexTools;
-import com.shinonometn.Pupa.ToolBox.Pronunciation;
+import com.shinonometn.pupa.Pupa;
+import com.shinonometn.pupa.tools.HexTools;
+import com.shinonometn.pupa.tools.Pronunciation;
 
 import java.net.DatagramPacket;
 

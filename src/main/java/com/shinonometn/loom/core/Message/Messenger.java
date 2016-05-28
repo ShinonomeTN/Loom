@@ -1,9 +1,9 @@
 package com.shinonometn.loom.core.message;
 
-import com.shinonometn.Pupa.Pupa;
-import com.shinonometn.Pupa.ToolBox.Dictionary;
-import com.shinonometn.Pupa.ToolBox.HexTools;
-import com.shinonometn.Pupa.ToolBox.Pronunciation;
+import com.shinonometn.pupa.Pupa;
+import com.shinonometn.pupa.tools.Dictionary;
+import com.shinonometn.pupa.tools.HexTools;
+import com.shinonometn.pupa.tools.Pronunciation;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
