@@ -10,39 +10,39 @@ import java.net.DatagramPacket;
  * Created by catten on 16/2/18.
  */
 public class PupaFactory {
-    public Client getClient() {
-        return client;
+    public IClient getIClient() {
+        return IClient;
     }
 
-    public void setClient(Client client) {
-        this.client = client;
+    public void setIClient(IClient IClient) {
+        this.IClient = IClient;
     }
 
-    private Client client;
+    private IClient IClient;
 
-    public PupaFactory(Client client) {
-        this.client = client;
+    public PupaFactory(IClient IClient) {
+        this.IClient = IClient;
     }
 
     public Pupa knockPupa(){
         return new Pupa("get server", String.format(
                 "session:%s|ip address:%s|mac address:%s",
-                HexTools.byte2HexStr(client.getSession().getBytes()),
-                HexTools.byte2HexStr(client.getIPAddress().getBytes()),
-                HexTools.byte2HexStr(client.getMacAddress())
+                HexTools.byte2HexStr(IClient.getSession().getBytes()),
+                HexTools.byte2HexStr(IClient.getIPAddress().getBytes()),
+                HexTools.byte2HexStr(IClient.getMacAddress())
         ));
     }
 
     public Pupa certificatePupa(){
         return new Pupa("login",String.format(
                 "session:%s|username:%s|password:%s|ip address:%s|mac address:%s|access point:%s|version:%s|is dhcp enabled:%s",
-                HexTools.byte2HexStr(client.getSession().getBytes()),
-                HexTools.byte2HexStr(client.getUsername().getBytes()),
-                HexTools.byte2HexStr(client.getPassword().getBytes()),
-                HexTools.byte2HexStr(client.getIPAddress().getBytes()),
-                HexTools.byte2HexStr(client.getMacAddress()),
+                HexTools.byte2HexStr(IClient.getSession().getBytes()),
+                HexTools.byte2HexStr(IClient.getUsername().getBytes()),
+                HexTools.byte2HexStr(IClient.getPassword().getBytes()),
+                HexTools.byte2HexStr(IClient.getIPAddress().getBytes()),
+                HexTools.byte2HexStr(IClient.getMacAddress()),
                 HexTools.byte2HexStr("internet".getBytes()),
-                HexTools.byte2HexStr(client.getVersion().getBytes()),
+                HexTools.byte2HexStr(IClient.getVersion().getBytes()),
                 "00"
         ));
     }
@@ -50,19 +50,19 @@ public class PupaFactory {
     public Pupa breathPupa(){
         return new Pupa("breathe", String.format(
                 "session:%s|ip address:%s|serial no:0%x|mac address:%s",
-                HexTools.byte2HexStr(client.getSession().getBytes()),
-                HexTools.byte2HexStr(client.getIPAddress().getBytes()),
-                client.getSerialNo(),
-                HexTools.byte2HexStr(client.getMacAddress())
+                HexTools.byte2HexStr(IClient.getSession().getBytes()),
+                HexTools.byte2HexStr(IClient.getIPAddress().getBytes()),
+                IClient.getSerialNo(),
+                HexTools.byte2HexStr(IClient.getMacAddress())
         ));
     }
 
     public Pupa logoutPupa(){
         return new Pupa("logout", String.format(
                 "session:%s|ip address:%s|mac address:%s",
-                HexTools.byte2HexStr(client.getSession().getBytes()),
-                HexTools.byte2HexStr(client.getIPAddress().getBytes()),
-                HexTools.byte2HexStr(client.getMacAddress())
+                HexTools.byte2HexStr(IClient.getSession().getBytes()),
+                HexTools.byte2HexStr(IClient.getIPAddress().getBytes()),
+                HexTools.byte2HexStr(IClient.getMacAddress())
         ));
     }
 

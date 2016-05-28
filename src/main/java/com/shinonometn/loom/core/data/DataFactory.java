@@ -1,4 +1,4 @@
-package com.shinonometn.Loom.core.data;
+package com.shinonometn.loom.core.data;
 
 import com.shinonometn.pupa.Pupa;
 import com.shinonometn.pupa.tools.Pronunciation;
