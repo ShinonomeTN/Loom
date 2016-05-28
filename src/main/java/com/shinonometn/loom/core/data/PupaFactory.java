@@ -10,17 +10,17 @@ import java.net.DatagramPacket;
  * Created by catten on 16/2/18.
  */
 public class PupaFactory {
-    public ShuttleClient getClient() {
+    public Client getClient() {
         return client;
     }
 
-    public void setClient(ShuttleClient client) {
+    public void setClient(Client client) {
         this.client = client;
     }
 
-    private ShuttleClient client;
+    private Client client;
 
-    public PupaFactory(ShuttleClient client) {
+    public PupaFactory(Client client) {
         this.client = client;
     }
 
